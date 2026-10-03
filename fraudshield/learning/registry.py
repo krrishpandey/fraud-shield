@@ -98,8 +98,23 @@ class ModelRegistry:
             for v in self.data["versions"]:
                 v["deployed"] = v["version"] == version
             target["ever_deployed"] = True
+            now = _now()
+            target["activated_at"] = now  # latest time this version became the one serving new bookings
             self.data["active"] = version
+            self.data["active_since"] = now
             self.save()
+
+    @property
+    def active_since(self) -> str | None:
+        """When the active version was last activated (None for v1 until anything is activated)."""
+        return self.data.get("active_since")
+
+    def rollback_target(self) -> str | None:
+        """The most recently activated version, other than the active one, that passed the gate before."""
+        cands = [v for v in self.data["versions"] if v.get("ever_deployed") and v["version"] != self.active_version]
+        if not cands:
+            return None
+        return max(enumerate(cands), key=lambda iv: (iv[1].get("activated_at") or "", iv[0]))[1]["version"]
 
     def save(self) -> None:
         with self._lock:

@@ -16,6 +16,7 @@ from typing import Any, Callable
 import pandas as pd
 
 from fraudshield.learning.calibration_refresh import refresh_misuse_calibration
+from fraudshield.learning.handover import retrain_handover, rollback_handover
 from fraudshield.learning.laya_export import LIVE_UPDATE_NOTE, LayaExport
 from fraudshield.learning.metrics import GateConfig
 from fraudshield.learning.registry import ModelRegistry
@@ -45,11 +46,16 @@ class LearningUnavailable(Exception):
     pass
 
 
-def gbm_scorer(model) -> Callable:
+def gbm_scorer(model, version: str | None = None) -> Callable:
     def score(fv) -> float:
         return model.score_values(dict(fv.values))
     score.model = model
+    score.version = version  # the pipeline logs this exact version on every decision this scorer makes
     return score
+
+
+def _now() -> str:
+    return datetime.now().isoformat(timespec="seconds")
 
 
 class LearningService:
@@ -75,10 +81,15 @@ class LearningService:
         self.fit_fn, self.max_train_rows, self.B = fit_fn, max_train_rows, B
         self.calibration_dir = Path(calibration_dir) if calibration_dir else None
         self._run_lock = threading.Lock()
+        self.started_at = _now()
+        # called with (scorer, version) after every swap, e.g. so the live stream's pipeline follows the deploy
+        self.swap_listeners: list[Callable[[Callable, str], None]] = []
         pipeline.label_store = label_store
         pipeline.on_label = laya_export.add
-        if wire_active and registry.path.exists() and registry.active_version:
-            pipeline.swap_gbm(gbm_scorer(registry.load_model(registry.active_version)), registry.active_version)
+        if wire_active and registry.active_version:
+            # also for v1 before any registry file exists: the pipeline then logs the exact version, not "gbm"
+            pipeline.swap_gbm(gbm_scorer(registry.load_model(registry.active_version), registry.active_version),
+                              registry.active_version)
             cal = (registry.data.get("calibration") or {}).get("path")
             if cal and Path(cal).exists():
                 pipeline.calibration = json.loads(Path(cal).read_text(encoding="utf-8"))
@@ -107,15 +118,40 @@ class LearningService:
     def _new_labels(self) -> list[dict[str, Any]]:
         return self.label_store.all()[int(self.registry.data.get("last_retrain_label_count", 0)):]
 
+    def _swap(self, model, version: str) -> None:
+        scorer = gbm_scorer(model, version)
+        self.pipeline.swap_gbm(scorer, version)
+        for fn in list(self.swap_listeners):
+            fn(scorer, version)
+
+    def active_since(self) -> tuple[str, str]:
+        """(timestamp, reason): since when the active version has been the one serving new bookings."""
+        since = self.registry.active_since
+        if since:
+            return since, "activated"
+        return self.started_at, "service start (already the active version)"
+
+    def model_in_use(self) -> dict[str, Any]:
+        """What actually scores new bookings now (the pipeline's scorer), and whether it is the registry's active."""
+        since, why = self.active_since()
+        serving = self.pipeline.versions.get("gbm", "unknown")
+        return {"version": serving, "since": since, "since_reason": why,
+                "registry_active_version": self.registry.active_version,
+                "matches_registry": serving == self.registry.active_version,
+                "rollback_target": self.registry.rollback_target()}
+
     def status(self) -> dict[str, Any]:
         cal = self.pipeline.calibration or {}
         runs = self.registry.data.get("runs") or []
         return {
+            "model_in_use": self.model_in_use(),
+            "last_handover": self.registry.data.get("last_handover"),
             "active_version": self.registry.active_version,
             "labels_since_last_retrain": len(self._new_labels()),
             "label_sources": self.label_store.counts_by_source(),
             "versions": [{k: v.get(k) for k in ("version", "created_at", "parent", "n_train", "n_feedback_labels",
-                                                 "metrics", "deployed", "ever_deployed", "gate_passed", "note")}
+                                                 "metrics", "deployed", "ever_deployed", "gate_passed", "note",
+                                                 "activated_at")}
                          for v in self.registry.versions()],
             "calibration_version": cal.get("version", "uncalibrated"),
             "laya_export": {"path": str(self.laya_export.path), "rows": self.laya_export.rows()},
@@ -183,8 +219,11 @@ class LearningService:
                              metrics_run_id=run_id)
         if passed:
             self.registry.activate(cand_version)
-            self.pipeline.swap_gbm(gbm_scorer(res.candidate), cand_version)
+            self._swap(res.candidate, cand_version)
         deployed = self.registry.active_version
+        handover = retrain_handover(rep, gate_cfg, len(new), run_id=run_id, at=_now(), previous=cur,
+                                    candidate=cand_version, active=deployed, active_since=self.active_since()[0],
+                                    rollback_target=self.registry.rollback_target())
         cal = self._refresh_calibration(labels)
         rep["candidate"]["version"] = cand_version
         out = {
@@ -201,12 +240,14 @@ class LearningService:
             "laya": {"export_path": str(self.laya_export.path), "export_rows": self.laya_export.rows(),
                      "weights_updated": False, "note": LIVE_UPDATE_NOTE},
             "notes": rep["notes"], "duration_s": rep["duration_s"],
+            "handover": handover,
         }
         payload = {k: v for k, v in out.items() if k != "audit_hash"}
         payload["calibration_refresh"] = {k: v for k, v in cal.items() if k != "calibration"}
         _, h = self.audit.append("retrain", payload)
         out["audit_hash"] = h
         self.registry.data["last_retrain_label_count"] = len(self.label_store)
+        self.registry.data["last_handover"] = {**handover, "audit_hash": h}
         runs.append({"run_id": run_id, "at": datetime.now().isoformat(timespec="seconds"),
                      "candidate": cand_version, "gate_passed": passed, "deployed_version": deployed,
                      "audit_hash": h, "duration_s": rep["duration_s"]})
@@ -234,7 +275,11 @@ class LearningService:
             prev = self.registry.active_version
             self.registry.get(version)  # KeyError if unknown
             self.registry.activate(version, require_ever_deployed=True)
-            self.pipeline.swap_gbm(gbm_scorer(self.registry.load_model(version)), version)
-            _, h = self.audit.append("rollback", {"from": prev, "to": version,
-                                                  "at": datetime.now().isoformat(timespec="seconds")})
-            return {"active_version": version, "previous_version": prev, "audit_hash": h}
+            self._swap(self.registry.load_model(version), version)
+            at = self.registry.active_since or _now()
+            handover = rollback_handover(at=at, previous=prev, active=version,
+                                         rollback_target=self.registry.rollback_target())
+            _, h = self.audit.append("rollback", {"from": prev, "to": version, "at": at, "handover": handover})
+            self.registry.data["last_handover"] = {**handover, "audit_hash": h}
+            self.registry.save()
+            return {"active_version": version, "previous_version": prev, "audit_hash": h, "handover": handover}

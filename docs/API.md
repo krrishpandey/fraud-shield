@@ -103,3 +103,41 @@ audit record and returns the same body plus `audit_hash`. An unknown level retur
 `under_score` (`-(dims_z + weight_z)`, accounts with 5+ earlier bookings) reaches the level's threshold gets the reason
 `UNDER_DECLARED_PARCEL` and at least `allow_scan_gated`. The starting level is `first_scan.level` in the config
 (default `standard`).
+
+## Model handover (v1.4, continuous learning)
+
+Additive fields that say which GBM scores new bookings from now on. Existing fields are unchanged. Code:
+`fraudshield/learning/handover.py`.
+
+- `POST /learning/retrain` adds `handover`; `POST /learning/rollback` adds `handover` and `previous_version`:
+```json
+{"event":"retrain","run_id":"rt_0002","at":"2026-10-04T14:02:11",
+ "verdict":"previous_model_kept",
+ "active_version":"gbm-B2-F-v1",
+ "previous_version":"gbm-B2-F-v1",
+ "candidate_version":"gbm-B2-F-v3",
+ "active_since":"2026-10-04T13:40:02",
+ "rollback_target":null,
+ "failed_checks":[{"name":"fpr_hard_negative_noninferior",
+   "plain":"honest hard-case false positives would rise from 0.51% to 2.48%; the limit is +0.5 points",
+   "detail":"FPR on hard negatives 0.51% -> 2.48% (max +0.5 points)"}],
+ "new_pattern":{"current":0.529,"candidate":0.775,"ci95":[0.177,0.325],"typologies":["T3","T5"],"source":"new-pattern eval set"},
+ "message":"Still using gbm-B2-F-v1 (since 2026-10-04T13:40:02). Candidate gbm-B2-F-v3 learned the new pattern (...) but was not deployed because: (1) ..."}
+```
+  - `verdict`: `new_model_in_use` (gate passed, candidate deployed), `previous_model_kept` (gate failed) or
+    `rolled_back`.
+  - `active_version` scores new bookings from now on. `previous_version` was active before this event (equal to
+    `active_version` when the candidate was kept). `candidate_version` is null for a rollback.
+  - `active_since`: when the active version became active (the service start time if it never changed).
+  - `rollback_target`: the latest other version that passed the gate before, or null.
+  - `failed_checks[].plain`: each failed gate check in plain words, built from the gate's numbers.
+- `GET /learning/status` adds `model_in_use` (what the decision service actually scores with) and `last_handover`
+  (the latest retrain or rollback handover above plus its `audit_hash`; null before the first one). Versions add
+  `activated_at`.
+```json
+"model_in_use":{"version":"gbm-B2-F-v1","since":"2026-10-04T13:40:02","since_reason":"activated",
+  "registry_active_version":"gbm-B2-F-v1","matches_registry":true,"rollback_target":null}
+```
+- Every decision's `model_versions.gbm` (API record and audit log) is the exact registry version of the scorer that
+  produced its score (e.g. `gbm-B2-F-v1`, no longer the generic `gbm` when `learning.wire_active` is on). A deploy or
+  rollback also swaps the GBM of a running live stream. The retrain and rollback audit payloads include `handover`.

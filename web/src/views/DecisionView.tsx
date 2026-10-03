@@ -483,6 +483,11 @@ export default function DecisionView() {
                 : `Decided from Laya's answers: it weighed the LightGBM score${d.gbm_score != null ? ` (${fmtPct(d.gbm_score)})` : ''} and the rules as evidence, and the cost rule picked the cheapest action.`}
             </p>
           )}
+          {d.model_versions?.gbm && (
+            <p className="mt-2 text-[0.78rem] text-ink-2" data-testid="decision-gbm-version" data-version={d.model_versions.gbm}>
+              LightGBM model that scored this booking: <span className="font-mono">{d.model_versions.gbm}</span>
+            </p>
+          )}
           {d.explored && (
             <p className="verdict-flag" data-testid="explored-flag">
               Exploration sample: sent to a first-scan check to measure the policy.
