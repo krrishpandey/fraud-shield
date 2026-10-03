@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { StreamAccuracy, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus } from '../api/types'
 import { ActionPill } from '../components/ActionBadge'
+import LabelFreeMonitorCard from '../components/LabelFreeMonitorCard'
 import { ACTION_META, reasonText } from '../lib/domain'
 import { fmtBRL, fmtInt } from '../lib/format'
 
@@ -410,6 +411,8 @@ export default function LiveView() {
               {metrics && <AccuracyTable m={metrics} />}
             </div>
           </section>
+
+          <LabelFreeMonitorCard scored={load?.scored ?? 0} />
 
           <section className="live-load">
             <Spark testId="live-throughput" label="Bookings scored per second" unit="/s"

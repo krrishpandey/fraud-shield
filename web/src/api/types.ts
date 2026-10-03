@@ -372,3 +372,36 @@ export interface StreamFlagged {
   rows: StreamFlaggedRow[]
   counts: { hold: number; block: number; unreviewed: number }
 }
+
+/* ---------- label-free monitor (GET /monitor/estimate) ---------- */
+export interface MonitorCounts {
+  n: number
+  n_stopped: number
+  n_let_through: number
+  precision_stopped: number | null
+  fraud_caught: number
+  fraud_missed: number
+  recall: number | null
+  label: string
+}
+export interface MonitorEstimate {
+  n: number
+  source: 'stream'
+  status: StreamStatus
+  /** From calibrated scores and the actions taken: no labels needed. */
+  estimated: MonitorCounts
+  /** Simulation ground truth: not available in production until labels arrive. */
+  realized: MonitorCounts & { missed_by_type: Record<string, number>; missed_held_out: number }
+  drift: { psi: number | null; min_n: number; reference: string | null; note: string }
+  blind_spot: {
+    ui_note: string
+    missed_gap_per_period: number
+    missed_gap_per_period_sd: number | null
+    period: string
+    seeds: number
+    split: string
+    held_out_let_through: number | null
+    held_out_sum_p_let_through: number | null
+  } | null
+  evidence: string | null
+}

@@ -464,3 +464,35 @@
 .flagged-link {
   align-items: start;
 }
+
+/* label-free monitor card (components/LabelFreeMonitorCard.tsx) */
+.monitor-card {
+  padding: 1.25rem 0 1.5rem;
+  border-top: 3px solid var(--rule-strong);
+}
+.monitor-tag {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.monitor-truth {
+  margin-top: 0.9rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px dashed var(--rule);
+  background: var(--surface-2);
+  font-size: 0.85rem;
+  max-width: 68ch;
+}
+.monitor-truth-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.monitor-blind {
+  margin-top: 0.9rem;
+  padding-left: 0.8rem;
+  border-left: 3px solid var(--act-hold);
+  font-size: 0.85rem;
+  font-weight: 600;
+  max-width: 68ch;
+}
