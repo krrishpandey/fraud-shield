@@ -16,7 +16,7 @@ import pandas as pd
 
 from fraudshield.contracts import Booking, FeatureVector
 from fraudshield.data.olist import CATEGORY_VOCAB, HIGH_VALUE_CATEGORIES
-from fraudshield.features.mix import FAR_KM, account_mix, rule_flags
+from fraudshield.features.mix import FAR_KM, account_mix, rule_flags, under_score
 from fraudshield.features.geo import dist_km
 from fraudshield.features.spec import CATEGORY_INDEX, CHANNELS, FEATURES, PAYMENTS
 from fraudshield.features.store import FeatureStore, booking_to_row, to_ts
@@ -129,6 +129,7 @@ def featurize(booking: Booking, store: FeatureStore) -> FeatureVector:
     else:
         v.update(account_mix(0, 0.0, 0.0, 0.0))
     v.update(rule_flags(v))
+    v["under_score"] = under_score(v)
     return FeatureVector(booking_id=booking.booking_id, as_of=t.isoformat(), values=v)
 
 

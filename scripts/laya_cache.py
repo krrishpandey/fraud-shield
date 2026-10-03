@@ -51,6 +51,25 @@ def demo_states() -> list[tuple[str, str]]:
     return out
 
 
+def demo_states_v2() -> list[tuple[str, str]]:
+    """Laya v2 states (ser-v2, LightGBM score as evidence) of every demo booking: fresh and sequential."""
+    from fraudshield.api import real_components as rc  # noqa: PLC0415
+    from fraudshield.data.demo import load_demo_bookings  # noqa: PLC0415
+
+    bks = [Booking(**d["booking"]) for d in load_demo_bookings()]
+    out = []
+    for b in bks:
+        rc.reset()
+        fv = rc.featurizer(b)
+        out.append((f"{b.booking_id}:fresh", rc.serializer_v2(b, fv, rc.gbm(fv))))
+    rc.reset()
+    for b in bks:
+        fv = rc.featurizer(b)
+        out.append((f"{b.booking_id}:sequential", rc.serializer_v2(b, fv, rc.gbm(fv))))
+    rc.reset()
+    return out
+
+
 def main() -> None:
     import argparse  # noqa: PLC0415
     ap = argparse.ArgumentParser()
@@ -61,10 +80,12 @@ def main() -> None:
                          "from the demo store with the app's real components")
     ap.add_argument("--dump-states", default=None, help="write the demo states to this json and exit (CPU only)")
     ap.add_argument("--n-latency", type=int, default=200)
-    ap.add_argument("--out", default=str(ART / "laya_cache.json"))
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--v2", action="store_true", help="Laya v2: ser-v2 states, also caches the action question")
     a = ap.parse_args()
+    a.out = a.out or str((LA / "laya_cache_v2.json") if a.v2 else (ART / "laya_cache.json"))
     if a.dump_states:
-        Path(a.dump_states).write_text(json.dumps(demo_states(), indent=1))
+        Path(a.dump_states).write_text(json.dumps(demo_states_v2() if a.v2 else demo_states(), indent=1))
         print(f"wrote {a.dump_states}")
         return
     import laya  # noqa: PLC0415
@@ -75,11 +96,12 @@ def main() -> None:
     t0 = time.time()
     agent = laya.load(str(ckpt), device=a.device)
     load_s = time.time() - t0
-    qs = {q: QUESTIONS[q] for q in SERVED_QUESTIONS}
+    qids = SERVED_QUESTIONS + (("action",) if a.v2 else ())
+    qs = {q: QUESTIONS[q] for q in qids}
     rev = sha12(ckpt / "model.safetensors")
 
     states = ([tuple(x) for x in json.loads(Path(a.states_json).read_text())] if a.states_json
-              else demo_states())
+              else demo_states_v2() if a.v2 else demo_states())
     uniq = list(dict.fromkeys(s for _, s in states))
     entries, shown = [], []
     for st in uniq:
@@ -89,10 +111,13 @@ def main() -> None:
     for tag, st in states:
         r = by_state[st]
         shown.append({"variant": tag, **{q: r["answers"][q]["probabilities"]["a"] for q in SERVED_QUESTIONS}})
-    doc = build_cache(entries, revision=rev, meta={"model": "fraudshield-laya (fine-tuned)", "checkpoint": "artifacts/laya/fraudshield-laya",
-                                                    "probabilities": "raw, temperature 1.0; apply artifacts/calibration.json",
-                                                    "source": "data/processed/demo_bookings.json (fresh, sequential and fallback states)",
-                                                    "built": time.strftime("%Y-%m-%dT%H:%M:%S")})
+    meta = {"model": "fraudshield-laya v2" if a.v2 else "fraudshield-laya (fine-tuned)", "checkpoint": str(ckpt),
+            "probabilities": "raw, temperature 1.0; apply the calibration file",
+            "source": "data/processed/demo_bookings.json (fresh, sequential and fallback states)",
+            "built": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    doc = build_cache(entries, revision=rev, meta=meta)
+    if a.v2:   # the app asks either the 4 served questions or, with the action head on, those plus action
+        doc.update({k: v for k, v in build_cache(entries, revision=rev, meta=meta, qids=qids).items() if not k.startswith("_")})
     Path(a.out).write_text(json.dumps(doc, indent=1))
     print(pd.DataFrame(shown).to_string())
 

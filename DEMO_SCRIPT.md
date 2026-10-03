@@ -228,6 +228,23 @@ The action is chosen by comparing the expected cost of every option, using the c
 - **"Too easy?" checks:** rules alone reach PR-AUC 0.042 (real columns) and 0.050 (all) on the hardest camouflage level. Shuffled labels give 0.0108, about the fraud rate, as expected.
 - **Results (artifacts/results_system.md):** LightGBM PR-AUC 0.74 (real columns), 0.78 (all). App score with the drop-address rule: 0.79 (real), 0.82 (all), ROC-AUC 0.955. Share caught, model only to full system: reshipping drops (held out) 18% to 53%, weight fraud 6% to 40% (depot scan + follow-up), all fraud 45% to 53%. Honest bookings stopped 0.4%, honest parcels weighed at the depot 1.8%.
 - **Depot scan (T6):** `POST /decisions/{id}/first-scan` takes the measured weight; heavier than declared beyond 0.5 lb or 3% (the UPS / FedEx tolerance) fails the scan, and the account's later parcels get a first-scan check with the reason "A parcel from this account failed a depot weight check". The decision page has a "Depot scan" box; the live stream simulates scans from the dataset's true weights.
+- **Depot weighing dial (T6):** the Dashboard has a "Depot weighing" panel. The carrier picks how many parcels to weigh;
+  each level shows its measured result, and switching applies to new bookings at once and is written to the audit log
+  (`GET`/`POST /first-scan/dial`). The score behind it is how far below the account's usual size and weight a parcel is
+  declared (accounts with 5+ earlier bookings).
+
+  | Dial level | Weight fraud caught by the scale | Honest parcels weighed | Weighings per 1,000 bookings |
+  |---|---|---|---|
+  | Standard (default) | 36% | 1.8% | 19 |
+  | Target 3% | 54% | 4.0% | 42 |
+  | Target 5% | 73% | 6.2% | 64 |
+  | Target 10% | 94% | 11.4% | 116 |
+
+  Mean over 10 seeds on the test window; the thresholds were chosen on separate validation data (the calibration split), so
+  the test numbers are honest. "Caught by the scale" counts only parcels the depot weighs; with the model's own flags on
+  top, the standard level reaches 40%. Source: `artifacts/first_scan_dial.json` (`scripts/fit_first_scan.py`). Chart:
+  `docs/figures/depot_dial.png`.
+
 
 ### 2.10 Desktop app
 
@@ -250,5 +267,5 @@ The action is chosen by comparing the expected cost of every option, using the c
 | "What about a legit 3PL that ships for many senders?" | "We built that in as a legitimate hard case in testing, and a verified pre-announced change flow switches off the novelty signals for 30 days." |
 | "Why not reinforcement learning?" | "With known costs and calibrated probabilities, picking the cheapest expected cost is already optimal. RL would add risk without adding value." |
 | "What's the latency?" | "About 20 to 30 ms per booking for the decision (p99 under 100 ms), measured on a laptop CPU; the live stream keeps up with 20 bookings per second and peaks near 38. Asking fine-tuned Laya a question takes about 70 ms on the laptop GPU." |
-| "Can you catch weight fraud at booking?" | "Mostly not, and we say so: a booking form can't be weighed. Parcels declared far smaller than the account's norm are weighed at the first depot scan, and one failed scan puts the account's next parcels on the scale. That catches 40% of weight fraud while weighing 1.8% of honest parcels." |
+| "Can you catch weight fraud at booking?" | "Mostly not, and we say so: a booking form can't be weighed. Parcels declared far smaller than the account's norm are weighed at the first depot scan, and one failed scan puts the account's next parcels on the scale. That catches 40% of weight fraud while weighing 1.8% of honest parcels. If the carrier wants more, the depot weighing dial on the dashboard goes up to 94% caught for 11.4% of honest parcels weighed; it's their trade-off, and we show the measured cost of each level." |
 | "What would a carrier need to change?" | "A 'pending' label state at booking, read access to payment and login events, and a first-scan check record." |

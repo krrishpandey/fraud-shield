@@ -157,3 +157,14 @@ def test_carrier_weight_tolerance():
     assert scan_mismatch(10.0, 10.31) is True
     assert scan_mismatch(1.0, 1.2) is False      # within 0.5 lb (0.227 kg)
     assert scan_mismatch(1.0, 1.3) is True
+
+
+def test_dial_threshold_sends_more_under_declared_parcels_to_the_scale(tmp_path):
+    p = make_pipeline(tmp_path, laya=fakes.DownLaya())
+    p.featurize, p.gbm = _featurize_with(drop_pattern=0, under_declared=0, under_score=3.0), _low_gbm
+    assert p.score(make_booking(booking_id="d0"))["action"] == "allow"   # standard level: no extra weighing
+    p.scan_threshold = 2.75                                               # e.g. the 5% level
+    d = p.score(make_booking(booking_id="d1"))
+    assert d["action"] == "allow_scan_gated" and "UNDER_DECLARED_PARCEL" in d["reasons"]
+    p.featurize = _featurize_with(drop_pattern=0, under_declared=0, under_score=float("nan"))
+    assert p.score(make_booking(booking_id="d2"))["action"] == "allow"   # no history: never weighed by the dial

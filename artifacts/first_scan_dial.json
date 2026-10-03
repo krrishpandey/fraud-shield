@@ -1,0 +1,49 @@
+{
+ "version": "first-scan-dial-v1",
+ "seeds": 10,
+ "score": "-(dims_z + weight_z) for accounts with 5+ earlier bookings, plus the standard rule",
+ "chosen_on": "calibration split, honest parcels; median over seeds",
+ "measured_on": "test split, with the depot follow-up",
+ "levels": [
+  {
+   "name": "standard",
+   "target_honest_share": 0.0,
+   "threshold": null,
+   "t6_caught": 0.3611,
+   "t6_caught_sd": 0.2114,
+   "honest_weighed": 0.0185,
+   "weighs_per_1k_bookings": 19.49,
+   "t6_freight_checked_per_1k_brl": 11.2
+  },
+  {
+   "name": "3%",
+   "target_honest_share": 0.03,
+   "threshold": 4.075623826817651,
+   "t6_caught": 0.5429,
+   "t6_caught_sd": 0.178,
+   "honest_weighed": 0.0404,
+   "weighs_per_1k_bookings": 41.69,
+   "t6_freight_checked_per_1k_brl": 15.87
+  },
+  {
+   "name": "5%",
+   "target_honest_share": 0.05,
+   "threshold": 2.7534371850200197,
+   "t6_caught": 0.7314,
+   "t6_caught_sd": 0.18,
+   "honest_weighed": 0.0619,
+   "weighs_per_1k_bookings": 63.67,
+   "t6_freight_checked_per_1k_brl": 20.4
+  },
+  {
+   "name": "10%",
+   "target_honest_share": 0.1,
+   "threshold": 1.6911980525025783,
+   "t6_caught": 0.9411,
+   "t6_caught_sd": 0.0874,
+   "honest_weighed": 0.1138,
+   "weighs_per_1k_bookings": 116.1,
+   "t6_freight_checked_per_1k_brl": 25.98
+  }
+ ]
+}

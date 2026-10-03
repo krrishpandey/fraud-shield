@@ -347,3 +347,24 @@ def test_first_scan_route(client):
     assert r.status_code == 200 and r.json()["mismatch"] is True
     assert client.post("/decisions/nope/first-scan", json={"measured_weight_kg": 1.0}).status_code == 404
     assert client.post(f"/decisions/{did}/first-scan", json={"measured_weight_kg": -1}).status_code == 422
+
+
+def test_first_scan_dial_routes(cfg, tmp_path):
+    import json as _json
+    dial = tmp_path / "dial.json"
+    dial.write_text(_json.dumps({"version": "v", "levels": [
+        {"name": "standard", "threshold": None, "t6_caught": 0.36, "honest_weighed": 0.019},
+        {"name": "5%", "threshold": 2.75, "t6_caught": 0.73, "honest_weighed": 0.062}]}))
+    c = TestClient(build_app({**cfg, "first_scan": {"level": "standard", "dial_path": str(dial)}}, components=components()))
+    d = c.get("/first-scan/dial").json()
+    assert d["current"] == "standard" and [lv["name"] for lv in d["levels"]] == ["standard", "5%"]
+    r = c.post("/first-scan/dial", json={"level": "5%"})
+    assert r.status_code == 200 and r.json()["current"] == "5%" and r.json()["audit_hash"]
+    assert c.app.state.pipeline.scan_threshold == 2.75
+    assert c.post("/first-scan/dial", json={"level": "50%"}).status_code == 422
+
+
+def test_first_scan_dial_without_a_dial_file(cfg, tmp_path):
+    c = TestClient(build_app({**cfg, "first_scan": {"dial_path": str(tmp_path / "missing.json")}}, components=components()))
+    d = c.get("/first-scan/dial").json()
+    assert d["current"] == "standard" and d["levels"] == []

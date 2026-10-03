@@ -474,6 +474,15 @@ export default function DecisionView() {
               Decided by the backup model with stricter thresholds, because the Laya model is not loaded.
             </p>
           )}
+          {!d.degraded && d.decider && (
+            <p className="verdict-flag" data-testid="decider-flag" data-decider={d.decider}>
+              {d.laya_action
+                ? d.laya_action.accepted
+                  ? `Decided by Laya: it weighed the LightGBM score${d.gbm_score != null ? ` (${fmtPct(d.gbm_score)})` : ''} and the rules as evidence and chose this action; the cost check agreed.`
+                  : `Laya proposed "${actionLabel(d.laya_action.proposed)}"; the cost check overruled it: ${d.laya_action.overrule_reason}.`
+                : `Decided from Laya's answers: it weighed the LightGBM score${d.gbm_score != null ? ` (${fmtPct(d.gbm_score)})` : ''} and the rules as evidence, and the cost rule picked the cheapest action.`}
+            </p>
+          )}
           {d.explored && (
             <p className="verdict-flag" data-testid="explored-flag">
               Exploration sample: sent to a first-scan check to measure the policy.

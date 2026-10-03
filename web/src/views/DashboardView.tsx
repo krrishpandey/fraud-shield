@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from 'recharts'
 import { api } from '../api/client'
-import { ACTIONS, type DashboardMetrics } from '../api/types'
+import { ACTIONS, type DashboardMetrics, type FirstScanDial } from '../api/types'
 import { ErrorBox, Loading, PageTitle, Section } from '../components/common'
 import { ACTION_META, TYPOLOGY_META, typologyName } from '../lib/domain'
 import { fmtBRL, fmtInt, fmtMs, fmtPct } from '../lib/format'
@@ -197,6 +197,53 @@ function ActionMix({ m }: { m: DashboardMetrics }) {
   )
 }
 
+/** Depot weighing dial: how many parcels to weigh at the first scan, with each level's measured result. */
+function DepotDial() {
+  const [dial, setDial] = useState<FirstScanDial | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  useEffect(() => {
+    api.firstScanDial().then(setDial).catch((e) => setErr(e instanceof Error ? e.message : String(e)))
+  }, [])
+  const choose = async (level: string) => {
+    setBusy(true)
+    setErr(null)
+    try {
+      setDial(await api.setFirstScanDial(level))
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (!dial || dial.levels.length === 0) return null
+  return (
+    <Section title="Depot weighing" aside="weight fraud is only visible on a scale" testId="depot-dial">
+      <p className="mb-3 max-w-[80ch] text-[0.85rem] text-ink-2">
+        Parcels declared far below an account's usual size and weight are weighed at the first depot scan, and one failed
+        scan puts that account's next parcels on the scale too. Weighing more honest parcels catches more weight fraud.
+        Measured on the test window over 10 seeds; thresholds chosen on separate validation data.
+      </p>
+      <div className="dial-grid" role="radiogroup" aria-label="How many parcels to weigh">
+        {dial.levels.map((lv) => (
+          <button key={lv.name} type="button" role="radio" aria-checked={dial.current === lv.name} disabled={busy}
+            className={`dial-opt${dial.current === lv.name ? ' is-on' : ''}`} onClick={() => choose(lv.name)}
+            data-testid={`dial-${lv.name}`} data-current={dial.current === lv.name}>
+            <span className="dial-name">{lv.name === 'standard' ? 'Standard' : `Target ${lv.name}`}</span>
+            <span className="dial-big tnum">{Math.round(lv.t6_caught * 100)}%</span>
+            <span className="dial-small">of weight fraud caught</span>
+            <span className="dial-small tnum">{(lv.honest_weighed * 100).toFixed(1)}% of honest parcels weighed</span>
+          </button>
+        ))}
+      </div>
+      {err && <p className="mt-2 text-[0.85rem] text-danger" role="alert">{err}</p>}
+      <p className="mt-2 text-[0.78rem] text-muted" data-testid="dial-current">
+        In use: {dial.current}. Changes apply to new bookings and are written to the audit log.
+      </p>
+    </Section>
+  )
+}
+
 type Source = 'all' | 'app' | 'stream'
 const SOURCES: [Source, string][] = [
   ['all', 'All bookings'],
@@ -292,6 +339,8 @@ export default function DashboardView() {
               <ActionMix m={m} />
             </Section>
           </div>
+
+          <DepotDial />
 
           <div className="panel border-dashed p-3 text-[0.8rem] text-ink-2" data-testid="dashboard-assumptions" role="note">
             <strong>Assumptions.</strong> Money figures use cost matrix <code className="font-mono">{m.assumptions.cost_matrix_version}</code>: {m.assumptions.note}.

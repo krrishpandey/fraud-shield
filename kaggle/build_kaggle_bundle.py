@@ -26,12 +26,20 @@ DATA = ["artifacts/laya/train.jsonl", "artifacts/laya/prepare.json", "artifacts/
         "artifacts/laya/evalset_cal.parquet", "artifacts/laya/demo_states.json"]
 EXTRA = {"kaggle/requirements.txt": "requirements.txt",
          "kaggle/fraudshield_laya_kaggle.ipynb": "fraudshield_laya_kaggle.ipynb"}
+# v2 ("Laya decides", docs/LAYA_V2.md): uv run python kaggle/build_kaggle_bundle.py --v2
+DIST_V2 = ROOT / "kaggle" / "dist" / "fraudshield_laya_v2_bundle.zip"
+DATA_V2 = ["artifacts/laya_v2/train.jsonl", "artifacts/laya_v2/prepare.json", "artifacts/laya_v2/evalset_test.parquet",
+           "artifacts/laya_v2/evalset_cal.parquet"]
+EXTRA_V2 = {"kaggle/requirements.txt": "requirements.txt",
+            "kaggle/fraudshield_laya_v2_kaggle.ipynb": "fraudshield_laya_v2_kaggle.ipynb",
+            "docs/LAYA_V2.md": "docs/LAYA_V2.md"}
 SECRET = re.compile(r"(sk-ant-[A-Za-z0-9_\-]{10,}|gsk_[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{30,}|"
                     r"(API_KEY|SECRET|TOKEN)\s*=\s*['\"]?[A-Za-z0-9_\-]{16,})")
 TEXT_SUFFIX = {".py", ".json", ".jsonl", ".txt", ".csv", ".ipynb", ".md", ".yaml", ".yml"}
 
 
-def collect_files(root: Path = ROOT) -> list[tuple[Path, str]]:
+def collect_files(root: Path = ROOT, data=None, extra=None) -> list[tuple[Path, str]]:
+    data, extra = data or DATA, extra or EXTRA
     root = Path(root)
     files: list[tuple[Path, str]] = []
     for p in sorted((root / "fraudshield").rglob("*")):
@@ -39,11 +47,11 @@ def collect_files(root: Path = ROOT) -> list[tuple[Path, str]]:
             files.append((p, p.relative_to(root).as_posix()))
     for p in sorted((root / "scripts").glob("laya_*.py")):
         files.append((p, p.relative_to(root).as_posix()))
-    for rel in DATA:
+    for rel in data:
         if not (root / rel).exists():
             raise FileNotFoundError(f"{rel} missing; run scripts/laya_prepare.py and scripts/laya_score.py's evalset step first")
         files.append((root / rel, rel))
-    for rel, arc in EXTRA.items():
+    for rel, arc in extra.items():
         if not (root / rel).exists():
             raise FileNotFoundError(rel)
         files.append((root / rel, arc))
@@ -66,8 +74,8 @@ def check_safe(files: list[tuple[Path, str]]) -> None:
                 raise ValueError(f"possible secret in {arc}: {m.group(0)[:12]}...")
 
 
-def build(root: Path = ROOT, out: Path = DIST) -> Path:
-    files = collect_files(root)
+def build(root: Path = ROOT, out: Path = DIST, v2: bool = False) -> Path:
+    files = collect_files(root, DATA_V2, EXTRA_V2) if v2 else collect_files(root)
     check_safe(files)
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -78,7 +86,8 @@ def build(root: Path = ROOT, out: Path = DIST) -> Path:
 
 
 if __name__ == "__main__":
-    p = build()
+    v2 = "--v2" in sys.argv
+    p = build(out=DIST_V2, v2=True) if v2 else build()
     with zipfile.ZipFile(p) as z:
         n = len(z.namelist())
     print(f"wrote {p} ({p.stat().st_size / 1e6:.1f} MB, {n} files)")

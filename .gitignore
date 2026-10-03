@@ -6,6 +6,7 @@ data/raw/
 data/processed/*.parquet
 !data/processed/feature_store_demo.parquet
 artifacts/laya/
+artifacts/laya_v2/
 node_modules/
 # web/dist is committed so teammates can run the app without Node.js
 e2e/test-results/

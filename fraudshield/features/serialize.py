@@ -102,3 +102,47 @@ def serialize(fv: FeatureVector, gbm_risk: float | None = None) -> str:
     if gbm_risk is not None:
         lines.append(f"GBM risk {float(gbm_risk):.3f}")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------- ser-v2: the Laya-decides state
+SERIALIZER_V2 = "ser-v2"
+LINE_KEYS_V2 = (*LINE_KEYS, "MORE", "EVIDENCE")
+
+
+def _pct(x) -> str:
+    x = _num(x)
+    return "n/a" if math.isnan(x) else f"{int(round(100 * min(max(x, 0.0), 1.0)))}%"
+
+
+def _zc(x) -> str:
+    x = _num(x)
+    return "n/a" if math.isnan(x) else f"{min(max(x, -9.9), 9.9):+.1f}"
+
+
+def _yes(x) -> str:
+    return "yes" if x is True or (isinstance(x, (int, float)) and not isinstance(x, bool) and x == 1) else "no"
+
+
+def evidence_for(values: dict, gbm_risk: float | None) -> dict:
+    """The witnesses Laya weighs: the LightGBM risk (None = withheld) and the two published rule flags."""
+    from fraudshield.features.mix import rule_flags  # noqa: PLC0415
+    return {"gbm_risk": None if gbm_risk is None else float(gbm_risk), **rule_flags(values)}
+
+
+def serialize_v2(fv: FeatureVector, evidence: dict) -> str:
+    """ser-v1 lines, then MORE (signals the LightGBM used that v1 did not show) and EVIDENCE.
+
+    Same closed-vocabulary rule as v1: numbers are re-formatted, flags become yes/no, anything else is dropped,
+    so neither the feature values nor the evidence can carry text into the state.
+    """
+    v = fv.values
+    g = _num(evidence.get("gbm_risk"))
+    gbm = "not available" if math.isnan(g) else f"{100 * min(max(g, 1e-5), 0.99):.2g}%"  # 2 sig. digits: 0.032%, 4.2%, 45%; 0.001% .. 99%
+    more = (f"MORE acct mix high-value {_pct(v.get('acct_hv_share'))} far {_pct(v.get('acct_far_share'))}"
+            f" mean {_i(v.get('acct_mean_dist'), 9999)} km | burst x{_f(v.get('burst_ratio'), 1, 99.0)}"
+            f" | value z {_zc(v.get('value_z'))} | entropy jump sender {_zc(v.get('sender_entropy_jump'))}"
+            f" origin {_zc(v.get('origin_entropy_jump'))} | consignee parcels 30d {_i(v.get('consignee_bookings_30d'), 99)}"
+            f" | owner contact {_days(v.get('owner_contact_age_days'))}")
+    ev = (f"EVIDENCE LightGBM risk {gbm} | drop rule {_yes(evidence.get('drop_pattern'))}"
+          f" | under-declared rule {_yes(evidence.get('under_declared'))}")
+    return "\n".join([serialize(fv), more, ev])

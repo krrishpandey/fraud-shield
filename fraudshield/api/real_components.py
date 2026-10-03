@@ -74,6 +74,16 @@ def serializer(booking: Booking, fv: FeatureVector) -> str:
     return serialize(fv)  # no GBM line: Laya was fine-tuned on states without it
 
 
+def serializer_v2(booking: Booking, fv: FeatureVector, gbm_risk: float | None = None) -> str:
+    """Laya v2 state (docs/LAYA_V2.md): v1 lines + MORE + EVIDENCE (LightGBM risk as a witness, the two rules)."""
+    from fraudshield.features.serialize import evidence_for, serialize_v2
+
+    return serialize_v2(fv, evidence_for(fv.values, gbm_risk))
+
+
+serializer_v2.wants_gbm = True  # the pipeline passes the LightGBM score in
+
+
 def gbm(fv: FeatureVector) -> float:
     return _get_gbm().score_values(fv.values)
 

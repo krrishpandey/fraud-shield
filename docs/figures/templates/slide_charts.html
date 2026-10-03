@@ -115,12 +115,19 @@
       <p class="take">Identical, booking for booking: the largest difference between a live and an offline score was 0.</p>
       <div class="tip"></div>
     </figure>
+    <figure data-png="depot_dial">
+      <h2>Weight fraud (T6): the depot weighing dial</h2>
+      <p class="sub">Each point is one dial level. Mean over 10 seeds on the test window, whiskers ±1 sd; thresholds chosen on validation data</p>
+      <svg id="dial" viewBox="0 0 480 290" role="img" aria-label="Weight fraud caught against honest parcels weighed, for each dial level"></svg>
+      <p class="take" id="dial-take"></p>
+      <div class="tip"></div>
+    </figure>
   </div>
   <details>
     <summary>Data table and sources</summary>
     <div id="tables"></div>
     <p class="note">Sources: artifacts/results_gbm.json and the saved models (ROC, ranges), artifacts/results_laya.json
-      (Laya), docs/LEARNING_GATE.md and PROJECT_HISTORY.md (gate run), artifacts/stream_load.md and
+      (Laya), artifacts/first_scan_dial.json (depot dial), docs/LEARNING_GATE.md and PROJECT_HISTORY.md (gate run), artifacts/stream_load.md and
       artifacts/stream_consistency.md (live stream).</p>
   </details>
 </main>
@@ -321,6 +328,34 @@ function hbars(id, rows, o) {
   });
 })();
 
+/* 9. depot weighing dial: trade-off */
+(function () {
+  const svg = document.getElementById("dial"), tip = tipFor("dial"), L = D.dial.levels, W = 480, H = 290, m = { l: 46, r: 24, t: 14, b: 38 };
+  const xmax = 12, xs = (v) => m.l + (v / xmax) * (W - m.l - m.r), ys = (v) => m.t + (1 - v / 100) * (H - m.t - m.b);
+  [0, 25, 50, 75, 100].forEach((t) => { el("line", { x1: m.l, x2: W - m.r, y1: ys(t), y2: ys(t), class: t === 0 ? "baseline" : "gridline" }, svg);
+    el("text", { x: m.l - 8, y: ys(t) + 4, "text-anchor": "end", class: "lab" }, svg).textContent = t + "%"; });
+  [0, 2, 4, 6, 8, 10, 12].forEach((t) => el("text", { x: xs(t), y: H - m.b + 16, "text-anchor": "middle", class: "lab" }, svg).textContent = t + "%");
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle", class: "lab" }, svg).textContent = "Honest parcels weighed at the depot";
+  el("text", { x: 11, y: (m.t + H - m.b) / 2, "text-anchor": "middle", class: "lab", transform: `rotate(-90 11 ${(m.t + H - m.b) / 2})` }, svg).textContent = "Weight fraud caught";
+  const pts = L.map((l) => ({ ...l, x: l.honest_weighed * 100, y: l.t6_caught * 100, sd: (l.t6_caught_sd || 0) * 100 }));
+  el("path", { d: pts.map((p, i) => `${i ? "L" : "M"}${xs(p.x)},${ys(p.y)}`).join(""), fill: "none", stroke: "var(--s1)", "stroke-width": 2 }, svg);
+  pts.forEach((p) => {
+    const lo = Math.max(0, p.y - p.sd), hi = Math.min(100, p.y + p.sd);
+    el("line", { x1: xs(p.x), x2: xs(p.x), y1: ys(lo), y2: ys(hi), stroke: "var(--ink-2)", "stroke-width": 1.25 }, svg);
+    [lo, hi].forEach((v) => el("line", { x1: xs(p.x) - 4, x2: xs(p.x) + 4, y1: ys(v), y2: ys(v), stroke: "var(--ink-2)", "stroke-width": 1.25 }, svg));
+    const c = el("circle", { cx: xs(p.x), cy: ys(p.y), r: 5, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
+    const name = p.name === "standard" ? "Standard" : "Target " + p.name;
+    const last = p === pts[pts.length - 1];
+    el("text", { x: xs(p.x) + (last ? -10 : 9), y: ys(p.y) + (last ? -10 : 20), "text-anchor": last ? "end" : "start", class: "vlab" }, svg).textContent = `${name}: ${Math.round(p.y)}%`;
+    const hit = el("circle", { cx: xs(p.x), cy: ys(p.y), r: 14, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", (e) => tip.show(`${name}<br>Weight fraud caught <b>${p.y.toFixed(1)}%</b> (sd ${p.sd.toFixed(1)})<br>Honest parcels weighed <b>${p.x.toFixed(1)}%</b><br>${p.weighs_per_1k_bookings} weighings per 1,000 bookings`, e));
+    hit.addEventListener("mouseleave", () => tip.hide());
+    void c;
+  });
+  const a = pts[0], b = pts[pts.length - 1];
+  document.getElementById("dial-take").textContent = `Weighing ${b.x.toFixed(1)}% of honest parcels instead of ${a.x.toFixed(1)}% raises weight fraud caught from ${Math.round(a.y)}% to ${Math.round(b.y)}%. The carrier picks the level in the console; every change is audited.`;
+})();
+
 /* tables */
 (function () {
   const t = (head, rows) => `<table><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</table>`;
@@ -332,7 +367,9 @@ function hbars(id, rows, o) {
     t(["Zero-shot drop question on T3", "ROC-AUC", "95% interval"], Object.entries(Z).map(([k, v]) => [k, f3(v.auc), `${f3(v.ci[0])} to ${f3(v.ci[1])}`])) +
     t(["Question", "ECE base", "ECE fine-tuned"], Object.entries(D.ece).map(([k, v]) => [k, f3(v.stock), f3(v.ft)])) +
     "<h3>Live stream</h3>" + t(["Target /s", "Achieved /s", "p99 ms", "Errors"], D.load.map((r) => [r.target, r.achieved, r.p99, r.errors])) +
-    t(["Measure", "Live", "Offline"], D.live_vs_offline.map((r) => [r.label, f3(r.live), f3(r.offline)]));
+    t(["Measure", "Live", "Offline"], D.live_vs_offline.map((r) => [r.label, f3(r.live), f3(r.offline)])) +
+    "<h3>Depot weighing dial (T6)</h3>" + t(["Level", "Weight fraud caught", "sd", "Honest weighed", "Weighings per 1,000"],
+      D.dial.levels.map((l) => [l.name, (l.t6_caught * 100).toFixed(1) + "%", (l.t6_caught_sd * 100).toFixed(1), (l.honest_weighed * 100).toFixed(1) + "%", l.weighs_per_1k_bookings]));
 })();
 </script>
 </body>

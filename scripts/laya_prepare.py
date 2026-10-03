@@ -106,10 +106,15 @@ def rebuild_from_jsonl(path: Path, a, t0: float) -> None:
     for name in ("test", "cal"):
         p = OUT / f"evalset_{name}.parquet"
         if p.exists():
-            states += pd.read_parquet(p, columns=["state"]).state.tolist()
+            ev = pd.read_parquet(p)
+            for col in ("state", "state_nogbm"):
+                if col in ev.columns:
+                    states += ev[col].tolist()
+    # token room for the questions these records train plus every served question (v2 drops risk_level)
+    rec_q = tuple(json.loads(recs[0]["questions"]))
     rooms = {q: state_room(tok, {"t": QUESTIONS[q]["type"], "ins": QUESTIONS[q]["instructions"],
                                  "crit": QUESTIONS[q]["criteria"]}, a.max_len, a.head_max_len)
-             for q in dict.fromkeys(TRAINED_QUESTIONS + SERVED_QUESTIONS)}
+             for q in dict.fromkeys(rec_q + SERVED_QUESTIONS)}
     lens = np.array([len(x) for x in tok(states, add_special_tokens=False)["input_ids"]])
     over = {q: int((lens > r).sum()) for q, r in rooms.items()}
     assert all(v == 0 for v in over.values()), over

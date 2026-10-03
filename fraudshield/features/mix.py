@@ -76,3 +76,20 @@ def rule_flags_frame(df: pd.DataFrame) -> pd.DataFrame:
     under = (df.dims_z <= -3.0) & (df.weight_z <= -1.0) & (df.n_prior >= 5)
     return pd.DataFrame({"drop_pattern": drop.fillna(False).astype(int).to_numpy(),
                          "under_declared": under.fillna(False).astype(int).to_numpy()}, index=df.index)
+
+
+MIN_HISTORY = 5  # earlier bookings needed before an account's "usual parcel" means anything
+
+
+def under_score(v: dict) -> float:
+    """How far below the account's usual size and weight this parcel is declared: -(dims_z + weight_z).
+    NaN without enough history. Used by the depot weighing dial (artifacts/first_scan_dial.json)."""
+    dz, wz = _num(v.get("dims_z")), _num(v.get("weight_z"))
+    if math.isnan(dz) or math.isnan(wz) or not _num(v.get("n_prior")) >= MIN_HISTORY:
+        return NAN
+    return -(dz + wz)
+
+
+def under_score_frame(df: pd.DataFrame) -> np.ndarray:
+    s = -(df.dims_z.astype(float) + df.weight_z.astype(float))
+    return np.where(df.n_prior.astype(float) >= MIN_HISTORY, s, np.nan)

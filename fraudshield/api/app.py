@@ -41,6 +41,7 @@ from fraudshield.sim.stream import StreamMetrics, StreamRunner, offline_metrics
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG: dict[str, Any] = {
+    "first_scan": {"level": "standard", "dial_path": "artifacts/first_scan_dial.json"},
     "stream": {"audit_path": "artifacts/audit/stream_audit.jsonl", "explain_llm_per_min": 5, "max_rate": 200,
                "explain_llm_always": ["hold", "block"]},
     "laya_ask": {"enabled": False, "model_path": "convaiinnovations/laya", "device": "cuda", "timeout_s": 3.0},
@@ -104,6 +105,10 @@ class StreamStartIn(BaseModel):
     concurrency: int = 4
     seed: int = 0
     limit: int | None = None
+
+
+class DialIn(BaseModel):
+    level: str
 
 
 class ScanIn(BaseModel):
@@ -301,6 +306,11 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
                             label=ask_label)
         ask_laya.warm()
 
+    # Laya v2 decides with its action head (docs/LAYA_V2.md); only when Laya is the decision model
+    laya_action = bool((cfg.get("laya") or {}).get("action_head", False)) and (cfg.get("laya") or {}).get("decide", True) is not False
+    report["decider"] = ("laya (action head, cost auditor)" if laya_action else
+                         "laya probabilities + cost rule" if (cfg.get("laya") or {}).get("decide", True) is not False
+                         else "lightgbm + cost rule (laya answers questions)")
     calibration = load_calibration(_path(cfg["calibration_path"]))
     if calibration is None:
         warnings.append("no calibration file: Laya probabilities are uncalibrated (identity)")
@@ -331,7 +341,25 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
                     seed=int(pol.get("seed", 0)), llm_client=llm_client,
                     llm_model_id=llm_model_id,
                     llm_for_allow=bool(explain_cfg.get("llm_for_allow", False)), versions=versions,
-                    ask_laya=ask_laya)
+                    ask_laya=ask_laya, laya_action=laya_action)
+
+    fs_cfg = cfg.get("first_scan") or {}
+    dial_path = _path(fs_cfg.get("dial_path"))
+    dial = json.loads(dial_path.read_text(encoding="utf-8")) if dial_path and dial_path.exists() else {"levels": []}
+    dial_state = {"current": "standard"}
+
+    def _set_dial(level: str) -> None:
+        lv = next((x for x in dial.get("levels", []) if x["name"] == level), None)
+        if lv is None and level != "standard":
+            raise ValueError(level)
+        dial_state["current"] = level
+        pipe.scan_threshold = lv.get("threshold") if lv else None  # the stream service copies it (routes below)
+
+    try:
+        _set_dial(fs_cfg.get("level", "standard"))
+    except ValueError:
+        warnings.append(f"first_scan.level {fs_cfg.get('level')!r} not in the dial; using standard")
+        _set_dial("standard")
 
     replay = {"path": str(_path(cfg.get("replay_path"))), "loaded": 0, "error": None}
     rp = _path(cfg.get("replay_path"))
@@ -443,6 +471,25 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         _get(decision_id)
         return _owner(decision_id).record_first_scan(decision_id, body.measured_weight_kg)
 
+    @r.get("/first-scan/dial")
+    def first_scan_dial():
+        """Depot weighing levels (fitted by scripts/fit_first_scan.py) and the one in use."""
+        return {"current": dial_state["current"], "levels": dial.get("levels", []), "version": dial.get("version")}
+
+    @r.post("/first-scan/dial")
+    def set_first_scan_dial(body: DialIn):
+        names = {x["name"] for x in dial.get("levels", [])} | {"standard"}
+        if body.level not in names:
+            raise HTTPException(422, f"unknown level {body.level!r}; choose one of {sorted(names)}")
+        old = dial_state["current"]
+        _set_dial(body.level)
+        sp = stream.get("pipe")
+        if sp is not None:
+            sp.scan_threshold = pipe.scan_threshold
+        _, h = audit.append("config_change", {"setting": "first_scan.level", "from": old, "to": body.level,
+                                              "threshold": pipe.scan_threshold})
+        return {**first_scan_dial(), "audit_hash": h}
+
     @r.post("/decisions/{decision_id}/explanation/check")
     def check_explanation(decision_id: str, body: CheckIn):
         return check_text(_get(decision_id), body.text)
@@ -519,7 +566,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
                          calibration=calibration, costs=costs, policy=policy, seed=int(pol.get("seed", 0)),
                          llm_client=llm_client, llm_model_id=llm_model_id,
                          llm_for_allow=bool(explain_cfg.get("llm_for_allow", False)), versions=dict(pipe.versions),
-                         ask_laya=ask_laya, id_prefix="str_")
+                         ask_laya=ask_laya, id_prefix="str_", laya_action=laya_action)
+        spipe.scan_threshold = pipe.scan_threshold
         metrics = StreamMetrics()
         metrics.offline_full = offline_metrics(items)
         cap = int(scfg.get("explain_llm_per_min", 5))

@@ -469,3 +469,42 @@
   border-left-color: var(--danger);
   font-weight: 600;
 }
+
+/* Depot weighing dial (dashboard) */
+.dial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.6rem;
+}
+.dial-opt {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.dial-opt:hover:not(:disabled) {
+  border-color: var(--rule-strong);
+}
+.dial-opt.is-on {
+  border: 2px solid var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+.dial-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+.dial-big {
+  font-stretch: 78%;
+  font-weight: 800;
+  font-size: 1.9rem;
+  line-height: 1.1;
+}
+.dial-small {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}

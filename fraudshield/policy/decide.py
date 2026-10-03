@@ -120,3 +120,31 @@ def decide_with_trace(probs: dict[str, float], ctx: PolicyContext, costs: CostCo
 
 def decide(probs, ctx, costs, cfg, rng, reasons=None) -> Decision:
     return decide_with_trace(probs, ctx, costs, cfg, rng, reasons)[0]
+
+
+LAYA_AUDIT_MARGIN_BRL = 2.0  # ASSUMPTION: Laya's action stands unless it costs > 2 BRL more in expectation
+
+
+def audit_laya_action(proposed: str, d: Decision, trace: dict[str, Any], ctx: PolicyContext, cfg: PolicyConfig,
+                      margin: float = LAYA_AUDIT_MARGIN_BRL) -> tuple[Decision, dict[str, Any]]:
+    """Laya v2 decides (docs/LAYA_V2.md): its action head proposes, the cost rule audits.
+
+    The proposal stands if it is inside the guards (trace["allowed"]; block also needs a hard signal and the
+    per-account cap) and costs at most `margin` BRL more than the cheapest allowed action under the same
+    probabilities. Otherwise the cost rule's action stands and the overrule is recorded. An accepted proposal
+    replaces any exploration draw (deterministic, propensity 1).
+    """
+    if proposed == "block" and (not ctx.hard_signal or ctx.blocks_last_24h >= cfg.block_cap_24h):
+        proposed = "hold"
+    ec = d.expected_costs
+    reason = None
+    if proposed not in trace["allowed"]:
+        reason = f"{proposed} is outside the guards for this booking"
+    elif ec[proposed] - ec[d.greedy_action] > margin:
+        reason = (f"{proposed} costs {ec[proposed] - ec[d.greedy_action]:.2f} BRL more in expectation than "
+                  f"{d.greedy_action} (margin {margin:.2f})")
+    info = {"proposed": proposed, "accepted": reason is None, "overrule_reason": reason, "margin_brl": margin}
+    if reason is not None:
+        return Decision(d.action, d.propensity, d.greedy_action, d.expected_costs, d.explored, d.degraded,
+                        ["AUDITOR_OVERRULED_LAYA", *d.reasons]), info
+    return Decision(proposed, 1.0, d.greedy_action, d.expected_costs, False, d.degraded, list(d.reasons)), info

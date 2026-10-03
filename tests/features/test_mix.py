@@ -64,3 +64,13 @@ def test_live_featurize_returns_the_flags():
     v = featurize(bk("cur", "acc1", "2018-03-01T00:00:00"), _store(history_frame(8))).values
     assert v["drop_pattern"] in (0, 1) and v["under_declared"] in (0, 1)
     assert np.isfinite(v["acct_mean_dist"])
+
+
+def test_under_score_live_and_frame_agree():
+    from fraudshield.features.mix import under_score, under_score_frame
+    rows = [{"dims_z": -2.0, "weight_z": -1.0, "n_prior": 10}, {"dims_z": 1.0, "weight_z": 0.5, "n_prior": 10},
+            {"dims_z": -4.0, "weight_z": -2.0, "n_prior": 3}, {"dims_z": float("nan"), "weight_z": -1.0, "n_prior": 20}]
+    assert under_score(rows[0]) == 3.0 and under_score(rows[1]) == -1.5
+    assert math.isnan(under_score(rows[2])) and math.isnan(under_score(rows[3]))  # too little history / unknown
+    fr = under_score_frame(pd.DataFrame(rows))
+    assert fr[0] == 3.0 and fr[1] == -1.5 and math.isnan(fr[2]) and math.isnan(fr[3])

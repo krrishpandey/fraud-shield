@@ -14,12 +14,12 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from typing import Any, Callable
 
-from fraudshield.contracts import Booking
+from fraudshield.contracts import SERVED_QUESTIONS, Booking
 from fraudshield.explain.llm import DEFAULT_MODEL_ID, explain
 from fraudshield.models.calibration import apply_calibration, p_yes
 from fraudshield.models.laya_client import LayaUnavailable
 from fraudshield.policy.costs import CostConfig
-from fraudshield.policy.decide import PolicyConfig, PolicyContext, decide_with_trace
+from fraudshield.policy.decide import PolicyConfig, PolicyContext, audit_laya_action, decide_with_trace
 from fraudshield.policy.reasons import booking_signals, reason_codes
 
 MODE_QUESTIONS = ("foreign_senders", "payoff_max", "drop_consignee")
@@ -65,7 +65,8 @@ class Pipeline:
                  policy: PolicyConfig | None = None, rules: Callable = default_rules, seed: int = 0,
                  llm_client: Any = None, llm_model_id: str = DEFAULT_MODEL_ID, llm_for_allow: bool = False,
                  versions: dict[str, str] | None = None, explainer: Callable | None = None,
-                 label_store: Any = None, ask_laya: Any = None, id_prefix: str = "dec_"):
+                 label_store: Any = None, ask_laya: Any = None, id_prefix: str = "dec_",
+                 laya_action: bool = False):
         self.featurize, self.serialize, self.gbm, self.laya, self.audit = featurize, serialize, gbm, laya, audit
         self.calibration = calibration
         self.costs = costs or CostConfig.default()
@@ -84,8 +85,13 @@ class Pipeline:
         self.label_store = label_store  # learning.LabelStore-like (append); None = labels only audited
         # Question model for "ask a new question" while the decision Laya is not live (stock, not fine-tuned).
         self.ask_laya = ask_laya
+        # Laya v2 (docs/LAYA_V2.md): Laya also answers the action question; its action stands unless the cost
+        # rule's audit overrules it. False = Laya's probabilities feed the cost rule, which picks the action.
+        self.laya_action = laya_action
         # Accounts whose parcel failed a depot weight check: their later parcels always get a first-scan check.
         self.scan_failed_accounts: set[str] = set()
+        # Depot weighing dial: parcels whose under_score reaches this threshold are also weighed (None = standard).
+        self.scan_threshold: float | None = None
         self.id_prefix = id_prefix  # the live stream uses "str_" so its ids never collide with the main service
         self.on_label: Callable | None = None  # optional hook(label_record), e.g. the Laya export
         self.last_degraded: bool | None = None
@@ -167,15 +173,18 @@ class Pipeline:
         lap("gbm", t)
 
         t = time.perf_counter()
-        state = self.serialize(b, fv)
+        # ser-v2 serializers (wants_gbm) put the LightGBM score in Laya's state as a witness
+        state = self.serialize(b, fv, gbm_score) if getattr(self.serialize, "wants_gbm", False) else self.serialize(b, fv)
         lap("serialize", t)
 
         t = time.perf_counter()
         raw: dict[str, dict[str, float]] = {}
         laya_info: dict[str, Any] = {"mode": getattr(self.laya, "mode", None), "cached": False, "error": None}
+        act_probs = None
         try:
-            res = self.laya.predict(state)
-            raw = res.raw
+            res = self.laya.predict(state, SERVED_QUESTIONS + ("action",)) if self.laya_action else self.laya.predict(state)
+            raw = dict(res.raw)
+            act_probs = raw.pop("action", None)
             laya_info.update(cached=res.cached, revision=res.revision, mode=res.mode)
             degraded = False
         except LayaUnavailable as e:
@@ -193,6 +202,12 @@ class Pipeline:
             cal_probs, cal_info = apply_calibration(raw, self.calibration)
             probs = {q: p_yes(v) for q, v in cal_probs.items()}
         floor, hard, rule_hits = self.rules(b, values, probs, degraded)
+        us = _maybe_float(values.get("under_score"))
+        if (self.scan_threshold is not None and us is not None and us == us and us >= self.scan_threshold
+                and "UNDER_DECLARED_PARCEL" not in rule_hits):
+            rule_hits = [*rule_hits, "UNDER_DECLARED_PARCEL"]
+            if floor == "allow":
+                floor = "allow_scan_gated"
         if b.account_id in self.scan_failed_accounts:
             rule_hits = [*rule_hits, "ACCOUNT_FAILED_DEPOT_SCAN"]
             if floor == "allow":
@@ -208,11 +223,24 @@ class Pipeline:
             blocks_last_24h=self._blocks_24h(b.account_id, at), degraded=degraded,
         )
         codes, top = reason_codes(values)
+        if "UNDER_DECLARED_PARCEL" in rule_hits and "UNDER_DECLARED_PARCEL" not in codes:
+            codes = ["UNDER_DECLARED_PARCEL", *codes]
         if "ACCOUNT_FAILED_DEPOT_SCAN" in rule_hits:
             codes = ["ACCOUNT_FAILED_DEPOT_SCAN", *codes]
         rng = random.Random(f"{self.seed}:{b.booking_id}")
         d, trace = decide_with_trace(probs, ctx, self.costs, self.policy, rng, reasons=codes)
         trace["rule_hits"] = rule_hits
+        laya_action = None
+        if degraded:
+            decider = "lightgbm (laya unavailable)"
+        elif act_probs:
+            proposed = max(act_probs, key=act_probs.get)
+            d, laya_action = audit_laya_action(proposed, d, trace, ctx, self.policy)
+            laya_action["probabilities"] = {k: round(float(v), 4) for k, v in act_probs.items()}
+            decider = "laya" if laya_action["accepted"] else "cost auditor (overruled laya)"
+            trace["laya_action"] = laya_action
+        else:
+            decider = "laya"
         lap("decide", t)
 
         versions = {
@@ -234,6 +262,7 @@ class Pipeline:
             "model_versions": versions, "calibrated": cal_info["calibrated"],
             "laya_mode": laya_info["mode"], "laya_cached": laya_info["cached"], "laya_error": laya_info["error"],
             "policy_trace": trace, "explanation_status": "pending", "source": "live",
+            "decider": decider, "laya_action": laya_action,
             # as-of snapshot at decision time, used by the label store (never recomputed later)
             "feature_values": dict(fv.values),
         }
@@ -373,7 +402,7 @@ def _maybe_float(x):
 SCORE_FIELDS = ("decision_id", "booking_id", "action", "greedy_action", "propensity", "explored", "degraded",
                 "probabilities", "raw_probabilities", "gbm_score", "expected_costs", "reasons", "top_features",
                 "state_text", "model_versions", "latency_ms", "explanation_status", "audit_hash",
-                "calibrated", "laya_mode", "laya_cached", "source")
+                "calibrated", "laya_mode", "laya_cached", "source", "decider", "laya_action")
 
 
 def public_view(rec: dict[str, Any]) -> dict[str, Any]:

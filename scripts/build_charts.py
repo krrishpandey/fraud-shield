@@ -20,7 +20,8 @@ def main() -> None:
     pages = {
         "lightgbm_charts.html": d,
         "slide_charts.html": {**laya, "roc": d["roc"], "ranges": d["ranges"], "load": d["load"],
-                              "live_vs_offline": d["live_vs_offline"]},
+                              "live_vs_offline": d["live_vs_offline"],
+                              "dial": json.loads((ROOT / "artifacts" / "first_scan_dial.json").read_text(encoding="utf-8"))},
     }
     for name, data in pages.items():
         t = (FIG / "templates" / name).read_text(encoding="utf-8")

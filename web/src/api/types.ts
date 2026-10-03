@@ -56,6 +56,17 @@ export interface ScoreResponse {
   latency_ms: Record<string, number> & { total: number }
   explanation_status: 'pending' | 'ready' | 'failed' | string
   audit_hash: string
+  /** Laya v2 (docs/LAYA_V2.md): who made the call, and Laya's own action proposal when its action head is on */
+  decider?: string
+  laya_action?: LayaAction | null
+}
+
+export interface LayaAction {
+  proposed: Action
+  accepted: boolean
+  overrule_reason: string | null
+  margin_brl: number
+  probabilities: Partial<Record<Action, number>>
 }
 
 export interface Explanation {
@@ -85,6 +96,22 @@ export interface DecisionDetail extends ScoreResponse {
   analyst: AnalystRecord | null
   policy_trace?: PolicyTrace | null
   first_scan?: FirstScan | null
+}
+
+export interface DialLevel {
+  name: string
+  target_honest_share?: number
+  threshold: number | null
+  t6_caught: number
+  t6_caught_sd?: number
+  honest_weighed: number
+  weighs_per_1k_bookings?: number
+}
+export interface FirstScanDial {
+  current: string
+  levels: DialLevel[]
+  version?: string
+  audit_hash?: string
 }
 
 export interface FirstScan {

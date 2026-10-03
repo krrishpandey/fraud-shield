@@ -126,10 +126,10 @@ All of this takes well under a second.
 - **Not too easy:** simple rules alone score very low (PR-AUC 0.04-0.05) on our hardest test, so our inserted fraud isn't trivially easy to spot.
 - **LightGBM results:** PR-AUC 0.74 using only real columns, 0.78 using all columns. With the drop-address rule (below), the app's score reaches PR-AUC **0.79** (real columns) and **0.82** (all columns); ROC-AUC 0.955. (PR-AUC runs from 0 to 1. Higher means it catches more fraud while raising fewer false alarms.)
 - **Unseen fraud:** we hid two fraud types from training on purpose. For reshipping drops (T3), a rule based on published research (Hao et al., 2015: drops are new addresses that get parcels from several accounts for about 30 days) raised the share caught from 18% to 53%, still without training on them.
-- **Weight fraud (T6):** nobody can weigh a booking form, so the model alone catches only 6%. Parcels declared far smaller than the account's usual ones are weighed at the first depot scan; one failed scan means the account's next parcels are weighed too. That catches 40%, while weighing 1.8% of honest parcels.
+- **Weight fraud (T6):** nobody can weigh a booking form, so the model alone catches only 6%. Parcels declared far smaller than the account's usual ones are weighed at the first depot scan; one failed scan means the account's next parcels are weighed too. That catches 40%, while weighing 1.8% of honest parcels. The carrier can turn this up with the **depot weighing dial** on the dashboard: weighing more parcels catches more weight fraud, and each level shows its measured result (weighing 4% of honest parcels catches 54%, 6% catches 73%, 11% catches 94%). Every change of level is written to the audit log.
 - **New account fraud (T2):** three new features (what a fresh account ships, how far, how valuable) raised its PR-AUC from 0.38 to 0.46.
 - **Live load:** replaying all 22,925 test bookings through the app gives exactly the offline numbers (live PR-AUC 0.807 = offline 0.807).
-- **Software tests:** 344 automated code tests and 14 full app click-through tests, all passing.
+- **Software tests:** 410 automated code tests and 19 full app click-through tests, all passing.
 
 ---
 

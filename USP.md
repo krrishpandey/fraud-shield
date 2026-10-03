@@ -60,6 +60,24 @@ We drafted 8 candidates and ran each through three tests:
 - **Judge challenge:** "So your continuous learning doesn't actually work?"
 - **Our answer:** "It learned the unseen pattern, 0.28 to 0.69. It also would have hurt real customers, and a rule we wrote in advance caught that before any shipper saw it."
 
+### USP 4: We say what a booking form can't see, and move the check to where it can
+
+- **Headline:** Weight fraud is invisible at booking, so we catch it on the depot scale, and the carrier sets how hard to look.
+- **Why it is ours:** Typical teams report one accuracy number and stay quiet about the fraud type their model can't see. Ours admits it: the model alone catches 6% of weight fraud, because a form can't be weighed. So we send suspicious parcels to the first depot scale. One failed weighing puts that account's next parcels on the scale too. A dial on the dashboard shows the measured cost of every level.
+- **Proof** (10 seeds, test window, thresholds chosen on separate validation data; `artifacts/first_scan_dial.json`):
+
+  | Dial level | Weight fraud caught by the scale | Honest parcels weighed |
+  |---|---|---|
+  | Standard (default) | 36% | 1.8% |
+  | Target 3% | 54% | 4.0% |
+  | Target 5% | 73% | 6.2% |
+  | Target 10% | 94% | 11.4% |
+
+  The mismatch tolerance is the one UPS and FedEx publish (0.5 lb or 3%).
+- **Demo moment:** Open the Dashboard and click "Target 10%". The level changes live for new bookings and the live stream. Then open the Audit tab and show the change recorded with a hash. Slide: `docs/figures/depot_dial.png`.
+- **Judge challenge:** "Weighing 11% of honest parcels is a lot. Is that worth it?"
+- **Our answer:** "On freight alone, no, and we don't pretend otherwise. The standard level pays for itself: about R$11 of underpaid freight caught per 1,000 bookings, for 19 weighings at about R$1 each (the R$1 is our assumption). Higher levels are for a carrier that values deterrence, or whose hubs already weigh every parcel in-line, so an extra check costs almost nothing. That's the carrier's call, and the dial shows them the real number for each level."
+
 ## 20-second spoken version
 
 > "Stolen shipping accounts aren't used to ship one parcel. They're used to open a shipping shop. So we don't flag new destinations, which turned out to be 94.9% of normal bookings. We flag an account paying for senders it never shipped for. Fraudsters buy labels at a flat price, so expensive parcels get checked sooner. And when our own retrained model would have hurt real shippers, our system refused to deploy it."

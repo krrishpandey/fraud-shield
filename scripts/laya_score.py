@@ -58,10 +58,13 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=0, help="score only the first N bookings (smoke tests)")
     ap.add_argument("--chunk", type=int, default=512)
     ap.add_argument("--device", default="cuda", help="cuda, cuda:1 (run stock scoring next to training), cpu")
+    ap.add_argument("--state-col", default="state", help="v2: state (with the LightGBM line) or state_nogbm")
+    ap.add_argument("--with-action", action="store_true", help="v2: also score the action question")
+    ap.add_argument("--tag", default="", help="suffix for the output files, e.g. _nogbm")
     a = ap.parse_args()
     s = evalset(a.set)
-    out = ART / f"scores_{a.model}_{a.set}.parquet"
-    part = ART / f"scores_{a.model}_{a.set}.partial.parquet"
+    out = ART / f"scores_{a.model}{a.tag}_{a.set}.parquet"
+    part = ART / f"scores_{a.model}{a.tag}_{a.set}.partial.parquet"
     done = pd.read_parquet(part) if part.exists() else pd.DataFrame()
     if a.limit:
         s = s.iloc[: a.limit]
@@ -72,16 +75,21 @@ def main() -> None:
     import torch  # noqa: PLC0415
     agent = laya.Agent("convaiinnovations/laya" if a.model == "stock" else a.path, device=a.device)
     is_cuda = a.device.startswith("cuda")
-    qs = {q: QUESTIONS[q] for q in SERVED_QUESTIONS}
+    qids = SERVED_QUESTIONS + (("action",) if a.with_action else ())
+    qs = {q: QUESTIONS[q] for q in qids}
+    act_keys = tuple(QUESTIONS["action"]["criteria"])
     rows = [done] if len(done) else []
     t0 = time.time()
     n = 0
     for i in range(0, len(todo), a.chunk):
         ch = todo.iloc[i: i + a.chunk]
-        res = agent.predict_batch(ch.state.tolist(), qs, batch_size=a.batch, sort_by_length=True)
+        res = agent.predict_batch(ch[a.state_col].tolist(), qs, batch_size=a.batch, sort_by_length=True)
         rec = pd.DataFrame({"id": ch.id.to_numpy()})
         for q in SERVED_QUESTIONS:
             rec[f"p_{q}"] = [float(r["answers"][q]["probabilities"]["a"]) for r in res]
+        if a.with_action:
+            for k in act_keys:
+                rec[f"p_act_{k}"] = [float(r["answers"]["action"]["probabilities"][k]) for r in res]
         rows.append(rec)
         n += len(ch)
         pd.concat(rows, ignore_index=True).to_parquet(part)
@@ -91,9 +99,9 @@ def main() -> None:
     allr = pd.concat(rows, ignore_index=True)
     allr.to_parquet(out)
     part.unlink(missing_ok=True)
-    meta = {"model": a.model, "set": a.set, "n": len(allr), "seconds": round(time.time() - t0, 1), "device": a.device,
+    meta = {"model": a.model, "set": a.set, "state_col": a.state_col, "tag": a.tag, "n": len(allr), "seconds": round(time.time() - t0, 1), "device": a.device,
             "path": a.path if a.model == "ft" else "convaiinnovations/laya"}
-    (ART / f"scores_{a.model}_{a.set}.json").write_text(json.dumps(meta, indent=2))
+    (ART / f"scores_{a.model}{a.tag}_{a.set}.json").write_text(json.dumps(meta, indent=2))
     print(json.dumps(meta))
 
 

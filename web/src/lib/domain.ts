@@ -108,6 +108,7 @@ const REASONS: Record<string, string> = {
   DROP_ADDRESS_PATTERN: 'The receiver looks like a reshipping drop',
   UNDER_DECLARED_PARCEL: "Declared weight and size far below the account's usual parcels",
   ACCOUNT_FAILED_DEPOT_SCAN: 'A parcel from this account failed a depot weight check',
+  AUDITOR_OVERRULED_LAYA: "The cost check overruled Laya's proposed action",
   NEW_DESTINATION_STATE: 'First parcel from this account to the destination state',
   CONSIGNEE_MANY_UNRELATED_PAYERS: 'The consignee receives parcels paid for by many unrelated accounts',
   CONSIGNEE_ADDRESS_RECENT: 'The consignee address is recent',

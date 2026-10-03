@@ -1,6 +1,6 @@
 import type {
   AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, DashboardMetrics,
-  DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, Health, LearningStatus, RetrainResponse, RollbackResponse,
+  DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, FirstScanDial, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
 } from './types'
 
@@ -68,6 +68,8 @@ export const api = {
   decision: (id: string) => request<DecisionDetail>(`/decisions/${encodeURIComponent(id)}`),
   analyst: (id: string, body: AnalystRequest) => post<AnalystResponse>(`/decisions/${encodeURIComponent(id)}/analyst`, body),
   ask: (id: string, body: AskRequest) => post<AskResponse>(`/decisions/${encodeURIComponent(id)}/ask`, body),
+  firstScanDial: () => request<FirstScanDial>('/first-scan/dial'),
+  setFirstScanDial: (level: string) => post<FirstScanDial>('/first-scan/dial', { level }),
   firstScan: (id: string, measured_weight_kg: number) =>
     post<FirstScan>(`/decisions/${encodeURIComponent(id)}/first-scan`, { measured_weight_kg }),
   accountStory: (id: string) => request<AccountStory>(`/decisions/${encodeURIComponent(id)}/account-story`),

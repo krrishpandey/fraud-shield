@@ -91,3 +91,15 @@ Analyst confirmations (and, only when explicitly requested, SIMULATED analyst la
  "deployed_version":"gbm-B2-F-v2","audit_hash":"..."}
 ```
 - `POST /learning/rollback` `{"version":"gbm-B2-F-v1"}` -> `{"active_version":"gbm-B2-F-v1","audit_hash":"..."}`
+
+## Depot weighing dial (v1.3)
+
+`GET /first-scan/dial` returns `{current, levels, version}`. Each level has `name`, `threshold` (null for standard),
+`t6_caught`, `t6_caught_sd`, `honest_weighed` and `weighs_per_1k_bookings`, fitted and measured by
+`scripts/fit_first_scan.py` (`artifacts/first_scan_dial.json`).
+
+`POST /first-scan/dial {"level": "5%"}` switches the level for the app and the live stream, writes a `config_change`
+audit record and returns the same body plus `audit_hash`. An unknown level returns 422. A booking whose
+`under_score` (`-(dims_z + weight_z)`, accounts with 5+ earlier bookings) reaches the level's threshold gets the reason
+`UNDER_DECLARED_PARCEL` and at least `allow_scan_gated`. The starting level is `first_scan.level` in the config
+(default `standard`).
