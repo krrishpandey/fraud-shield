@@ -88,6 +88,13 @@ def gbm(fv: FeatureVector) -> float:
     return _get_gbm().score_values(fv.values)
 
 
+# Read-only access for what-if scoring (fraudshield/redteam/search.py): it reads the same store through a view that
+# never appends, and batch-scores the same model.
+featurizer.store = _get_store
+featurizer.lock = _lock
+gbm.get_model = _get_gbm
+
+
 def account_story(booking: Booking) -> dict:
     """The account's own bookings as of this booking (read only; the booking is not appended)."""
     from fraudshield.features.story import account_story as build

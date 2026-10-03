@@ -466,6 +466,29 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
             raise HTTPException(503, "account history is not available in this configuration")
         return story(Booking(**rec["booking"]))
 
+    @r.get("/decisions/{decision_id}/counterfactual")
+    def counterfactual(decision_id: str):
+        """ANALYST-ONLY (docs/API.md, "What would change this decision"): the smallest changes to booker-controlled
+        fields that would soften this decision. These are evasion hints: never shown to the booker, and every view is
+        audited before anything is returned."""
+        from fraudshield.redteam.search import Outcome, WhatIf, counterfactual_payload, search  # noqa: PLC0415
+        rec = _get(decision_id)
+        if not rec.get("booking"):
+            raise HTTPException(409, "this decision has no stored booking (replayed record), so there is nothing to vary")
+        owner = _owner(decision_id)
+        probs = rec.get("probabilities") or {}
+        current = Outcome(rec["action"], float(probs.get("misuse", rec.get("gbm_score") or 0.0)),
+                          float(rec.get("gbm_score") or 0.0), rec.get("greedy_action") or rec["action"])
+        out = counterfactual_payload(search(WhatIf.for_pipeline(owner), Booking(**rec["booking"]), current))
+        try:
+            _, h = owner.audit.append("counterfactual_view", {
+                "decision_id": decision_id, "booking_id": rec["booking_id"], "viewer": "analyst",
+                "found": out["found"], "shown": [c["summary"] for c in out["counterfactuals"]],
+                "evaluations": out["evaluations"], "latency_ms": out["latency_ms"]})
+        except OSError as e:
+            raise HTTPException(503, f"audit write failed, counterfactual not shown: {e}")
+        return _json_safe({"decision_id": decision_id, **out, "audit_hash": h})
+
     @r.post("/decisions/{decision_id}/first-scan")
     def first_scan(decision_id: str, body: ScanIn):
         """Depot scale reading for a booking (integration point for the carrier's scanners)."""

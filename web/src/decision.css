@@ -508,3 +508,22 @@
   font-size: 0.78rem;
   color: var(--ink-2);
 }
+
+/* "What would change this decision?" (analyst-only counterfactuals) */
+.cf-warning {
+  padding: 0.35rem 0.6rem;
+  border-left: 4px solid var(--danger);
+  background: var(--surface);
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.cf-list {
+  margin-top: 0.5rem;
+}
+.cf-item {
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--rule);
+}
+.cf-item:last-child {
+  border-bottom: 1px solid var(--rule);
+}

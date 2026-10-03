@@ -1,5 +1,5 @@
 import type {
-  AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, DashboardMetrics,
+  AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, Counterfactual, DashboardMetrics,
   DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, FirstScanDial, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
 } from './types'
@@ -74,6 +74,8 @@ export const api = {
   firstScan: (id: string, measured_weight_kg: number) =>
     post<FirstScan>(`/decisions/${encodeURIComponent(id)}/first-scan`, { measured_weight_kg }),
   accountStory: (id: string) => request<AccountStory>(`/decisions/${encodeURIComponent(id)}/account-story`),
+  /** Analyst-only: smallest booker-controlled changes that would soften the decision (audited per view). */
+  counterfactual: (id: string) => request<Counterfactual>(`/decisions/${encodeURIComponent(id)}/counterfactual`),
   checkExplanation: (id: string, text: string) =>
     post<ExplanationCheck>(`/decisions/${encodeURIComponent(id)}/explanation/check`, { text }),
   dashboard: (source: 'app' | 'stream' | 'all' = 'app') => request<DashboardMetrics>(`/dashboard/metrics?source=${source}`),
