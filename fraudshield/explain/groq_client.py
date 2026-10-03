@@ -5,6 +5,7 @@ Lets the explanation layer run on Groq-hosted open models with no change to prom
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,8 @@ import httpx
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 REASONING_PREFIXES = ("openai/gpt-oss",)
+RATE_LIMIT_RETRIES = 3
+MAX_RETRY_WAIT_S = 30.0
 
 
 @dataclass
@@ -40,8 +43,18 @@ class _Messages:
             # Hidden reasoning tokens count against max_tokens; without room the answer is cut off.
             body["reasoning_effort"] = "low"
             body["max_tokens"] = max(max_tokens, 2000)
-        r = self._o.http.post(GROQ_URL, json=body, headers={"Authorization": f"Bearer {self._o.api_key}"},
-                              timeout=self._o.timeout)
+        # Rate limited (429): wait as long as Groq asks (Retry-After, capped) and try again. Explanations run in
+        # the background, so waiting is fine; after the last try the error reaches the caller (template shown).
+        for attempt in range(RATE_LIMIT_RETRIES + 1):
+            r = self._o.http.post(GROQ_URL, json=body, headers={"Authorization": f"Bearer {self._o.api_key}"},
+                                  timeout=self._o.timeout)
+            if r.status_code != 429 or attempt == RATE_LIMIT_RETRIES:
+                break
+            try:
+                wait = float(r.headers.get("retry-after", 2 ** attempt))
+            except ValueError:
+                wait = float(2 ** attempt)
+            time.sleep(min(max(wait, 0.5), MAX_RETRY_WAIT_S))
         r.raise_for_status()
         choice = r.json()["choices"][0]
         text = (choice.get("message") or {}).get("content") or ""

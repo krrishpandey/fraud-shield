@@ -41,7 +41,8 @@ from fraudshield.sim.stream import StreamMetrics, StreamRunner, offline_metrics
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG: dict[str, Any] = {
-    "stream": {"audit_path": "artifacts/audit/stream_audit.jsonl", "explain_llm_per_min": 10, "max_rate": 200},
+    "stream": {"audit_path": "artifacts/audit/stream_audit.jsonl", "explain_llm_per_min": 5, "max_rate": 200,
+               "explain_llm_always": ["hold", "block"]},
     "laya_ask": {"enabled": False, "model_path": "convaiinnovations/laya", "device": "cuda", "timeout_s": 3.0},
     "laya": {"mode": "auto", "model_path": "convaiinnovations/laya", "device": "cuda", "timeout_s": 0.18,
              "http_url": "http://localhost:8001", "api_key_env": "LAYA_API_KEY",
@@ -433,13 +434,18 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
             return {"state": "idle", "available": stream_source is not None}
         return {**r.status(), "seed": stream["seed"], "available": True}
 
-    def _stream_send_factory(spipe: Pipeline, metrics: StreamMetrics, cap: int):
+    def _stream_send_factory(spipe: Pipeline, metrics: StreamMetrics, cap: int, always: set[str]):
+        """Explanations for streamed decisions. Actions in `always` (held, blocked: rare, and the ones an analyst
+        reviews) always get a language-model explanation, one at a time so the provider never sees a burst.
+        Other non-allow actions share `cap` LLM explanations per minute; everything else uses the template.
+        Every LLM text still passes the validator, or the template is shown."""
         import collections  # noqa: PLC0415
         from concurrent.futures import ThreadPoolExecutor  # noqa: PLC0415
         llm_times: collections.deque = collections.deque()
         lock = threading.Lock()
         pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="stream-explain")
-        stream["explain_pool"] = pool
+        priority_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stream-explain-held")
+        stream["explain_pool"], stream["explain_priority_pool"] = pool, priority_pool
 
         def explain(did: str, use_llm: bool) -> None:
             spipe.explain_decision(did, use_llm=use_llm)
@@ -447,6 +453,12 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         def send(b: Booking) -> dict:
             out = spipe.score(b)
             if out.get("explanation_status") == "pending":
+                if out["action"] in always and spipe.llm_client is not None:
+                    with lock:
+                        metrics.explanations["llm"] += 1
+                        metrics.explanations["llm_held_blocked"] += 1
+                    priority_pool.submit(explain, out["decision_id"], True)
+                    return out
                 now = time.monotonic()
                 with lock:
                     while llm_times and now - llm_times[0] > 60:
@@ -482,9 +494,12 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
                          ask_laya=ask_laya, id_prefix="str_")
         metrics = StreamMetrics()
         metrics.offline_full = offline_metrics(items)
-        cap = int(scfg.get("explain_llm_per_min", 10))
+        cap = int(scfg.get("explain_llm_per_min", 5))
         metrics.explanations["llm_cap_per_min"] = cap
-        runner = StreamRunner(items, _stream_send_factory(spipe, metrics, cap), metrics,
+        metrics.explanations["llm_held_blocked"] = 0
+        always = set(scfg.get("explain_llm_always", ["hold", "block"]) or [])
+        metrics.explanations["llm_always_for"] = sorted(always)
+        runner = StreamRunner(items, _stream_send_factory(spipe, metrics, cap, always), metrics,
                               rate=body.rate, concurrency=body.concurrency)
         stream.update({"runner": runner, "metrics": metrics, "pipe": spipe, "seed": body.seed})
         runner.start()
@@ -543,7 +558,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
                          "route": f"{b.get('origin_uf')} {b.get('origin_zip3')} to {b.get('dest_uf')} {b.get('dest_zip3')}",
                          "carrier_cost": b.get("carrier_cost"), "action": act,
                          "score": (rec.get("probabilities") or {}).get("misuse", rec.get("gbm_score")),
-                         "reasons": list(rec.get("reasons") or [])[:3], "reviewed": label})
+                         "reasons": list(rec.get("reasons") or [])[:3], "reviewed": label,
+                         "explanation_status": rec.get("explanation_status"), "explanation": rec.get("explanation")})
         return _json_safe({"rows": rows, "counts": counts})
 
     @r.get("/stream/feed")

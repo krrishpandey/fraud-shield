@@ -303,7 +303,7 @@ export interface StreamMetricsResponse {
   offline_same_rows?: StreamAccuracy
   offline_full?: StreamAccuracy | null
   consistency?: { n_compared: number; max_abs_score_diff: number }
-  explanations?: { llm: number; template: number; llm_cap_per_min: number | null }
+  explanations?: { llm: number; template: number; llm_cap_per_min: number | null; llm_held_blocked?: number }
   errors?: { booking_id: string; error: string }[]
 }
 export interface StreamFeedRow {
@@ -326,6 +326,8 @@ export interface StreamFlaggedRow {
   score: number | null
   reasons: string[]
   reviewed: 'fraud' | 'legit' | null
+  explanation_status?: string | null
+  explanation?: Explanation | null
 }
 export interface StreamFlagged {
   rows: StreamFlaggedRow[]

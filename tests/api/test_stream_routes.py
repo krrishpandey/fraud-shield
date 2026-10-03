@@ -86,6 +86,7 @@ def test_without_a_source_the_stream_is_unavailable(scfg):
 
 
 def test_llm_explanations_are_capped_and_the_rest_use_the_template(scfg):
+    scfg = {**scfg, "stream": {**scfg["stream"], "explain_llm_always": []}}  # no priority actions: the cap applies
     c = TestClient(build_app(scfg, components=components(stream_source=source(6),
                                                          llm_client=fakes.llm_client("Hold this booking."))))
     c.post("/stream/start", json={"rate": 200, "concurrency": 1})
@@ -132,3 +133,55 @@ def test_flagged_lists_every_held_or_blocked_booking_newest_first_with_review_st
 def test_flagged_before_any_stream_is_empty(scfg):
     c = TestClient(build_app(scfg, components=components(stream_source=source())))
     assert c.get("/stream/flagged").json() == {"rows": [], "counts": {"hold": 0, "block": 0, "unreviewed": 0}}
+
+
+
+# A valid explanation for the fake decision record: it names the action from the facts it is given (as the
+# real model does) and two of the top reasons.
+def good_llm_text(action):
+    return (f"{action.capitalize()} this booking: carrier cost is 11.6x the account median and 8 of the last 10 "
+            "bookings used new senders. Check the senders with the account owner.")
+
+
+def action_aware_llm():
+    from types import SimpleNamespace
+
+    def create(**kw):
+        prompt = kw["messages"][0]["content"]
+        action = "block" if '"action": "block"' in prompt else "hold"
+        return SimpleNamespace(content=[SimpleNamespace(type="text", text=good_llm_text(action))], stop_reason="end_turn")
+    return SimpleNamespace(messages=SimpleNamespace(create=create))
+
+
+def test_every_held_or_blocked_booking_gets_a_language_model_explanation_outside_the_cap(scfg):
+    c = TestClient(build_app(scfg, components=components(stream_source=source(8), llm_client=action_aware_llm())))
+    c.post("/stream/start", json={"rate": 200, "concurrency": 1})
+    wait_done(c)
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < 10:  # explanations are written in the background
+        f = c.get("/stream/flagged").json()
+        if f["rows"] and all(r["explanation_status"] == "ready" for r in f["rows"]):
+            break
+        time.sleep(0.1)
+    ex = c.get("/stream/metrics").json()["explanations"]
+    n_stopped = f["counts"]["hold"] + f["counts"]["block"]
+    assert n_stopped > 1 and ex["llm_cap_per_min"] == 1
+    assert ex["llm_held_blocked"] == n_stopped  # all of them, although the cap is 1 per minute
+    for r in f["rows"]:
+        assert r["explanation"]["source"] == "llm" and r["explanation"]["text"] == good_llm_text(r["action"])
+        assert r["explanation"]["valid"] is True and r["explanation"]["model_id"]
+
+
+def test_held_booking_falls_back_to_the_template_when_the_llm_text_fails_the_check(scfg):
+    bad = "Block this booking now, loss R$99999."
+    c = TestClient(build_app(scfg, components=components(stream_source=source(4), llm_client=fakes.llm_client(bad))))
+    c.post("/stream/start", json={"rate": 200, "concurrency": 1})
+    wait_done(c)
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < 10:
+        rows = c.get("/stream/flagged").json()["rows"]
+        if rows and all(r["explanation_status"] == "ready" for r in rows):
+            break
+        time.sleep(0.1)
+    assert rows and all(r["explanation"]["source"] == "template" for r in rows)
+    assert all("99999" not in r["explanation"]["text"] for r in rows)

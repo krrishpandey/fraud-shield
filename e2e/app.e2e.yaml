@@ -18,7 +18,8 @@ laya_ask:
 # Live booking stream: replays the seed-0 test window into a separate decision-service instance.
 stream:
   audit_path: e2e/.tmp/audit/stream_audit.jsonl   # never the main audit log
-  explain_llm_per_min: 10   # LLM explanations per minute; the rest use the fixed template
+  explain_llm_per_min: 5   # LLM explanations per minute for other non-allow decisions; the rest use the template
+  explain_llm_always: [hold, block]   # always explained by the LLM (rare), outside the cap
   max_rate: 200
 calibration_path: artifacts/calibration.json
 costs_path: config/costs.yaml

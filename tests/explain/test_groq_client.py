@@ -93,3 +93,28 @@ def test_non_reasoning_models_unchanged():
     _client(handler).messages.create(model="qwen/qwen3.8-27b", max_tokens=400, temperature=0, system="s",
                                      messages=[])
     assert "reasoning_effort" not in seen["body"] and seen["body"]["max_tokens"] == 400
+
+
+def _ok():
+    return httpx.Response(200, json={"choices": [{"message": {"content": "Held."}, "finish_reason": "stop"}]})
+
+
+def test_rate_limit_waits_as_asked_and_retries(monkeypatch):
+    calls, slept = [], []
+    monkeypatch.setattr("fraudshield.explain.groq_client.time.sleep", lambda s: slept.append(s))
+
+    def handler(req):
+        calls.append(1)
+        return httpx.Response(429, headers={"retry-after": "2"}) if len(calls) < 3 else _ok()
+
+    resp = _client(handler).messages.create(model="m", max_tokens=10, temperature=0, system="s", messages=[])
+    assert resp.content[0].text == "Held." and len(calls) == 3 and slept == [2.0, 2.0]
+
+
+def test_rate_limit_wait_is_capped_and_gives_up_after_max_tries(monkeypatch):
+    slept = []
+    monkeypatch.setattr("fraudshield.explain.groq_client.time.sleep", lambda s: slept.append(s))
+    c = _client(lambda req: httpx.Response(429, headers={"retry-after": "600"}))
+    with pytest.raises(httpx.HTTPStatusError):
+        c.messages.create(model="m", max_tokens=10, temperature=0, system="s", messages=[])
+    assert len(slept) == 3 and max(slept) <= 30.0

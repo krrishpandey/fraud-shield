@@ -146,3 +146,36 @@ def test_check_text_applies_the_same_length_rule_as_explain():
     from fraudshield.explain.llm import check_text
     r = check_text(RECORD, GOOD + " More words." * 70)
     assert r["ok"] is False and any("too long" in p for p in r["problems"])
+
+
+def _sequence_client(texts):
+    calls = []
+
+    def create(**kw):
+        calls.append(kw)
+        return SimpleNamespace(content=[SimpleNamespace(type="text", text=texts[min(len(calls), len(texts)) - 1])],
+                               stop_reason="end_turn")
+    return SimpleNamespace(messages=SimpleNamespace(create=create)), calls
+
+
+def test_rejected_text_gets_one_second_try_with_the_checker_feedback():
+    weak = "Hold this booking because carrier cost is 11.6x the account median."  # 1 of the top reasons only
+    client, calls = _sequence_client([weak, GOOD])
+    exp, log = explain(RECORD, client=client, model_id="m1", retry_invalid=1)
+    assert exp.source == "llm" and exp.text == GOOD and len(calls) == 2
+    retry_prompt = calls[1]["messages"][-1]["content"]
+    assert "rejected" in retry_prompt and "reasons" in retry_prompt  # the model is told what failed
+    assert log["attempts"][0]["validator"]["ok"] is False and log["validator"]["ok"] is True
+
+
+def test_second_try_is_checked_too_and_falls_back_to_the_template():
+    bad = "Hold. Loss could be R$99999."
+    client, calls = _sequence_client([bad, bad])
+    exp, log = explain(RECORD, client=client, model_id="m1", retry_invalid=1)
+    assert exp.source == "template" and len(calls) == 2 and log["validator"]["ok"] is False
+
+
+def test_no_retry_by_default():
+    client, calls = _sequence_client(["Hold. Loss could be R$99999.", GOOD])
+    exp, _ = explain(RECORD, client=client, model_id="m1")
+    assert exp.source == "template" and len(calls) == 1

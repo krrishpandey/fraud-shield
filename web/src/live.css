@@ -441,3 +441,26 @@
     display: none;
   }
 }
+
+.flagged-why {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.35rem;
+  max-width: 80ch;
+  font-size: 0.84rem;
+  color: var(--ink);
+}
+.flagged-why-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.45;
+}
+.flagged-why-src {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.flagged-link {
+  align-items: start;
+}

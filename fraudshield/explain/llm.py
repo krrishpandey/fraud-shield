@@ -53,30 +53,51 @@ def _default_client():
     return anthropic.Anthropic(timeout=15.0, max_retries=1)
 
 
+RETRY_NOTE = ("Your previous text was rejected by the automatic checker for these reasons: {problems}. "
+              "Rewrite it following the rules: use only numbers and ids from the facts, name the recommended action, "
+              "mention at least two of the listed reasons, and say what the analyst should check.")
+
+
 def explain(record: dict[str, Any], client: Any = None, model_id: str = DEFAULT_MODEL_ID,
-            use_default_client: bool = True) -> tuple[Explanation, dict[str, Any]]:
+            use_default_client: bool = True, retry_invalid: int = 0) -> tuple[Explanation, dict[str, Any]]:
+    """retry_invalid: extra tries when the validator rejects the text; each retry tells the model what failed.
+    Every try is validated the same way; if none passes, the template is shown."""
     facts = build_facts(record)
     template = render_template(record)
     system, user, h = build_prompt(facts, template)
     log: dict[str, Any] = {"decision_id": record.get("decision_id"), "prompt_version": PROMPT_VERSION,
                            "prompt_hash": h, "model_id": model_id, "template": template,
-                           "llm_output": None, "validator": None, "error": None}
+                           "llm_output": None, "validator": None, "error": None, "attempts": []}
     if client is None and use_default_client:
         client = _default_client()
     if client is None:
         log["error"] = "no ANTHROPIC_API_KEY; template used"
         log["source"] = "template"
         return Explanation(template, "template", True, None, h), log
-    try:
-        resp = client.messages.create(model=model_id, max_tokens=400, temperature=0, system=system,
-                                      messages=[{"role": "user", "content": user}])
-        text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text").strip()
-        if getattr(resp, "stop_reason", "end_turn") == "refusal" or not text:
-            raise RuntimeError(f"no usable LLM text (stop_reason={getattr(resp, 'stop_reason', None)})")
-    except Exception as e:  # any SDK or network error -> template
-        log["error"] = f"{type(e).__name__}: {e}"
-        log["source"] = "template"
-        return Explanation(template, "template", True, model_id, h), log
+    messages = [{"role": "user", "content": user}]
+    for attempt in range(retry_invalid + 1):
+        try:
+            resp = client.messages.create(model=model_id, max_tokens=400, temperature=0, system=system,
+                                          messages=list(messages))
+            text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text").strip()
+            if getattr(resp, "stop_reason", "end_turn") == "refusal" or not text:
+                raise RuntimeError(f"no usable LLM text (stop_reason={getattr(resp, 'stop_reason', None)})")
+        except Exception as e:  # any SDK or network error -> template
+            log["error"] = f"{type(e).__name__}: {e}"
+            log["source"] = "template"
+            return Explanation(template, "template", True, model_id, h), log
+        checked = check_text(record, text)
+        ok, problems = checked["ok"], checked["problems"]
+        log["llm_output"] = text
+        log["validator"] = {"ok": ok, "problems": problems}
+        log["attempts"].append({"llm_output": text, "validator": {"ok": ok, "problems": problems}})
+        if ok:
+            log["source"] = "llm"
+            return Explanation(text, "llm", True, model_id, h), log
+        messages += [{"role": "assistant", "content": text},
+                     {"role": "user", "content": RETRY_NOTE.format(problems="; ".join(problems))}]
+    log["source"] = "template"
+    return Explanation(template, "template", True, model_id, h), log
     log["llm_output"] = text
     checked = check_text(record, text)
     ok, problems = checked["ok"], checked["problems"]

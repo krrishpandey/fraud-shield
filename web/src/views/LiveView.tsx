@@ -243,6 +243,23 @@ function FlaggedPanel({ data, fresh }: { data: StreamFlagged | null; fresh: Set<
                   <span className="flagged-meta tnum">
                     {r.booked_at?.replace('T', ' ').slice(5, 16)}, {r.route}, account {r.account_id?.slice(0, 8)}
                   </span>
+                  <span className="flagged-why" data-testid="live-flagged-why"
+                    data-source={r.explanation?.source ?? ''} data-status={r.explanation_status ?? ''}>
+                    {r.explanation ? (
+                      <>
+                        <span className="flagged-why-text">{r.explanation.text}</span>
+                        <span className="flagged-why-src">
+                          {r.explanation.source === 'llm'
+                            ? `${r.explanation.model_id ?? 'Language model'}, fact-checked against the decision record`
+                            : 'Fixed template (the model text was not used)'}
+                        </span>
+                      </>
+                    ) : r.explanation_status === 'failed' ? (
+                      'No explanation was produced.'
+                    ) : (
+                      'Writing the explanation...'
+                    )}
+                  </span>
                 </span>
                 <span className="flagged-cost tnum">{fmtBRL(r.carrier_cost)}</span>
                 <span className="flagged-score tnum">{r.score == null ? 'n/a' : `${(r.score * 100).toFixed(1)}%`}</span>
@@ -409,8 +426,9 @@ export default function LiveView() {
               </dl>
               {metrics?.explanations && (
                 <p className="live-note" data-testid="live-explanations">
-                  Explanations: {fmtInt(metrics.explanations.llm)} written by the language model (limit{' '}
-                  {metrics.explanations.llm_cap_per_min} per minute), {fmtInt(metrics.explanations.template)} from the fixed template.
+                  Explanations: every held or blocked booking gets one from the language model
+                  ({fmtInt(metrics.explanations.llm_held_blocked ?? 0)} so far). Other decisions share{' '}
+                  {metrics.explanations.llm_cap_per_min} per minute; {fmtInt(metrics.explanations.template)} used the fixed template.
                 </p>
               )}
             </div>
