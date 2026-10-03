@@ -291,3 +291,51 @@ def test_auto_mode_with_a_fine_tuned_checkpoint_loads_it(monkeypatch, tmp_path):
     monkeypatch.setattr(A.LayaClient, "auto", classmethod(fake_auto))
     cfg = {"laya": {"mode": "auto", "model_path": "artifacts/laya/fraudshield-laya", "device": "cuda", "cache_path": None}}
     assert A._build_laya(cfg, []) == "fine-tuned client" and Path(seen["path"]) == ck
+
+
+def test_decide_false_keeps_decisions_on_the_backup_model_even_with_a_laya_cache(cfg, tmp_path):
+    import json as _json
+    cache = tmp_path / "laya_cache.json"
+    cache.write_text(_json.dumps({"some": {"misuse": {"a": 0.9, "b": 0.1}}}))
+    comps = {"featurize": fakes.fake_featurize, "serialize": fakes.fake_serialize, "gbm": fakes.fake_gbm, "llm_client": None}
+    cfg = {**cfg, "laya": {"mode": "cached", "decide": False, "cache_path": str(cache)}}
+    c = TestClient(build_app(cfg, components=comps))
+    h = c.get("/health").json()
+    assert h["laya_mode"] == "cached" and "LightGBM" in h["laya_reason"]
+    assert c.post("/score", json=booking_json()).json()["degraded"] is True
+
+
+def test_question_model_is_labelled_fine_tuned_when_it_loads_a_local_checkpoint(cfg, tmp_path, monkeypatch):
+    from fraudshield.api import app as A
+    ck = tmp_path / "fraudshield-laya"
+    ck.mkdir()
+    monkeypatch.setattr(A, "cuda_available", lambda: True)
+    fake = fakes.laya()  # built before patching LayaClient.local, which fakes.laya() itself uses
+    monkeypatch.setattr(A.LayaClient, "local", staticmethod(lambda *a, **k: fake))
+    comps = {"featurize": fakes.fake_featurize, "serialize": fakes.fake_serialize, "gbm": fakes.fake_gbm, "llm_client": None}
+    cfg = {**cfg, "laya": {"mode": "cached", "decide": False, "cache_path": str(tmp_path / "none.json")},
+           "laya_ask": {"enabled": True, "model_path": str(ck), "device": "cuda", "timeout_s": 3.0}}
+    c = TestClient(build_app(cfg, components=comps))
+    did = c.post("/score", json=booking_json()).json()["decision_id"]
+    r = c.post(f"/decisions/{did}/ask", json=ASK)
+    assert r.status_code == 200 and r.json()["answered_by"] == "fine-tuned Laya"
+
+
+def test_question_model_falls_back_to_stock_when_the_fine_tuned_folder_is_missing(cfg, tmp_path, monkeypatch):
+    from fraudshield.api import app as A
+    seen = {}
+    fake = fakes.laya()
+
+    def fake_local(path, *a, **k):
+        seen["path"] = path
+        return fake
+    monkeypatch.setattr(A, "cuda_available", lambda: True)
+    monkeypatch.setattr(A.LayaClient, "local", staticmethod(fake_local))
+    comps = {"featurize": fakes.fake_featurize, "serialize": fakes.fake_serialize, "gbm": fakes.fake_gbm, "llm_client": None}
+    cfg = {**cfg, "laya": {"mode": "cached", "decide": False, "cache_path": str(tmp_path / "none.json")},
+           "laya_ask": {"enabled": True, "model_path": "artifacts/laya/not-imported-here", "device": "cuda"}}
+    c = TestClient(build_app(cfg, components=comps))
+    did = c.post("/score", json=booking_json()).json()["decision_id"]
+    r = c.post(f"/decisions/{did}/ask", json=ASK)
+    assert r.status_code == 200 and r.json()["answered_by"] == "stock Laya (not fine-tuned)"
+    assert seen["path"] == "convaiinnovations/laya"

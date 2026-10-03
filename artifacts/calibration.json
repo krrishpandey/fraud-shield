@@ -1,0 +1,33 @@
+{
+  "version": "cal-20261003-21e12c1c",
+  "model_revision": "77e2caf7e3c7",
+  "temperatures": {
+    "misuse": 3.0248233336580426,
+    "foreign_senders": 1.7131204742519741,
+    "payoff_max": 2.475435099202915,
+    "drop_consignee": 1.0
+  },
+  "platt": {
+    "misuse": {
+      "a": 0.6565675124968466,
+      "b": -3.0173074035613214
+    }
+  },
+  "conformal": {
+    "lambda_allow": 0.0,
+    "alpha": 0.05,
+    "n_fraud": 56
+  },
+  "prevalence": 0.009170281697874913,
+  "fit": {
+    "c1_bookings": 3432,
+    "c2_bookings": 2222,
+    "c1_fraud": 111,
+    "c2_fraud": 56,
+    "split": "by account hash, 60/40",
+    "window": "calibration split, seed 0",
+    "weights": "random legit rows weighted back to the full calibration window",
+    "drop_consignee": "T=1.0, zero-shot question with no positive labels in the calibration window",
+    "platt_on": "misuse after its temperature"
+  }
+}

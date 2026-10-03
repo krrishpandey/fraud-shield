@@ -1,7 +1,8 @@
 # FraudShield decision service config. Relative paths resolve against the repo root.
 laya:
   mode: auto                     # auto | local | http | cached. auto = local on CUDA if laya loads, else cached
-  model_path: convaiinnovations/laya   # or a local fine-tuned checkpoint dir
+  model_path: artifacts/laya/fraudshield-laya   # fine-tuned Laya (imported from Kaggle); stock: convaiinnovations/laya
+  decide: false                  # LightGBM decides: it ranks better (artifacts/results_laya.md); Laya answers questions
   device: cuda
   timeout_s: 0.18                # hard timeout; on timeout the decision degrades to the calibrated GBM
   http_url: http://localhost:8001
@@ -12,7 +13,7 @@ laya:
 # Once laya.model_path points at the imported fine-tuned checkpoint, Laya answers both.
 laya_ask:
   enabled: true
-  model_path: convaiinnovations/laya
+  model_path: artifacts/laya/fraudshield-laya   # fine-tuned; stock: convaiinnovations/laya
   device: cuda
   timeout_s: 3.0
 # Live booking stream: replays the seed-0 test window into a separate decision-service instance.

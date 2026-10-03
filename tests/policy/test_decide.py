@@ -122,3 +122,12 @@ def test_no_exploration_far_from_boundary():
 def test_reasons_passed_through():
     d = decide({"misuse": 0.5}, ctx(), COSTS, PolicyConfig(), random.Random(0), reasons=["NEW_LOGIN_DEVICE"])
     assert d.reasons == ["NEW_LOGIN_DEVICE"]
+
+
+def test_laya_allow_guard_does_not_apply_when_the_backup_model_decides():
+    # The conformal guard in calibration.json is fitted on Laya's misuse probability. When Laya is not deciding
+    # (degraded: the LightGBM score decides), a Laya guard of 0.0 must not rule out "allow" for every booking.
+    cfg = PolicyConfig(lambda_allow=0.0, degraded_lambda_allow=0.02)
+    assert run(0.001, ctx(degraded=True), cfg=cfg).action == "allow"
+    assert run(0.05, ctx(degraded=True), cfg=cfg).action != "allow"  # the stricter backup guard still applies
+    assert run(0.001, cfg=cfg).action != "allow"  # when Laya decides, its own guard applies

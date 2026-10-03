@@ -1,0 +1,197 @@
+{
+ "885089e9eafba8fab6372ff964a1be07369e8406fd6093c3d5ac3bd01bc3d797": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "drop_consignee": {
+   "a": 0.0,
+   "b": 1.0
+  }
+ },
+ "3a419e8185181ddf1ebf11412ba32d26c8a7e5b3b1c0601967dc988dd5c6bf9e": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "drop_consignee": {
+   "a": 0.0,
+   "b": 1.0
+  }
+ },
+ "82c7ee3d7a37fc386dbb1f42011b4b8e6a955634f075bef304073e2734111e4a": {
+  "misuse": {
+   "a": 1.0,
+   "b": 0.0
+  },
+  "foreign_senders": {
+   "a": 1.0,
+   "b": 0.0
+  },
+  "payoff_max": {
+   "a": 1.0,
+   "b": 0.0
+  },
+  "drop_consignee": {
+   "a": 1.0,
+   "b": 0.0
+  }
+ },
+ "f6edda8bacfd1990337af329f7848dfc77add6ea22b973bc262fdfb5f8d4e4ec": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "drop_consignee": {
+   "a": 0.0,
+   "b": 1.0
+  }
+ },
+ "6c79a4da50933849ebe62b802aa037eb67da6e0b70a9d43f3cf4d20763a85068": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "drop_consignee": {
+   "a": 0.0,
+   "b": 1.0
+  }
+ },
+ "7fc75786a6dc2ad461da97f553b41cc9521b539fe730ac9f2c2f07d1147d875f": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.0016,
+   "b": 0.9984
+  },
+  "drop_consignee": {
+   "a": 0.9981,
+   "b": 0.0019
+  }
+ },
+ "b38fb845eca1aa463f7439820406eb75795e1288ea057f76e5a692c282ec2296": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.9977,
+   "b": 0.0023
+  },
+  "drop_consignee": {
+   "a": 0.9807,
+   "b": 0.0193
+  }
+ },
+ "4f6e6e9cf07b119856b48370c68ed9ef4fa0ce41416d26ad2100b3eb59808861": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 1.0,
+   "b": 0.0
+  },
+  "payoff_max": {
+   "a": 0.9997,
+   "b": 0.0003
+  },
+  "drop_consignee": {
+   "a": 0.9996,
+   "b": 0.0004
+  }
+ },
+ "8580b08ba679217cbf6dda65a4b46a205d41ec99dbcfa5ed590f13b6f1455f33": {
+  "misuse": {
+   "a": 0.6687,
+   "b": 0.3313
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "drop_consignee": {
+   "a": 1.0,
+   "b": 0.0
+  }
+ },
+ "59ab8276277437166026c1aae8a5efa36c860e88967a852b1d4c712d191556b0": {
+  "misuse": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "foreign_senders": {
+   "a": 0.0,
+   "b": 1.0
+  },
+  "payoff_max": {
+   "a": 0.9057,
+   "b": 0.0943
+  },
+  "drop_consignee": {
+   "a": 1.0,
+   "b": 0.0
+  }
+ },
+ "_revision": "77e2caf7e3c7",
+ "_meta": {
+  "model": "fraudshield-laya (fine-tuned)",
+  "checkpoint": "artifacts/laya/fraudshield-laya",
+  "probabilities": "raw, temperature 1.0; apply artifacts/calibration.json",
+  "source": "data/processed/demo_bookings.json (fresh, sequential and fallback states)",
+  "built": "2026-10-03T12:14:16",
+  "entries": 10,
+  "questions": [
+   "misuse",
+   "foreign_senders",
+   "payoff_max",
+   "drop_consignee"
+  ]
+ }
+}

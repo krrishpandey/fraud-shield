@@ -207,6 +207,10 @@ def resolve_model_path(p: str, root: Path | None = None) -> str:
 
 def _build_laya(cfg: dict, warnings: list[str]):
     lc = dict(cfg["laya"])
+    if lc.get("decide", True) is False:
+        return LayaClient("cached", None, model="none", cache={},
+                          mode_reason="laya.decide is false: decisions use the LightGBM backup score; Laya answers "
+                                      "questions only (laya_ask)")
     lc["model_path"] = resolve_model_path(lc.get("model_path", "convaiinnovations/laya"))
     mode = lc.get("mode", "auto")
     cache = _path(lc.get("cache_path"))
@@ -283,9 +287,14 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     ac = cfg.get("laya_ask") or {}
     if ask_laya is None and ac.get("enabled") and getattr(laya, "mode", None) not in ("local", "http") and cuda_available():
         from fraudshield.models.laya_client import LazyLaya  # noqa: PLC0415
-        ask_laya = LazyLaya(lambda: LayaClient.local(resolve_model_path(ac.get("model_path", "convaiinnovations/laya")),
-                                                     ac.get("device", "cuda"), timeout_s=float(ac.get("timeout_s", 3.0))),
-                            label="stock Laya (not fine-tuned)")
+        ask_path = resolve_model_path(ac.get("model_path", "convaiinnovations/laya"))
+        if str(ac.get("model_path", "")).startswith(("artifacts/", "./", "/")) and not Path(ask_path).is_dir():
+            warnings.append(f"laya_ask: {ask_path} not found (fine-tuned model not imported here); using stock Laya")
+            ask_path = "convaiinnovations/laya"
+        ask_label = "fine-tuned Laya" if Path(ask_path).is_dir() else "stock Laya (not fine-tuned)"
+        ask_laya = LazyLaya(lambda: LayaClient.local(ask_path, ac.get("device", "cuda"),
+                                                     timeout_s=float(ac.get("timeout_s", 3.0))),
+                            label=ask_label)
         ask_laya.warm()
 
     calibration = load_calibration(_path(cfg["calibration_path"]))

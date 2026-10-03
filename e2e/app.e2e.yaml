@@ -1,6 +1,7 @@
 # FraudShield e2e config (copy of config/app.yaml). Laya cached, audit/registry/feedback under e2e/.tmp/.
 laya:
   mode: cached                   # e2e: never load the model, never touch the GPU
+  decide: false                  # as in config/app.yaml: LightGBM decides, Laya answers questions
   model_path: convaiinnovations/laya   # or a local fine-tuned checkpoint dir
   device: cpu
   timeout_s: 0.18                # hard timeout; on timeout the decision degrades to the calibrated GBM

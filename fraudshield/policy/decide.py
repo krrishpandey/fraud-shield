@@ -78,7 +78,9 @@ def decide_with_trace(probs: dict[str, float], ctx: PolicyContext, costs: CostCo
 
     lam = cfg.lambda_allow
     if ctx.degraded:
-        lam = cfg.degraded_lambda_allow if lam is None else min(lam, cfg.degraded_lambda_allow)
+        # The backup (LightGBM) score decides: use its own guard. lambda_allow is fitted on Laya's misuse
+        # probability, a different scale, so it does not apply here (a Laya guard of 0 would rule out every allow).
+        lam = cfg.degraded_lambda_allow
     guard_passed = lam is None or p <= lam
     if not guard_passed:
         allowed = [a for a in allowed if a != "allow"]

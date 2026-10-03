@@ -192,9 +192,10 @@ class LazyLaya:
     a question gets LayaUnavailable instead of blocking the request.
     """
 
-    def __init__(self, factory: Callable[[], Any], label: str):
+    def __init__(self, factory: Callable[[], Any], label: str, wait_s: float = 8.0):
         self._factory = factory
         self.label = label
+        self.wait_s = wait_s
         self._client: Any = None
         self._error: str | None = None
         self._thread: threading.Thread | None = None
@@ -234,6 +235,9 @@ class LazyLaya:
         if self._client is not None:
             return self._client
         if self._thread is not None and self._thread.is_alive():
+            self._thread.join(timeout=self.wait_s)  # a question right after startup waits briefly for the load
+            if self._client is not None:
+                return self._client
             raise LayaUnavailable(f"{self.label} is still loading; try again in a moment")
         if self._error is None and self._thread is None:
             self._load()
