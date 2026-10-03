@@ -394,6 +394,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     scheduled: set[str] = set()
     stream: dict[str, Any] = {}
     app.state.stream = stream
+    if learning is not None:  # a deploy or rollback also reaches a running live stream, with its version label
+        learning.swap_listeners.append(lambda scorer, v: stream["pipe"].swap_gbm(scorer, v) if stream.get("pipe") else None)
     r = APIRouter()
 
     def _owner(did: str) -> Pipeline:
@@ -586,7 +588,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
             raise HTTPException(400, str(e))
         if body.limit:
             items = items[: body.limit]
-        spipe = Pipeline(featurize, serialize, lambda fv: pipe.gbm(fv), laya, AuditLog(_path(scfg["audit_path"])),
+        # the stream scores with the main pipeline's GBM; learning deploys and rollbacks swap it (listener below)
+        spipe = Pipeline(featurize, serialize, pipe.gbm, laya, AuditLog(_path(scfg["audit_path"])),
                          calibration=calibration, costs=costs, policy=policy, seed=int(pol.get("seed", 0)),
                          llm_client=llm_client, llm_model_id=llm_model_id,
                          llm_for_allow=bool(explain_cfg.get("llm_for_allow", False)), versions=dict(pipe.versions),

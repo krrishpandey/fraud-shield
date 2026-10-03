@@ -128,4 +128,5 @@ def test_wiring_reads_training_options(files, tmp_path):
                                        "max_feedback_share": 0.3, "ipw_clip": 5,
                                        "lgb_params": {"lambda_l2": 10}}},
                          pipe, pipe.audit, tmp_path / "audit.jsonl", lambda p: None if p is None else ROOT / p)
-    assert svc.train_options == {"max_feedback_share": 0.3, "ipw_clip": 5.0, "lgb_params": {"lambda_l2": 10}}
+    assert svc.train_options == {"max_feedback_share": 0.3, "ipw_clip": 5.0, "lgb_params": {"lambda_l2": 10},
+                                 "interaction_limits": None}

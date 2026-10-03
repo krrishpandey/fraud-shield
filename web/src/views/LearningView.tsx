@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { api } from '../api/client'
 import type { LearningMetrics, RetrainResponse, SimulateFeedbackResponse } from '../api/types'
 import { ErrorBox, Loading, PageTitle, Section } from '../components/common'
+import { HandoverBanner, ModelInUseLine } from '../components/ModelHandover'
 import { fmtBRL, fmtInt, fmtPct, shortHash } from '../lib/format'
 import { useAsync } from '../lib/useAsync'
 
@@ -206,6 +207,7 @@ export default function LearningView() {
       )}
       {s && (
         <div className="flex flex-col gap-4">
+          {s.last_handover && <HandoverBanner h={s.last_handover} />}
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             <div className="panel px-3.5 py-3">
               <div className="text-[0.78rem] text-ink-2">Active model</div>
@@ -215,6 +217,11 @@ export default function LearningView() {
               <div className="mt-0.5 text-[0.75rem] text-muted">
                 Calibration <span className="font-mono">{s.calibration_version}</span>
               </div>
+              {s.model_in_use && (
+                <div className="mt-1.5 border-t border-rule pt-1.5">
+                  <ModelInUseLine m={s.model_in_use} testId="learning-model-in-use" />
+                </div>
+              )}
             </div>
             <div className="panel px-3.5 py-3">
               <div className="flex flex-wrap items-baseline gap-x-3">

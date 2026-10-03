@@ -253,6 +253,37 @@ export interface ModelVersion {
   /** true if this version ever passed the gate; only such versions can be rolled back to */
   ever_deployed?: boolean
   gate_passed?: boolean | null
+  /** latest time this version became the one scoring new bookings */
+  activated_at?: string | null
+}
+
+/** Which GBM scores new bookings from now on, after a retrain or rollback (docs/API.md v1.2 "handover"). */
+export interface Handover {
+  event: 'retrain' | 'rollback'
+  run_id: string | null
+  at: string
+  verdict: 'new_model_in_use' | 'previous_model_kept' | 'rolled_back'
+  active_version: string
+  previous_version: string
+  candidate_version: string | null
+  active_since: string | null
+  rollback_target: string | null
+  /** failed gate checks, each in plain words */
+  failed_checks: { name: string; plain: string; detail: string }[]
+  /** recall on fraud patterns the active model never trained on */
+  new_pattern: { current: number; candidate: number; ci95: number[] | null; typologies: string[] | null; source: string } | null
+  message: string
+  audit_hash?: string
+}
+
+/** What actually scores new bookings now (the decision service's GBM). */
+export interface ModelInUse {
+  version: string
+  since: string
+  since_reason: string
+  registry_active_version: string | null
+  matches_registry: boolean
+  rollback_target: string | null
 }
 
 export interface LearningStatus {
@@ -262,6 +293,8 @@ export interface LearningStatus {
   versions: ModelVersion[]
   calibration_version: string
   laya_export: { path: string; rows: number } | null
+  model_in_use?: ModelInUse
+  last_handover?: Handover | null
 }
 
 export interface SimulateFeedbackResponse {
@@ -288,11 +321,14 @@ export interface RetrainResponse {
   gate: { passed: boolean; checks: GateCheck[] }
   deployed_version: string | null
   audit_hash: string
+  handover?: Handover
 }
 
 export interface RollbackResponse {
   active_version: string
   audit_hash: string
+  previous_version?: string
+  handover?: Handover
 }
 
 /* ---------- live booking stream (GET /stream/...) ---------- */

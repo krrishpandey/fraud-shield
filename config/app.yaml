@@ -73,3 +73,4 @@ learning:
   max_feedback_share: null       # e.g. 0.3 = feedback may carry at most 30% of total sample weight
   ipw_clip: 20                   # propensity-weight clip for explored feedback
   lgb_params: {min_child_samples: 100, lambda_l2: 10}   # run R3 in docs/LEARNING_GATE.md: best candidate so far, gate still decides
+  interaction_limits: null       # attempt 5 in docs/LEARNING_GATE.md: {login_device_age_days: [channel_code]}

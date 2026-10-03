@@ -1,7 +1,7 @@
 // MOCK MODE ONLY. Invented continuous-learning state for offline UI work and E2E tests.
 // Retrain runs alternate: odd runs (1st, 3rd, ...) pass the gate and deploy, even runs are rejected,
 // so both outcomes can be shown. Shapes follow docs/API.md "Continuous learning (v1.2)".
-import type { LearningMetrics, LearningStatus, ModelVersion, RetrainResponse } from '../api/types'
+import type { Handover, LearningMetrics, LearningStatus, ModelVersion, RetrainResponse } from '../api/types'
 
 const RETRAIN_DELAY_MS = 2500
 
@@ -22,7 +22,13 @@ const state = {
   exportRows: 0,
   runs: 0,
   fraudSince: 0,
+  activeSince: new Date().toISOString().slice(0, 19),
+  lastHandover: null as Handover | null,
 }
+
+const now = () => new Date().toISOString().slice(0, 19)
+const rollbackTarget = () =>
+  [...state.versions].reverse().find((v) => v.version !== state.active && v.deployed !== false)?.version ?? null
 
 export function recordAnalystLabel(label: 'fraud' | 'legit') {
   state.sources.analyst += 1
@@ -40,6 +46,15 @@ export function learningStatus(): LearningStatus {
     versions: state.versions.map((v) => ({ ...v, deployed: v.version === state.active })),
     calibration_version: 'cal-mock-00000000',
     laya_export: { path: 'artifacts/feedback/laya_feedback.jsonl', rows: state.exportRows },
+    model_in_use: {
+      version: state.active,
+      since: state.activeSince,
+      since_reason: 'activated',
+      registry_active_version: state.active,
+      matches_registry: true,
+      rollback_target: rollbackTarget(),
+    },
+    last_handover: state.lastHandover,
   }
 }
 
@@ -113,7 +128,7 @@ export async function retrain(minNew: number): Promise<{ status: number; body: u
     current: { version: cur.version, ...c },
     candidate: { version: candVersion, ...cand },
     gate: { passed, checks },
-    deployed_version: passed ? candVersion : null,
+    deployed_version: passed ? candVersion : cur.version,
     audit_hash: '',
   }
   if (passed) {
@@ -129,12 +144,33 @@ export async function retrain(minNew: number): Promise<{ status: number; body: u
     state.active = candVersion
     state.sources = { analyst: 0, simulated_analyst: 0 }
     state.fraudSince = 0
+    state.activeSince = now()
+  } else {
+    state.versions.push({ version: candVersion, created_at: now(), parent: cur.version, n_train: cur.n_train + n,
+      n_feedback_labels: cur.n_feedback_labels + n, metrics: cand, deployed: false, ever_deployed: false, gate_passed: false })
   }
+  const failed = checks.filter((x) => !x.passed).map((x) => ({ name: x.name, plain: x.detail, detail: x.detail }))
+  res.handover = {
+    event: 'retrain', run_id: res.run_id, at: now(), verdict: passed ? 'new_model_in_use' : 'previous_model_kept',
+    active_version: state.active, previous_version: cur.version, candidate_version: candVersion,
+    active_since: state.activeSince, rollback_target: rollbackTarget(), failed_checks: failed,
+    new_pattern: { current: c.recall_new_pattern, candidate: cand.recall_new_pattern, ci95: null, typologies: ['T5'], source: 'mock' },
+    message: passed ? `From now on, new bookings are scored by ${candVersion}.` : `Still using ${cur.version}.`,
+  }
+  state.lastHandover = res.handover
   return { status: 200, body: res }
 }
 
 export function rollback(version: string): { status: number; body: unknown } {
   if (!state.versions.some((v) => v.version === version)) return { status: 404, body: { detail: `unknown version ${version}` } }
+  const prev = state.active
   state.active = version
-  return { status: 200, body: { active_version: version, audit_hash: '' } }
+  state.activeSince = now()
+  const handover: Handover = {
+    event: 'rollback', run_id: null, at: state.activeSince, verdict: 'rolled_back', active_version: version,
+    previous_version: prev, candidate_version: null, active_since: state.activeSince, rollback_target: rollbackTarget(),
+    failed_checks: [], new_pattern: null, message: `Rolled back. From now on, new bookings are scored by ${version}.`,
+  }
+  state.lastHandover = handover
+  return { status: 200, body: { active_version: version, previous_version: prev, audit_hash: '', handover } }
 }

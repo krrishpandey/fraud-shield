@@ -6,6 +6,7 @@ import { ActionPill } from '../components/ActionBadge'
 import LabelFreeMonitorCard from '../components/LabelFreeMonitorCard'
 import { ACTION_META, reasonText } from '../lib/domain'
 import { fmtBRL, fmtInt } from '../lib/format'
+import { ModelInUseBadge } from '../components/ModelHandover'
 
 /*
   Live stream: the seed-0 test window replayed into its own decision service at a steady rate.
@@ -322,6 +323,7 @@ export default function LiveView() {
             Replays the seed-0 test window (real Olist bookings plus the injected fraud, in booking-time order) into its own
             decision service, the way a booking system sends bookings. A simulation of continuous traffic, not live carrier data.
           </p>
+          <ModelInUseBadge testId="live-model-in-use" />
         </div>
         <p className="live-state" data-testid="live-state" data-state={state}>
           <span className={`live-dot is-${state}`} aria-hidden="true" />

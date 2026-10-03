@@ -169,7 +169,8 @@ class Pipeline:
         lap("features", t)
 
         t = time.perf_counter()
-        gbm_score = float(self.gbm(fv))
+        scorer = self.gbm  # read once: the gbm version logged below is the one that produced this score
+        gbm_score = float(scorer(fv))
         lap("gbm", t)
 
         t = time.perf_counter()
@@ -245,7 +246,8 @@ class Pipeline:
 
         versions = {
             "laya": str(laya_info.get("revision") or getattr(self.laya, "revision", None) or "none"),
-            "calibration": cal_info["version"], "gbm": self.versions.get("gbm", "unknown"),
+            "calibration": cal_info["version"],
+            "gbm": getattr(scorer, "version", None) or self.versions.get("gbm", "unknown"),
             "policy": self.policy.version, "costs": self.costs.version,
             "serializer": self.versions.get("serializer", "unknown"),
             "features": self.versions.get("features", "unknown"),
