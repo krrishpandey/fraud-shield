@@ -1,0 +1,7076 @@
+{
+ "run_at": "2026-10-04 04:48",
+ "seconds": 606.0327611000976,
+ "budget": 50,
+ "max_fields": 2,
+ "attack": {
+  "split": "test",
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "per_seed": 40,
+  "held_n": 10,
+  "rates_trained": {
+   "T1": {
+    "n": 132,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.1893939393939394,
+    "flip_softer_pooled": 0.75,
+    "flip_allow_mean": 0.18778932625681855,
+    "flip_allow_sd": 0.12836683595297554,
+    "flip_softer_mean": 0.7442835028748341,
+    "flip_softer_sd": 0.14480366855424628
+   },
+   "T2": {
+    "n": 54,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.0,
+    "flip_softer_pooled": 0.16666666666666666,
+    "flip_allow_mean": 0.0,
+    "flip_allow_sd": 0.0,
+    "flip_softer_mean": 0.13207070707070706,
+    "flip_softer_sd": 0.21723093927237844
+   },
+   "T4": {
+    "n": 72,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.2222222222222222,
+    "flip_softer_pooled": 0.5833333333333334,
+    "flip_allow_mean": 0.21911630036630036,
+    "flip_allow_sd": 0.15010692528674205,
+    "flip_softer_mean": 0.5752861721611722,
+    "flip_softer_sd": 0.08803582394999733
+   },
+   "T6": {
+    "n": 0,
+    "n_seeds": 0,
+    "flip_allow_pooled": null,
+    "flip_softer_pooled": null,
+    "flip_allow_mean": null,
+    "flip_allow_sd": null,
+    "flip_softer_mean": null,
+    "flip_softer_sd": null
+   },
+   "T7": {
+    "n": 62,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.27419354838709675,
+    "flip_softer_pooled": 0.8387096774193549,
+    "flip_allow_mean": 0.26851689976689974,
+    "flip_allow_sd": 0.21432667311545125,
+    "flip_softer_mean": 0.8454594017094017,
+    "flip_softer_sd": 0.13372994796026577
+   },
+   "all": {
+    "n": 320,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.18125,
+    "flip_softer_pooled": 0.63125,
+    "flip_allow_mean": 0.18125,
+    "flip_allow_sd": 0.07647361823344234,
+    "flip_softer_mean": 0.63125,
+    "flip_softer_sd": 0.07288689868556623
+   }
+  },
+  "rates_held_out": {
+   "T3": {
+    "n": 40,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.05,
+    "flip_softer_pooled": 0.2,
+    "flip_allow_mean": 0.041666666666666664,
+    "flip_allow_sd": 0.07715167498104596,
+    "flip_softer_mean": 0.17708333333333331,
+    "flip_softer_sd": 0.26888032093131503
+   },
+   "T5": {
+    "n": 40,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.175,
+    "flip_softer_pooled": 0.7,
+    "flip_allow_mean": 0.16488095238095238,
+    "flip_allow_sd": 0.1100015460621096,
+    "flip_softer_mean": 0.6997023809523809,
+    "flip_softer_sd": 0.200765612259071
+   },
+   "all": {
+    "n": 80,
+    "n_seeds": 8,
+    "flip_allow_pooled": 0.1125,
+    "flip_softer_pooled": 0.45,
+    "flip_allow_mean": 0.11250000000000002,
+    "flip_allow_sd": 0.06408699444616558,
+    "flip_softer_mean": 0.45,
+    "flip_softer_sd": 0.1851640199545103
+   }
+  },
+  "fields_used": {
+   "sender_id": 159,
+   "weight_kg": 38,
+   "dims": 13,
+   "declared_value": 12,
+   "service": 9,
+   "booked_at": 7
+  },
+  "median_queries_softer": 14.0,
+  "median_queries_allow": 14.0,
+  "median_cost_kept": 1.0,
+  "mismatches": 0,
+  "n_checked": 400,
+  "per_seed_info": [
+   {
+    "seed": 0,
+    "n_test_fraud": {
+     "T1": 66,
+     "T2": 34,
+     "T4": 47,
+     "T6": 27,
+     "T7": 34,
+     "T3": 38,
+     "T5": 30
+    },
+    "n_stopped": {
+     "T1": 66,
+     "T2": 28,
+     "T4": 33,
+     "T6": 0,
+     "T7": 34,
+     "T3": 27,
+     "T5": 24
+    },
+    "n_attacked": {
+     "T1": 21,
+     "T2": 8,
+     "T4": 7,
+     "T6": 0,
+     "T7": 4,
+     "T3": 4,
+     "T5": 6
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 43.5
+   },
+   {
+    "seed": 1,
+    "n_test_fraud": {
+     "T1": 65,
+     "T2": 33,
+     "T4": 37,
+     "T6": 26,
+     "T7": 34,
+     "T3": 50,
+     "T5": 40
+    },
+    "n_stopped": {
+     "T1": 65,
+     "T2": 25,
+     "T4": 30,
+     "T6": 0,
+     "T7": 34,
+     "T3": 30,
+     "T5": 33
+    },
+    "n_attacked": {
+     "T1": 12,
+     "T2": 8,
+     "T4": 9,
+     "T6": 0,
+     "T7": 11,
+     "T3": 4,
+     "T5": 6
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 45.1
+   },
+   {
+    "seed": 2,
+    "n_test_fraud": {
+     "T1": 69,
+     "T2": 25,
+     "T4": 46,
+     "T6": 34,
+     "T7": 34,
+     "T3": 55,
+     "T5": 40
+    },
+    "n_stopped": {
+     "T1": 69,
+     "T2": 23,
+     "T4": 35,
+     "T6": 1,
+     "T7": 34,
+     "T3": 38,
+     "T5": 34
+    },
+    "n_attacked": {
+     "T1": 17,
+     "T2": 6,
+     "T4": 8,
+     "T6": 0,
+     "T7": 9,
+     "T3": 6,
+     "T5": 4
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 52.5
+   },
+   {
+    "seed": 3,
+    "n_test_fraud": {
+     "T1": 66,
+     "T2": 34,
+     "T4": 27,
+     "T6": 27,
+     "T7": 39,
+     "T3": 64,
+     "T5": 41
+    },
+    "n_stopped": {
+     "T1": 66,
+     "T2": 29,
+     "T4": 21,
+     "T6": 7,
+     "T7": 39,
+     "T3": 43,
+     "T5": 31
+    },
+    "n_attacked": {
+     "T1": 15,
+     "T2": 11,
+     "T4": 9,
+     "T6": 0,
+     "T7": 5,
+     "T3": 6,
+     "T5": 4
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 42.7
+   },
+   {
+    "seed": 4,
+    "n_test_fraud": {
+     "T1": 88,
+     "T2": 31,
+     "T4": 44,
+     "T6": 31,
+     "T7": 36,
+     "T3": 30,
+     "T5": 49
+    },
+    "n_stopped": {
+     "T1": 88,
+     "T2": 28,
+     "T4": 35,
+     "T6": 0,
+     "T7": 36,
+     "T3": 18,
+     "T5": 38
+    },
+    "n_attacked": {
+     "T1": 14,
+     "T2": 5,
+     "T4": 8,
+     "T6": 0,
+     "T7": 13,
+     "T3": 3,
+     "T5": 7
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 50.8
+   },
+   {
+    "seed": 5,
+    "n_test_fraud": {
+     "T1": 52,
+     "T2": 33,
+     "T4": 41,
+     "T6": 31,
+     "T7": 33,
+     "T3": 37,
+     "T5": 42
+    },
+    "n_stopped": {
+     "T1": 52,
+     "T2": 29,
+     "T4": 39,
+     "T6": 0,
+     "T7": 33,
+     "T3": 26,
+     "T5": 34
+    },
+    "n_attacked": {
+     "T1": 17,
+     "T2": 5,
+     "T4": 10,
+     "T6": 0,
+     "T7": 8,
+     "T3": 6,
+     "T5": 4
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 58.6
+   },
+   {
+    "seed": 6,
+    "n_test_fraud": {
+     "T1": 72,
+     "T2": 40,
+     "T4": 45,
+     "T6": 35,
+     "T7": 33,
+     "T3": 36,
+     "T5": 42
+    },
+    "n_stopped": {
+     "T1": 72,
+     "T2": 35,
+     "T4": 35,
+     "T6": 0,
+     "T7": 33,
+     "T3": 31,
+     "T5": 33
+    },
+    "n_attacked": {
+     "T1": 17,
+     "T2": 9,
+     "T4": 8,
+     "T6": 0,
+     "T7": 6,
+     "T3": 6,
+     "T5": 4
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 44.5
+   },
+   {
+    "seed": 7,
+    "n_test_fraud": {
+     "T1": 81,
+     "T2": 34,
+     "T4": 43,
+     "T6": 31,
+     "T7": 40,
+     "T3": 46,
+     "T5": 49
+    },
+    "n_stopped": {
+     "T1": 81,
+     "T2": 27,
+     "T4": 42,
+     "T6": 0,
+     "T7": 40,
+     "T3": 21,
+     "T5": 40
+    },
+    "n_attacked": {
+     "T1": 19,
+     "T2": 2,
+     "T4": 13,
+     "T6": 0,
+     "T7": 6,
+     "T3": 5,
+     "T5": 5
+    },
+    "offline_online_mismatch": 0,
+    "seconds": 42.3
+   }
+  ]
+ },
+ "counterfactuals": {
+  "split": "test",
+  "seed": 0,
+  "n_stopped_in_window": 265,
+  "n_sampled": 60,
+  "n_fraud_sampled": 47,
+  "share_with_softer_cf": 0.7333333333333333,
+  "share_with_allow_cf": 0.21666666666666667,
+  "share_with_softer_cf_fraud": 0.7021276595744681,
+  "share_with_softer_cf_legit": 0.8461538461538461,
+  "latency_ms_median": 1118.44,
+  "latency_ms_p90": 1354.008,
+  "evaluations_median": 50.0,
+  "fields_used": {
+   "sender_id": 28,
+   "weight_kg": 13,
+   "declared_value": 6,
+   "booked_at": 5,
+   "dims": 5,
+   "service": 2
+  }
+ },
+ "hardening": {
+  "scratch_dir": "C:\\Users\\05nik\\AppData\\Local\\Temp\\redteam_scratch_0px_xppt",
+  "n_train_fraud_stopped": 386,
+  "n_attacked": 80,
+  "n_evaded": 48,
+  "n_labels": 113,
+  "gate": {
+   "mode": "noninferiority",
+   "passed": false,
+   "checks": [
+    {
+     "name": "cost_noninferior",
+     "passed": true,
+     "detail": "cost per 1,000 bookings 1080.27 -> 1040.57 BRL; improvement 95% CI [2.27, 80.01], lower bound must be >= -54.01"
+    },
+    {
+     "name": "pr_auc_noninferior",
+     "passed": true,
+     "detail": "PR-AUC 0.8160 -> 0.8568; must be >= 0.7960 (current - 0.02)"
+    },
+    {
+     "name": "ece_noninferior",
+     "passed": true,
+     "detail": "ECE (15 equal-mass bins) 0.0021 -> 0.0005 (change -0.0016, max +0.02)"
+    },
+    {
+     "name": "fpr_hard_negative_noninferior",
+     "passed": false,
+     "detail": "FPR on hard negatives 0.27% -> 1.68% (max +0.5 points)"
+    },
+    {
+     "name": "superiority",
+     "passed": true,
+     "detail": "needs a lower bound above 0 for either: cost improvement CI [2.27, 80.01] BRL per 1k (yes); new-pattern recall improvement 95% CI [-0.014, 0.001] (no)"
+    },
+    {
+     "name": "min_new_labels",
+     "passed": true,
+     "detail": "113 new labels since the last retrain (need 20)"
+    }
+   ]
+  },
+  "deployed_in_scratch": false,
+  "candidate_version": "gbm-B2-F-v2",
+  "current": {
+   "version": "gbm-B2-F-v1",
+   "pr_auc": 0.816,
+   "ece": 0.0021,
+   "cost_per_1k_brl": 1080.27,
+   "fpr_hard_negative": 0.0027,
+   "recall_new_pattern": null,
+   "n_hard_negative": 1487,
+   "n_new_pattern": 0
+  },
+  "candidate": {
+   "version": "gbm-B2-F-v2",
+   "pr_auc": 0.8568,
+   "ece": 0.0005,
+   "cost_per_1k_brl": 1040.57,
+   "fpr_hard_negative": 0.0168,
+   "recall_new_pattern": null,
+   "n_hard_negative": 1487,
+   "n_new_pattern": 0
+  },
+  "new_pattern_eval": {
+   "description": "test-window bookings of fraud typologies the active model never trained on, pooled across injection seeds; campaigns present in the training feedback removed",
+   "typologies": [
+    "T3",
+    "T5"
+   ],
+   "n": 860,
+   "campaigns": 60,
+   "excluded_rows": 0,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "current": {
+    "recall": 0.536,
+    "by_typology": {
+     "T3": 0.2927,
+     "T5": 0.8044
+    }
+   },
+   "candidate": {
+    "recall": 0.5291,
+    "by_typology": {
+     "T3": 0.2882,
+     "T5": 0.7946
+    }
+   },
+   "recall_diff_ci95": [
+    -0.0139,
+    0.0012
+   ],
+   "bootstrap": {
+    "B": 200,
+    "unit": "campaign"
+   }
+  },
+  "training_set": {
+   "n": 41902,
+   "n_reference": 41823,
+   "n_feedback": 79,
+   "n_explored_feedback": 0,
+   "n_fraud": 465,
+   "ipw_clip": 20.0,
+   "max_train_rows": null,
+   "max_feedback_share": null,
+   "feedback_weight_share": 0.0019,
+   "explored_weight": 0.0,
+   "n_reference_hard_negatives": 3251,
+   "lgb_params_override": {
+    "min_child_samples": 100,
+    "lambda_l2": 10
+   }
+  },
+  "candidate_rates": {
+   "baseline": {
+    "n": 40,
+    "n_seeds": 1,
+    "flip_allow_pooled": 0.15,
+    "flip_softer_pooled": 0.625,
+    "flip_allow_mean": 0.15,
+    "flip_allow_sd": null,
+    "flip_softer_mean": 0.625,
+    "flip_softer_sd": null
+   },
+   "candidate": {
+    "n": 40,
+    "n_seeds": 1,
+    "flip_allow_pooled": 0.05,
+    "flip_softer_pooled": 0.125,
+    "flip_allow_mean": 0.05,
+    "flip_allow_sd": null,
+    "flip_softer_mean": 0.125,
+    "flip_softer_sd": null
+   }
+  }
+ },
+ "attack_rows": [
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_31f295d5e3a0dfc1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1020.67
+  },
+  {
+   "seed": 0,
+   "typology": "T4",
+   "booking_id": "bk_d74e381fa1e19411",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 901.35
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_b8a9d6f6d7dcaa14",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 25,
+   "queries_to_softer": 14,
+   "queries": 32,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "declared_value"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 610.57
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_ed151d888c0d20ca",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1261.73
+  },
+  {
+   "seed": 0,
+   "typology": "T4",
+   "booking_id": "bk_0ace68bf04d27811",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1026.41
+  },
+  {
+   "seed": 0,
+   "typology": "T4",
+   "booking_id": "bk_c81fec36cedb167c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1050.7
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_45754132aa45f7f2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 880.99
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_859cfe29bd26a4bc",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 971.1
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_507d8b94e1e9a96a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 766.3
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_af770970cd09c918",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1050.3
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_2151fb16c88f964a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1101.18
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_94c74820d62e11ca",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 398.76
+  },
+  {
+   "seed": 0,
+   "typology": "T4",
+   "booking_id": "bk_c7aafff476fb6ed1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 700.11
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_1de45613e33a03b6",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 700.62
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_ad603531c37cb42e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 814.85
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_ecb336ebaf22e88e",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 35,
+   "queries_to_softer": 14,
+   "queries": 41,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 738.3
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_e65e2015ec9cf77c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 910.17
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_ca3f0adc9bca2d1a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 831.21
+  },
+  {
+   "seed": 0,
+   "typology": "T4",
+   "booking_id": "bk_4ee4594fe8f23924",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 8,
+   "queries_to_softer": 8,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.9128,
+   "latency_ms": 196.18
+  },
+  {
+   "seed": 0,
+   "typology": "T7",
+   "booking_id": "bk_ab8ecc6c1fbb9aca",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 697.31
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_a4cbb1639243a45a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 831.5
+  },
+  {
+   "seed": 0,
+   "typology": "T7",
+   "booking_id": "bk_fa8b0aa3abcb3089",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 813.48
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_6e56ba04edfddb2b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 667.61
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_95cfa2b4351fb53e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 721.72
+  },
+  {
+   "seed": 0,
+   "typology": "T4",
+   "booking_id": "bk_0406795d9191102a",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 9,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.7675,
+   "latency_ms": 252.6
+  },
+  {
+   "seed": 0,
+   "typology": "T7",
+   "booking_id": "bk_0ad683ab5d58f36f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 747.75
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_6adfe088c134e2f9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 977.68
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_6aca7a21c8999313",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 490.94
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_1876fb953236fa60",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1053.6
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_f72621af7095eb71",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 868.11
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_496eb5aafc8bfaf4",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 749.6
+  },
+  {
+   "seed": 0,
+   "typology": "T4",
+   "booking_id": "bk_a89f6339d0f83f12",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 9,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.6235,
+   "latency_ms": 243.99
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_97e469812604a7c8",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 820.33
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_c71e5a2a94e86dc6",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 710.77
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_31d2b73432afd8fd",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 691.07
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_c0542fe1ce9bfb08",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 765.65
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_a57ffa28db092ac8",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 939.66
+  },
+  {
+   "seed": 0,
+   "typology": "T2",
+   "booking_id": "bk_0feab55af16111d3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 730.83
+  },
+  {
+   "seed": 0,
+   "typology": "T7",
+   "booking_id": "bk_60d81e52762a146e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 797.58
+  },
+  {
+   "seed": 0,
+   "typology": "T1",
+   "booking_id": "bk_3ff6650be5d40400",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 863.17
+  },
+  {
+   "seed": 0,
+   "typology": "T5",
+   "booking_id": "bk_43c12a41001575ee",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 964.36
+  },
+  {
+   "seed": 0,
+   "typology": "T3",
+   "booking_id": "bk_772b609cd5b2db95",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 730.01
+  },
+  {
+   "seed": 0,
+   "typology": "T5",
+   "booking_id": "bk_52662b81baeea0fd",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 270.11
+  },
+  {
+   "seed": 0,
+   "typology": "T5",
+   "booking_id": "bk_4c580a551a4d8779",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 979.11
+  },
+  {
+   "seed": 0,
+   "typology": "T5",
+   "booking_id": "bk_07af7aa452ef7a6d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 943.84
+  },
+  {
+   "seed": 0,
+   "typology": "T5",
+   "booking_id": "bk_1d946573f7038df1",
+   "original": "owner_confirm",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.7478,
+   "latency_ms": 957.54
+  },
+  {
+   "seed": 0,
+   "typology": "T3",
+   "booking_id": "bk_9ef887c57cf9e1fb",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 948.79
+  },
+  {
+   "seed": 0,
+   "typology": "T5",
+   "booking_id": "bk_cf295e84d82b60a3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1151.07
+  },
+  {
+   "seed": 0,
+   "typology": "T3",
+   "booking_id": "bk_d365795360c5bd04",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1393.46
+  },
+  {
+   "seed": 0,
+   "typology": "T3",
+   "booking_id": "bk_9cc004c0ec5f6957",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 999.25
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_dcc279a850fb55b0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1184.47
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_e81ee7acf3b67768",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1065.99
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_41475ada601e213a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 843.09
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_a9c61cba89c54c1d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 8,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.8223,
+   "latency_ms": 965.25
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_53769990ece81c4f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 19,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 0.9023,
+   "latency_ms": 1011.81
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_99786bc35387e434",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 267.09
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_88cdf5abf6b0ac9c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.6978,
+   "latency_ms": 981.26
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_eed8f4d5ff6981da",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": null,
+   "latency_ms": 1096.5
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_29fe05694f5c4c0e",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 9,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.1571,
+   "latency_ms": 305.37
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_a5d181e4179d3006",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 5,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.7329,
+   "latency_ms": 290.35
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_53bca34ffeb1dc6a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 20,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id",
+    "declared_value"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 978.81
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_403b250b0d5af22a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 985.09
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_f96d6cc44599e569",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 802.83
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_e24a1b74a5b2640c",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 32,
+   "queries_to_softer": 8,
+   "queries": 39,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg",
+    "dims"
+   ],
+   "cost_kept": 0.9072,
+   "latency_ms": 731.3
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_19090131f8cc3b64",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 296.33
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_138aef6f07b825d7",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 310.69
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_99a5fa8fcaa9ec4b",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 21,
+   "queries_to_softer": 14,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "declared_value"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 501.61
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_b2ab246743504fb3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1094.83
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_254614efa3e50086",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 966.16
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_ad2d2ee0dd2e1497",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 279.97
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_af6ccb34dff850f0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 905.63
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_006909042659f899",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1078.15
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_aa26412eda4f68c1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 823.7
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_6b54f0f418507ad6",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1039.37
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_40ee233d99adbee8",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1095.48
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_89f9858e6a8768bc",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1204.22
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_229b8cdafed7f8fd",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 978.3
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_4a9983fe00047c4b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 19,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 844.23
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_ed856915b0668e71",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 868.72
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_5eb8d09b0d2b3aec",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 949.96
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_245774d4fdb7c224",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 19,
+   "queries_to_softer": 14,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 0.7083,
+   "latency_ms": 730.63
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_28037a02290b3dc5",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1016.7
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_888750f35dcb208b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1120.43
+  },
+  {
+   "seed": 1,
+   "typology": "T1",
+   "booking_id": "bk_b70d20f9f1350790",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 878.8
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_42eb26f49d42669c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 791.62
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_44d8532666f5328a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 847.19
+  },
+  {
+   "seed": 1,
+   "typology": "T2",
+   "booking_id": "bk_c912b92f14334115",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 732.17
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_1d7d24602d8cec7d",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 435.82
+  },
+  {
+   "seed": 1,
+   "typology": "T7",
+   "booking_id": "bk_e1f4606903656352",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 975.76
+  },
+  {
+   "seed": 1,
+   "typology": "T4",
+   "booking_id": "bk_ceb140995f547055",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.0122,
+   "latency_ms": 825.36
+  },
+  {
+   "seed": 1,
+   "typology": "T5",
+   "booking_id": "bk_4348a29b150bd01c",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 19,
+   "queries_to_softer": 14,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 0.713,
+   "latency_ms": 385.33
+  },
+  {
+   "seed": 1,
+   "typology": "T5",
+   "booking_id": "bk_0ba1e19e045bda8d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 920.25
+  },
+  {
+   "seed": 1,
+   "typology": "T5",
+   "booking_id": "bk_fe974417c586b249",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1061.39
+  },
+  {
+   "seed": 1,
+   "typology": "T3",
+   "booking_id": "bk_e76246e2be8b7fe3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1132.17
+  },
+  {
+   "seed": 1,
+   "typology": "T5",
+   "booking_id": "bk_31eeff784c3a8910",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1100.16
+  },
+  {
+   "seed": 1,
+   "typology": "T5",
+   "booking_id": "bk_76fb21d3f1be19a1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 49,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 948.04
+  },
+  {
+   "seed": 1,
+   "typology": "T3",
+   "booking_id": "bk_47e015d44538d90f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 986.5
+  },
+  {
+   "seed": 1,
+   "typology": "T3",
+   "booking_id": "bk_793b78aa2c12b37f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 931.08
+  },
+  {
+   "seed": 1,
+   "typology": "T5",
+   "booking_id": "bk_81b5614dc8b1dc4d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 995.34
+  },
+  {
+   "seed": 1,
+   "typology": "T3",
+   "booking_id": "bk_93b5fc44944cad3b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1083.76
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_d1f9f293830c1293",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 883.13
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_06509a03e5a61933",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1060.0
+  },
+  {
+   "seed": 2,
+   "typology": "T2",
+   "booking_id": "bk_da8d0d154c8d4804",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 377.02
+  },
+  {
+   "seed": 2,
+   "typology": "T2",
+   "booking_id": "bk_dac6071a1e1f0507",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 797.07
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_91783e81059244ed",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 859.14
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_48d125cb92ab9c36",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 291.55
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_d8a3c7272e9cddd5",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1071.96
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_c356e9068e602e8e",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 279.54
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_f63a34fb2c6bf7a8",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 315.93
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_f00f8fac61708a3a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 813.28
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_71f5e3725c4018d5",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 952.44
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_52c8d21b2914833e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 896.47
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_98b940feda6b6bbb",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 870.58
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_1f14546f5445bc2b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 903.18
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_45eaf8c526821cc2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1044.54
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_f5e8b3add4845116",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1167.61
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_9e8148dd6d1d5fda",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1309.09
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_c78b739bf90b62a3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1112.1
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_b7f10bd02afbd233",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.793,
+   "latency_ms": 1274.02
+  },
+  {
+   "seed": 2,
+   "typology": "T2",
+   "booking_id": "bk_9f011b2d59e72dcc",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 929.7
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_75472ed2d97f3a24",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 378.22
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_05981fab3ea266d1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1030.93
+  },
+  {
+   "seed": 2,
+   "typology": "T2",
+   "booking_id": "bk_2fbade41f7f03ab6",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 893.39
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_9e9aec509b6a10bc",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1001.12
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_e8b7c9dc46801936",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 45,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 0.0132,
+   "latency_ms": 986.34
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_5f4fa2f02bfa2ae0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1020.78
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_4d0dd7c86f5d9068",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1442.66
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_f3e889fa2316f3bc",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 994.39
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_589faefe2b383400",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1030.02
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_c8041a0520df33fe",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 996.25
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_df91f0a38b891dc1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1037.2
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_f4e6909d9165af4f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 997.97
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_bceb1991672d0b00",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1090.47
+  },
+  {
+   "seed": 2,
+   "typology": "T2",
+   "booking_id": "bk_8ec5b5520055dd91",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 814.25
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_99a2aacdb72bf086",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1293.86
+  },
+  {
+   "seed": 2,
+   "typology": "T2",
+   "booking_id": "bk_7f142d9c0cd4e8f4",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 986.77
+  },
+  {
+   "seed": 2,
+   "typology": "T7",
+   "booking_id": "bk_619cab8bd0ac883f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1222.52
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_790a0c6b7387163a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1280.51
+  },
+  {
+   "seed": 2,
+   "typology": "T1",
+   "booking_id": "bk_dc8a9fd39da4ada3",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 46,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 0.6804,
+   "latency_ms": 1252.34
+  },
+  {
+   "seed": 2,
+   "typology": "T4",
+   "booking_id": "bk_3017d69443cf4f6b",
+   "original": "owner_confirm",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "service"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1183.45
+  },
+  {
+   "seed": 2,
+   "typology": "T3",
+   "booking_id": "bk_71958ba4f1e79a7a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1058.79
+  },
+  {
+   "seed": 2,
+   "typology": "T5",
+   "booking_id": "bk_7304da6c3626fcbc",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1040.11
+  },
+  {
+   "seed": 2,
+   "typology": "T5",
+   "booking_id": "bk_bb5957fe2a73c03a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 33,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg",
+    "sender_id"
+   ],
+   "cost_kept": 0.7919,
+   "latency_ms": 927.71
+  },
+  {
+   "seed": 2,
+   "typology": "T5",
+   "booking_id": "bk_fb55f543973f535f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1266.19
+  },
+  {
+   "seed": 2,
+   "typology": "T3",
+   "booking_id": "bk_898ff580e95f3a27",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1212.2
+  },
+  {
+   "seed": 2,
+   "typology": "T3",
+   "booking_id": "bk_89314fc027c92636",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1418.12
+  },
+  {
+   "seed": 2,
+   "typology": "T3",
+   "booking_id": "bk_ed5b611015c3425c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1480.15
+  },
+  {
+   "seed": 2,
+   "typology": "T3",
+   "booking_id": "bk_cb69027807d5160b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1159.7
+  },
+  {
+   "seed": 2,
+   "typology": "T3",
+   "booking_id": "bk_9f310df9b5e42a45",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1349.93
+  },
+  {
+   "seed": 2,
+   "typology": "T5",
+   "booking_id": "bk_2f7c5baaff41acbc",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 21,
+   "queries_to_softer": 11,
+   "queries": 22,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 585.49
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_d11db29caa25b8d5",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1285.78
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_d567f49b348f851e",
+   "original": "block",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 1,
+   "queries": 50,
+   "evasion_action": "hold",
+   "evasion_fields": [
+    "declared_value"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1124.79
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_ba08d4988383e97d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1642.99
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_cd249887b95cd0d3",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 33,
+   "queries_to_softer": 13,
+   "queries": 39,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1007.67
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_5f5efe445d583fc5",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 14,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 309.48
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_6d4161573f1b5bcf",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 21,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "service",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 773.03
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_5311ef4c7058ead2",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 3,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.7706,
+   "latency_ms": 278.47
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_c5e24fcedcfa61a1",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 15,
+   "queries_to_softer": 8,
+   "queries": 22,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg",
+    "service"
+   ],
+   "cost_kept": 0.0152,
+   "latency_ms": 411.95
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_bda669c29e6503a9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 793.93
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_00f992108c58ebea",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 8,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.8143,
+   "latency_ms": 939.9
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_ceb4288135cdf492",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1065.29
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_4555634800028159",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 975.59
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_5b537340f99bc584",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 931.17
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_1fdbd351e5866477",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1082.11
+  },
+  {
+   "seed": 3,
+   "typology": "T7",
+   "booking_id": "bk_d2cfdba68b35b551",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 21,
+   "queries_to_softer": 14,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 830.8
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_ec06ea0f34c9ef6e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "service"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 942.17
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_3236f8fa5356179c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1002.52
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_be7d8b6fe74660de",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 896.19
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_f607fc7e28809529",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 735.41
+  },
+  {
+   "seed": 3,
+   "typology": "T7",
+   "booking_id": "bk_d36add507b647053",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1066.7
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_0db9edd3b8caa7bd",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 782.77
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_2e39ad24a9686dbf",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 825.59
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_6505e5204c8aee99",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 32,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "declared_value",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 700.77
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_cc8a3afaa4293882",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 21,
+   "queries_to_softer": 13,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 386.49
+  },
+  {
+   "seed": 3,
+   "typology": "T7",
+   "booking_id": "bk_1b213bbff101974f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 786.09
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_b9aa921f47973646",
+   "original": "owner_confirm",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 7,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.8369,
+   "latency_ms": 921.49
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_f19a1c122a0b4118",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 6,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "service"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 857.55
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_d7ac70c9ba832ee9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 35,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "dims",
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 926.68
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_701d89f19d7b3100",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 9,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.8661,
+   "latency_ms": 271.89
+  },
+  {
+   "seed": 3,
+   "typology": "T7",
+   "booking_id": "bk_f25e6302be216f02",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 865.95
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_b8e5a183d11ba52e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 632.55
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_835f19d072353a80",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 732.34
+  },
+  {
+   "seed": 3,
+   "typology": "T4",
+   "booking_id": "bk_ffcf4ceeb7a275dd",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 785.54
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_8556843d72dddbcf",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 18,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 260.48
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_c3ce749061c84be3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 758.94
+  },
+  {
+   "seed": 3,
+   "typology": "T2",
+   "booking_id": "bk_8b7be9baf433b334",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 11,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 763.55
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_14403556ed192b05",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 240.43
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_d9d5af398bbacaf0",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 213.66
+  },
+  {
+   "seed": 3,
+   "typology": "T7",
+   "booking_id": "bk_218bfca517d19622",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 642.8
+  },
+  {
+   "seed": 3,
+   "typology": "T1",
+   "booking_id": "bk_01000d7b8d300092",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 646.12
+  },
+  {
+   "seed": 3,
+   "typology": "T3",
+   "booking_id": "bk_5c9dadb716efa9a0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 829.59
+  },
+  {
+   "seed": 3,
+   "typology": "T3",
+   "booking_id": "bk_6996204a2d96f870",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1057.51
+  },
+  {
+   "seed": 3,
+   "typology": "T5",
+   "booking_id": "bk_d9118ef6de0e8e5c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 815.15
+  },
+  {
+   "seed": 3,
+   "typology": "T5",
+   "booking_id": "bk_07cb449b09c303e8",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 863.92
+  },
+  {
+   "seed": 3,
+   "typology": "T5",
+   "booking_id": "bk_20fb823f4a244aca",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 799.2
+  },
+  {
+   "seed": 3,
+   "typology": "T3",
+   "booking_id": "bk_61a9bf4c3e18370d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 865.9
+  },
+  {
+   "seed": 3,
+   "typology": "T5",
+   "booking_id": "bk_521d31aca34ee91f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 780.9
+  },
+  {
+   "seed": 3,
+   "typology": "T3",
+   "booking_id": "bk_662ebe6e25e8da06",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 750.37
+  },
+  {
+   "seed": 3,
+   "typology": "T3",
+   "booking_id": "bk_15c2d48cbcb55bc2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 912.03
+  },
+  {
+   "seed": 3,
+   "typology": "T3",
+   "booking_id": "bk_5181f8f9bad2e3fe",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 784.67
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_d3dacafd18c0567f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 964.07
+  },
+  {
+   "seed": 4,
+   "typology": "T2",
+   "booking_id": "bk_2ab995a003e2f0ae",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 716.69
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_69cca722e11687be",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 899.68
+  },
+  {
+   "seed": 4,
+   "typology": "T2",
+   "booking_id": "bk_2b3f18b5a4ff2918",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 736.95
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_cd9241782cffd267",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1033.69
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_35fba43eccec0e59",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 940.44
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_00683d405e18e782",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 994.16
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_fa8df45b79ad0521",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 920.15
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_fcf9ba21fb506b3a",
+   "original": "owner_confirm",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 44,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 0.7657,
+   "latency_ms": 779.26
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_c76f9c0c38b08501",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 948.8
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_8a1f6c7a2a360b86",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1504.26
+  },
+  {
+   "seed": 4,
+   "typology": "T2",
+   "booking_id": "bk_d8f291e3b182250a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 902.17
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_21534d04f515f0cb",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 872.41
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_b29efab62463a318",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 841.67
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_de428f006434887b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 962.41
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_eaf4517d8d423f90",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 783.38
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_28f2f183d29fe025",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.4723,
+   "latency_ms": 902.67
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_ddfe7b561a7fcaa9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1124.74
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_87e9e18b460f7295",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 884.82
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_9d30694fdb5c70fd",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 897.98
+  },
+  {
+   "seed": 4,
+   "typology": "T2",
+   "booking_id": "bk_058d8bfd6aedd805",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 727.2
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_8bdf2d281af14913",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 883.49
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_7bc96d2c4e3086f0",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 282.4
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_ffddbd09c73429c2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 823.89
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_8b2a12b2f2b8d474",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 908.76
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_ea0b47419b7c384d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 889.12
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_e3745f647f1d3130",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1137.0
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_4225b42f9618b228",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1310.91
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_c8edeafbb4ee7737",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1033.62
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_5f08ee45d43b9c3a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 996.21
+  },
+  {
+   "seed": 4,
+   "typology": "T7",
+   "booking_id": "bk_17851664ea2c6e2e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1012.63
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_d312fcdcded93552",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 32,
+   "queries_to_softer": 14,
+   "queries": 32,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 791.75
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_43fa7af1d0f78279",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 8,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.3356,
+   "latency_ms": 1002.53
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_6f60c70a5c6747a9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1015.75
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_21adfd9ac65142a1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1031.83
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_6834f652e3ffbe0d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1020.52
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_622c2c45310bbf09",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 9,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.3277,
+   "latency_ms": 309.51
+  },
+  {
+   "seed": 4,
+   "typology": "T1",
+   "booking_id": "bk_530493dbed101419",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1697.52
+  },
+  {
+   "seed": 4,
+   "typology": "T4",
+   "booking_id": "bk_18ef786816c256f4",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1490.77
+  },
+  {
+   "seed": 4,
+   "typology": "T2",
+   "booking_id": "bk_144aa43a4a258ec9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 792.66
+  },
+  {
+   "seed": 4,
+   "typology": "T5",
+   "booking_id": "bk_2fefd954198a569e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 923.94
+  },
+  {
+   "seed": 4,
+   "typology": "T5",
+   "booking_id": "bk_308776ff6b06e512",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 941.51
+  },
+  {
+   "seed": 4,
+   "typology": "T5",
+   "booking_id": "bk_b7c7d59330cc65a0",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 355.82
+  },
+  {
+   "seed": 4,
+   "typology": "T3",
+   "booking_id": "bk_71217015086c11a2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1079.53
+  },
+  {
+   "seed": 4,
+   "typology": "T5",
+   "booking_id": "bk_490db66bb814076a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1103.04
+  },
+  {
+   "seed": 4,
+   "typology": "T3",
+   "booking_id": "bk_b337a90714ed1d73",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1150.58
+  },
+  {
+   "seed": 4,
+   "typology": "T5",
+   "booking_id": "bk_f78fb4cd7b08d324",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 14,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 355.88
+  },
+  {
+   "seed": 4,
+   "typology": "T3",
+   "booking_id": "bk_51d85747d0fbb58e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1775.42
+  },
+  {
+   "seed": 4,
+   "typology": "T5",
+   "booking_id": "bk_44499d44a39f1f62",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1003.43
+  },
+  {
+   "seed": 4,
+   "typology": "T5",
+   "booking_id": "bk_db6433d3e16e3e88",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1686.19
+  },
+  {
+   "seed": 5,
+   "typology": "T2",
+   "booking_id": "bk_d675f7c67884929a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1093.86
+  },
+  {
+   "seed": 5,
+   "typology": "T2",
+   "booking_id": "bk_ab6c492b1a2622ed",
+   "original": "review",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 928.31
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_4a03ed4732c9a461",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1290.3
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_a3e83f90cad5785f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 971.86
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_2ef402ffc84b1886",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1223.65
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_68e7fb8c38258c76",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1160.15
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_f51228594fe28ff0",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 289.77
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_5e9e47e377894f80",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1140.09
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_9f03fa9a31a7b5ed",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1081.55
+  },
+  {
+   "seed": 5,
+   "typology": "T2",
+   "booking_id": "bk_ecf24295fc452a77",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 10,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "service"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 879.78
+  },
+  {
+   "seed": 5,
+   "typology": "T2",
+   "booking_id": "bk_9076e04c58906e1a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 772.04
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_bcce9828d121340c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 881.26
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_49c46eb30e5543d8",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1228.63
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_7916b8e7ec3c6c58",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1237.54
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_721a0b8f774e9614",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1234.98
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_2f8be9822a7f38d1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1003.51
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_c15f27b5965bcb31",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 20,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg",
+    "declared_value"
+   ],
+   "cost_kept": 0.5411,
+   "latency_ms": 1216.21
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_e7e2feba5d65bb7b",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 21,
+   "queries_to_softer": 14,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 654.52
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_cdf7eebb634f7226",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1410.85
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_614a75b3646a271e",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 493.27
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_0af21c727b40f181",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1196.69
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_0217937ec67a8225",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1583.29
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_ee5f051c8896e0da",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 34,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg",
+    "sender_id"
+   ],
+   "cost_kept": 0.1247,
+   "latency_ms": 1722.4
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_a37d30bcf2129cf8",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 9,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.6527,
+   "latency_ms": 397.27
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_6a188e414bdb57b1",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 523.73
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_52a3b83b01a25ca7",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1224.95
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_fd3592524cbaf316",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1369.0
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_f45a1f6dd81acca2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1194.47
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_b2f41878f475ab7d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.0502,
+   "latency_ms": 1338.5
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_434e9e54f325e740",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1642.03
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_454ec77510b5a6e0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1177.69
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_cdcff62a34183dce",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1014.76
+  },
+  {
+   "seed": 5,
+   "typology": "T4",
+   "booking_id": "bk_d77506aa407ed834",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 31,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "sender_id",
+    "service"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1000.42
+  },
+  {
+   "seed": 5,
+   "typology": "T2",
+   "booking_id": "bk_57d62113d73610ed",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 605.36
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_39fe4b71db9b612d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1086.22
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_ef1d8a6c35a2fa35",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 21,
+   "queries_to_softer": 14,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 579.04
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_25f097615f8e4df7",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1387.24
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_14f45857ae1b8c08",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1490.78
+  },
+  {
+   "seed": 5,
+   "typology": "T1",
+   "booking_id": "bk_8ad9e0fce7c6e470",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1159.81
+  },
+  {
+   "seed": 5,
+   "typology": "T7",
+   "booking_id": "bk_dc75d917c917bb44",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1092.32
+  },
+  {
+   "seed": 5,
+   "typology": "T3",
+   "booking_id": "bk_8bff37e289330093",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1209.91
+  },
+  {
+   "seed": 5,
+   "typology": "T5",
+   "booking_id": "bk_5a42d4fe0b0f4a97",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1114.9
+  },
+  {
+   "seed": 5,
+   "typology": "T3",
+   "booking_id": "bk_1d9edf720c7861ec",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1479.58
+  },
+  {
+   "seed": 5,
+   "typology": "T3",
+   "booking_id": "bk_ac9b9f16ebf2ac9e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1619.37
+  },
+  {
+   "seed": 5,
+   "typology": "T3",
+   "booking_id": "bk_860755e40f98016b",
+   "original": "owner_confirm",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 11,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 971.44
+  },
+  {
+   "seed": 5,
+   "typology": "T5",
+   "booking_id": "bk_1196875df2befe6a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1235.73
+  },
+  {
+   "seed": 5,
+   "typology": "T3",
+   "booking_id": "bk_c4649d1fff77646c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1278.48
+  },
+  {
+   "seed": 5,
+   "typology": "T3",
+   "booking_id": "bk_50693d6ed9600f10",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 610.75
+  },
+  {
+   "seed": 5,
+   "typology": "T5",
+   "booking_id": "bk_5c5be70d1bc6ea78",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1858.44
+  },
+  {
+   "seed": 5,
+   "typology": "T5",
+   "booking_id": "bk_5397345e061e9e99",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1021.46
+  },
+  {
+   "seed": 6,
+   "typology": "T7",
+   "booking_id": "bk_9c5f99d900a7fb77",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 11,
+   "queries_to_softer": 11,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 339.19
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_e5b474ad342ba9ee",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.7363,
+   "latency_ms": 1209.78
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_a2914ba2939073b2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 876.17
+  },
+  {
+   "seed": 6,
+   "typology": "T7",
+   "booking_id": "bk_22a08c46ed8c0a88",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 26,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id",
+    "declared_value"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 887.38
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_e5d8d94f4330a83d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "declared_value",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 769.39
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_2e85c7fda889cffb",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 359.48
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_7a59f637d5f34f92",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 36,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "weight_kg",
+    "sender_id"
+   ],
+   "cost_kept": 0.0374,
+   "latency_ms": 838.13
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_a8d665f90b1b6a84",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1662.36
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_8dad09b0d3dd3ca9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 400.53
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_4532716a53877135",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 862.45
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_86089b05a07ed3ef",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 832.86
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_d56a7c32caacb0b5",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 875.06
+  },
+  {
+   "seed": 6,
+   "typology": "T7",
+   "booking_id": "bk_5fcf4cd31bb2c3e1",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 767.36
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_c0056687d00b5270",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 935.12
+  },
+  {
+   "seed": 6,
+   "typology": "T7",
+   "booking_id": "bk_517c2883f07388c0",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 358.2
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_4cc631791872d80c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 849.27
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_42a781ab8ccf0fc9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 868.93
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_62ce7f54fe7fb8ee",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 725.54
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_62f3ea1239b19d18",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 679.08
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_a32e3897e26613c8",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 711.45
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_cf939872bbeb45d6",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 717.36
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_17a43d3b60edc66b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 684.39
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_e28ea679657b3566",
+   "original": "owner_confirm",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 7,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.9242,
+   "latency_ms": 709.04
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_1e101b906972e46d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 9,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.6351,
+   "latency_ms": 851.13
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_acccc7a751de2a2f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 863.99
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_d07a7f59b7443025",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 705.88
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_82363fc6f73d34fa",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 49,
+   "queries_to_softer": 8,
+   "queries": 50,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg",
+    "service"
+   ],
+   "cost_kept": 0.3704,
+   "latency_ms": 774.2
+  },
+  {
+   "seed": 6,
+   "typology": "T4",
+   "booking_id": "bk_a2e959e44fa486cb",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 880.15
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_0530ff0d00669b5e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 883.35
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_40ff2846ae67164a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 803.66
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_ce9e7836c521d94a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 37,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "weight_kg",
+    "sender_id"
+   ],
+   "cost_kept": 0.69,
+   "latency_ms": 910.0
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_a2a42ad52665c03e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 925.52
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_91971f60c21c6b93",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1403.04
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_eb37d409fd72dca9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 890.13
+  },
+  {
+   "seed": 6,
+   "typology": "T2",
+   "booking_id": "bk_35831a505c154178",
+   "original": "block",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 878.77
+  },
+  {
+   "seed": 6,
+   "typology": "T7",
+   "booking_id": "bk_fda4d4bae2c98664",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 15,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 546.35
+  },
+  {
+   "seed": 6,
+   "typology": "T7",
+   "booking_id": "bk_8d44373746d36941",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 26,
+   "queries_to_softer": 14,
+   "queries": 26,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 1.015,
+   "latency_ms": 492.71
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_b87a1c7a2318768b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1393.94
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_105c97254878f2a0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 976.73
+  },
+  {
+   "seed": 6,
+   "typology": "T1",
+   "booking_id": "bk_6ae3f8b74268bb55",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 40,
+   "queries_to_softer": 14,
+   "queries": 41,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "declared_value"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 896.25
+  },
+  {
+   "seed": 6,
+   "typology": "T3",
+   "booking_id": "bk_1631104a6a85ac70",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1169.74
+  },
+  {
+   "seed": 6,
+   "typology": "T5",
+   "booking_id": "bk_5f6e75198a440b68",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 45,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "declared_value",
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 944.33
+  },
+  {
+   "seed": 6,
+   "typology": "T3",
+   "booking_id": "bk_59ac235d340f6882",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 13,
+   "queries_to_softer": 13,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 322.49
+  },
+  {
+   "seed": 6,
+   "typology": "T3",
+   "booking_id": "bk_27f3b254af64ca95",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1121.68
+  },
+  {
+   "seed": 6,
+   "typology": "T5",
+   "booking_id": "bk_9ccb3f22c7d40fda",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1163.44
+  },
+  {
+   "seed": 6,
+   "typology": "T3",
+   "booking_id": "bk_a00bd26688badf67",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1135.38
+  },
+  {
+   "seed": 6,
+   "typology": "T3",
+   "booking_id": "bk_323c21f16e23328d",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 983.83
+  },
+  {
+   "seed": 6,
+   "typology": "T3",
+   "booking_id": "bk_8d095ae0aced225f",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 913.79
+  },
+  {
+   "seed": 6,
+   "typology": "T5",
+   "booking_id": "bk_f73216ea58db1ee3",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 230.06
+  },
+  {
+   "seed": 6,
+   "typology": "T5",
+   "booking_id": "bk_78ee37599c3e74d4",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 938.16
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_2b7da823d31731d0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 766.81
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_da45be63f18b95d2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 868.83
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_c6928022a893ffcf",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 815.12
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_41e4361ffffdeba5",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 763.59
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_a09b76eae6ab7219",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 293.59
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_04550594a9f44939",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 810.98
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_a7be117d4641bdc7",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 938.07
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_9199b43b957e3157",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1131.92
+  },
+  {
+   "seed": 7,
+   "typology": "T2",
+   "booking_id": "bk_552ec62cd1993cde",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 854.58
+  },
+  {
+   "seed": 7,
+   "typology": "T7",
+   "booking_id": "bk_da2251b7b5bf22ed",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1162.74
+  },
+  {
+   "seed": 7,
+   "typology": "T7",
+   "booking_id": "bk_1434a7286cf864c1",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 18,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 329.9
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_57821c4213059077",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 843.09
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_42d6414b974815ed",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 17,
+   "queries_to_softer": 8,
+   "queries": 24,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "service",
+    "booked_at"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 416.77
+  },
+  {
+   "seed": 7,
+   "typology": "T7",
+   "booking_id": "bk_7d7780dda2293b7e",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 914.64
+  },
+  {
+   "seed": 7,
+   "typology": "T7",
+   "booking_id": "bk_eed36318fdcee607",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 800.56
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_a105966bc1933cea",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 12,
+   "queries_to_softer": 12,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 277.05
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_824700439f1898b1",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 9,
+   "queries_to_softer": 9,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg"
+   ],
+   "cost_kept": 0.0142,
+   "latency_ms": 334.7
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_c0710f999c8caa81",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 18,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 349.38
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_43cdb8bc29ee9718",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 16,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 315.0
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_4762b19dce11cc91",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 18,
+   "queries_to_softer": 14,
+   "queries": 25,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 531.11
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_fff7e591597f8dce",
+   "original": "owner_confirm",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 30,
+   "queries_to_softer": 9,
+   "queries": 32,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg",
+    "declared_value"
+   ],
+   "cost_kept": 0.5821,
+   "latency_ms": 583.17
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_8c3a24f0f4c9c822",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 23,
+   "queries_to_softer": 1,
+   "queries": 24,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "weight_kg",
+    "declared_value"
+   ],
+   "cost_kept": 0.683,
+   "latency_ms": 389.17
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_38948e1a59d42955",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 871.15
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_35bdc5e98905cd76",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 3,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "declared_value"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 883.76
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_bea737d39c362eb0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 736.69
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_dfb2955c43d39b63",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 1,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 804.67
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_9f638a7be2b9f95a",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 867.82
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_8d37fc892d709d05",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 6,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 816.69
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_bd69c61983c97d76",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 19,
+   "queries_to_softer": 14,
+   "queries": 26,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "weight_kg"
+   ],
+   "cost_kept": 0.7826,
+   "latency_ms": 489.64
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_c6fcea71c2c3ec25",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 793.53
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_2fcbd79278a7dcb6",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 816.96
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_bf696d39f2b96d65",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 897.91
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_1454a343148ea776",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 936.24
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_f537ab6a076cead0",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 870.01
+  },
+  {
+   "seed": 7,
+   "typology": "T2",
+   "booking_id": "bk_c260d06aaba4d1d2",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 802.04
+  },
+  {
+   "seed": 7,
+   "typology": "T1",
+   "booking_id": "bk_dc07a8e7c19acc23",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 14,
+   "queries_to_softer": 14,
+   "queries": 17,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 293.04
+  },
+  {
+   "seed": 7,
+   "typology": "T7",
+   "booking_id": "bk_80b5ecc45b40ff5b",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 12,
+   "queries": 50,
+   "evasion_action": "review",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 969.04
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_53ef297bdf48b6ac",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 895.26
+  },
+  {
+   "seed": 7,
+   "typology": "T4",
+   "booking_id": "bk_550c48a13f81e73c",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1161.13
+  },
+  {
+   "seed": 7,
+   "typology": "T7",
+   "booking_id": "bk_566ff659db0138cf",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1035.99
+  },
+  {
+   "seed": 7,
+   "typology": "T3",
+   "booking_id": "bk_3bac6c8cfa458565",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1074.8
+  },
+  {
+   "seed": 7,
+   "typology": "T5",
+   "booking_id": "bk_067582aceaf569b1",
+   "original": "hold",
+   "flip_allow": true,
+   "flip_softer": true,
+   "queries_to_allow": 19,
+   "queries_to_softer": 14,
+   "queries": 26,
+   "evasion_action": "allow",
+   "evasion_fields": [
+    "sender_id",
+    "dims"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 656.8
+  },
+  {
+   "seed": 7,
+   "typology": "T3",
+   "booking_id": "bk_3ed08dd3b2039ad3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 928.03
+  },
+  {
+   "seed": 7,
+   "typology": "T5",
+   "booking_id": "bk_3de39ce623aaf8e5",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 14,
+   "queries": 50,
+   "evasion_action": "allow_scan_gated",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1010.32
+  },
+  {
+   "seed": 7,
+   "typology": "T3",
+   "booking_id": "bk_7c2b7c7d5bdbdf79",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1065.74
+  },
+  {
+   "seed": 7,
+   "typology": "T5",
+   "booking_id": "bk_7aea47c2369d5627",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 962.16
+  },
+  {
+   "seed": 7,
+   "typology": "T5",
+   "booking_id": "bk_5d0483fc37d4e956",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": true,
+   "queries_to_allow": null,
+   "queries_to_softer": 13,
+   "queries": 50,
+   "evasion_action": "owner_confirm",
+   "evasion_fields": [
+    "sender_id"
+   ],
+   "cost_kept": 1.0,
+   "latency_ms": 1201.71
+  },
+  {
+   "seed": 7,
+   "typology": "T5",
+   "booking_id": "bk_9459f5d41675f1e9",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1108.07
+  },
+  {
+   "seed": 7,
+   "typology": "T3",
+   "booking_id": "bk_eff58c5a69e1b7da",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1136.85
+  },
+  {
+   "seed": 7,
+   "typology": "T3",
+   "booking_id": "bk_efc16f908efdcaa3",
+   "original": "hold",
+   "flip_allow": false,
+   "flip_softer": false,
+   "queries_to_allow": null,
+   "queries_to_softer": null,
+   "queries": 50,
+   "evasion_action": null,
+   "evasion_fields": [],
+   "cost_kept": null,
+   "latency_ms": 1289.65
+  }
+ ]
+}

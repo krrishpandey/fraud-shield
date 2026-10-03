@@ -372,3 +372,37 @@ export interface StreamFlagged {
   rows: StreamFlaggedRow[]
   counts: { hold: number; block: number; unreviewed: number }
 }
+
+/* GET /decisions/{id}/counterfactual: ANALYST-ONLY evasion hints, never shown to the booker (docs/API.md). */
+export interface CounterfactualChange {
+  field: 'declared_value' | 'weight_kg' | 'dims' | 'service' | 'sender_id' | 'booked_at'
+  from: unknown
+  to: unknown
+  text: string
+  carrier_cost_to?: number
+}
+export interface CounterfactualItem {
+  target?: 'allow' | 'softer'
+  n_changes: number
+  changes: CounterfactualChange[]
+  action: Action
+  probability: number
+  summary: string
+}
+export interface Counterfactual {
+  decision_id: string
+  booking_id: string
+  analyst_only: true
+  current: { action: Action; probability: number }
+  found: boolean
+  message: string
+  counterfactuals: CounterfactualItem[]
+  closest: CounterfactualItem | null
+  evaluations: number
+  budget: number
+  max_fields: number
+  latency_ms: number
+  mutable_fields: string[]
+  cost_rule: string
+  audit_hash: string
+}

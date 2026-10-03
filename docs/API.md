@@ -103,3 +103,31 @@ audit record and returns the same body plus `audit_hash`. An unknown level retur
 `under_score` (`-(dims_z + weight_z)`, accounts with 5+ earlier bookings) reaches the level's threshold gets the reason
 `UNDER_DECLARED_PARCEL` and at least `allow_scan_gated`. The starting level is `first_scan.level` in the config
 (default `standard`).
+
+## What would change this decision (analyst-only counterfactuals)
+
+**ANALYST-ONLY. Never shown to the booker:** these are evasion hints. Every view writes a `counterfactual_view` audit
+record (decision, booking, what was shown); if that write fails, nothing is returned (503).
+
+`GET /decisions/{decision_id}/counterfactual` searches small changes to fields the booker controls (declared value,
+declared weight, parcel size, service, a sender the account already used, booking time) and scores each hypothetical
+booking through the real feature, LightGBM, calibration and cost-rule path, with no stored decision and no feature-store
+append (`fraudshield/redteam/search.py`). Carrier cost follows declared weight at the lane freight slope; the booker
+never sets it. Budget: 50 scored bookings, at most 2 changed fields; fewest fields first, then the smallest change.
+
+```json
+{"decision_id":"dec_000003","booking_id":"bk_...","analyst_only":true,
+ "current":{"action":"hold","probability":0.83},"found":true,
+ "message":"Smallest changes found within the budget. Analyst-only: never show these to the booker.",
+ "counterfactuals":[{"target":"allow","n_changes":1,"action":"allow","probability":0.011,
+   "changes":[{"field":"declared_value","from":1450.0,"to":906.25,"text":"declared value were R$906.25 (not R$1,450.00)"}],
+   "summary":"allow if declared value were R$906.25 (not R$1,450.00)"}],
+ "closest":null,"evaluations":24,"budget":50,"max_fields":2,"latency_ms":812.4,
+ "mutable_fields":["declared_value","weight_kg","dims","service","sender_id","booked_at"],
+ "cost_rule":"carrier cost moves with declared weight at R$2.727 per kg ...","audit_hash":"..."}
+```
+
+`target` is `allow` (plain allow) or `softer` (any action below the current one; may be `allow_scan_gated`). When
+nothing softens the decision within the budget, `found` is false, `counterfactuals` is empty, `message` says so and
+`closest` holds the change that came nearest. 404 for an unknown decision, 409 for a replayed record without a booking.
+Red-team results with the same search: `artifacts/results_redteam.md`.
