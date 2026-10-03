@@ -7,6 +7,7 @@ import { CounterfactualPanel } from '../components/CounterfactualPanel'
 import { ActionPill } from '../components/ActionBadge'
 import { ErrorBox, Loading, Section } from '../components/common'
 import { FactCheckedExplanation } from '../components/FactCheckedExplanation'
+import { OwnerPasskey } from '../components/OwnerPasskey'
 import { ShippingLabel } from '../components/ShippingLabel'
 import { ACTION_META, QUESTION_META, actionLabel, featureLabel, reasonText } from '../lib/domain'
 import { fmtBRL, fmtMs, fmtNum, fmtPct, shortHash } from '../lib/format'
@@ -508,6 +509,7 @@ export default function DecisionView() {
           )}
           {(d.action === 'allow_scan_gated' || d.first_scan) && <DepotScan d={d} onDone={reload} />}
           {d.action !== 'allow' && b && <CounterfactualPanel decisionId={d.decision_id} />}
+          <OwnerPasskey d={d} onDone={reload} />
           <div className="mt-6 max-w-[60ch]" data-testid="analyst-panel">
             <h2 className="verdict-h2">Your decision as the analyst</h2>
             <AnalystPanel d={d} onDone={reload} />

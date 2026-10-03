@@ -1,0 +1,53 @@
+{
+ "what": "owner passkey ES256 assertion verification latency",
+ "data": "SYNTHETIC: software authenticator keys and a fixture booking; no browser, no user data",
+ "machine": {
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.13",
+  "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD"
+ },
+ "cold_first_verify_in_fresh_process": {
+  "runs": [
+   0.3252999158576131,
+   0.296299927867949,
+   0.2877000952139497,
+   0.345399952493608,
+   0.29900006484240294
+  ],
+  "n": 5,
+  "p50_ms": 0.299,
+  "p95_ms": 0.3454,
+  "p99_ms": 0.3454,
+  "mean_ms": 0.3107,
+  "sd_ms": 0.0239,
+  "max_ms": 0.3454
+ },
+ "warm_verify_assertion": {
+  "n": 1000,
+  "p50_ms": 0.1757,
+  "p95_ms": 0.2903,
+  "p99_ms": 0.6812,
+  "mean_ms": 0.203,
+  "sd_ms": 0.2054,
+  "max_ms": 4.5191
+ },
+ "endpoint_verify_in_process": {
+  "n": 300,
+  "p50_ms": 8.923,
+  "p95_ms": 15.1644,
+  "p99_ms": 19.8369,
+  "mean_ms": 9.9518,
+  "sd_ms": 2.8167,
+  "max_ms": 28.3859,
+  "note": "TestClient round trip, includes audit write"
+ },
+ "endpoint_server_ms_field": {
+  "n": 300,
+  "p50_ms": 2.608,
+  "p95_ms": 3.329,
+  "p99_ms": 4.475,
+  "mean_ms": 2.7099,
+  "sd_ms": 0.4046,
+  "max_ms": 6.413
+ }
+}

@@ -96,6 +96,7 @@ export interface DecisionDetail extends ScoreResponse {
   analyst: AnalystRecord | null
   policy_trace?: PolicyTrace | null
   first_scan?: FirstScan | null
+  owner_confirmation?: OwnerConfirmation | null
 }
 
 export interface DialLevel {
@@ -437,5 +438,91 @@ export interface Counterfactual {
   latency_ms: number
   mutable_fields: string[]
   cost_rule: string
+  audit_hash: string
+}
+
+/* ---------- Owner passkey "was this you?" (docs/PASSKEY.md) ---------- */
+export interface PasskeyStatus {
+  account_id: string
+  enrolled: boolean
+  rp_id: string
+  credential_id_hash: string | null
+  enrolled_at: string | null
+  simulated_owner_device: boolean
+}
+/** WebAuthn creation options with binary fields as base64url strings. */
+export interface PasskeyEnrollOptions {
+  nonce_id: string
+  expires_in_s: number
+  publicKey: {
+    challenge: string
+    rp: { id: string; name: string }
+    user: { id: string; name: string; displayName: string }
+    pubKeyCredParams: { type: 'public-key'; alg: number }[]
+    timeout: number
+    attestation: 'none'
+    authenticatorSelection: { residentKey: string; userVerification: string }
+  }
+}
+export interface PasskeyEnrollResult {
+  enrolled: boolean
+  account_id?: string
+  credential_id_hash?: string
+  replaced?: boolean
+  audit_hash?: string
+  code?: string
+  reason?: string
+}
+export type BoundFields = {
+  booking_id: string
+  account_id: string
+  carrier_cost: number
+  declared_value: number
+  dest_zip3: string
+  consignee_id: string
+}
+export interface OwnerConfirmOptions {
+  nonce_id: string
+  challenge: string
+  rp_id: string
+  allow_credentials: { type: 'public-key'; id: string }[]
+  timeout: number
+  user_verification: string
+  expires_in_s: number
+  bound_fields: BoundFields
+  bound_fields_hash: string
+  release_action: Action
+}
+/** Browser credential JSON (base64url fields) as sent to the verify endpoints. */
+export type CredentialJSON = {
+  id: string
+  rawId: string
+  type: string
+  response: Record<string, string | null>
+}
+export interface OwnerConfirmation {
+  verified: boolean
+  released_action?: Action
+  original_action?: Action
+  credential_id_hash?: string
+  bound_fields_hash?: string
+  sign_count?: number
+  verify_ms?: number
+  server_ms?: number
+  code?: string
+  reason?: string
+  audit_hash: string
+  at?: string
+}
+export interface TamperTestResult {
+  verified: boolean
+  code: string | null
+  reason: string
+  tampered_field: string
+  original_fields: BoundFields
+  tampered_fields: BoundFields
+  original_bound_fields_hash: string
+  tampered_bound_fields_hash: string
+  verify_ms: number | null
   audit_hash: string
 }

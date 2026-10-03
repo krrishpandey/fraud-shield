@@ -26,3 +26,5 @@ artifacts/feedback/
 # runtime state of the continuous-learning registry on this machine
 artifacts/models/registry.json
 artifacts/models/versions/
+# runtime owner passkeys enrolled on this machine (demo)
+artifacts/passkeys/

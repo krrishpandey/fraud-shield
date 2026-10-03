@@ -16,6 +16,7 @@ dependencies = [
     "pyyaml>=6",
     "anthropic>=0.40",
     "pywebview>=6.2.1",
+    "cryptography>=50",
 ]
 
 [project.optional-dependencies]

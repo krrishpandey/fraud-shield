@@ -19,6 +19,31 @@ def find_free_port() -> int:
         return s.getsockname()[1]
 
 
+def window_url(port: int) -> str:
+    """The console's address in the window. "localhost", not 127.0.0.1: passkeys (WebAuthn) refuse IP addresses as
+    the relying party, and the owner passkey step uses RP ID "localhost". The server still binds 127.0.0.1 only;
+    the browser engine resolves localhost to the loopback addresses and falls back to 127.0.0.1 if ::1 refuses."""
+    return f"http://localhost:{port}"
+
+
+def loopback_sockets(port: int) -> list[socket.socket]:
+    """Listening sockets on 127.0.0.1 and, when the PC has IPv6, ::1 (loopback only, never the network). Windows
+    resolves localhost to ::1 first and a refused ::1 connect costs about 1 s before the 127.0.0.1 fallback."""
+    socks = []
+    for fam, host in ((socket.AF_INET, "127.0.0.1"), (socket.AF_INET6, "::1")):
+        s = socket.socket(fam, socket.SOCK_STREAM)
+        try:
+            if fam == socket.AF_INET6:
+                s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+            s.bind((host, port))
+            socks.append(s)
+        except OSError:
+            s.close()
+            if fam == socket.AF_INET:
+                raise
+    return socks
+
+
 def choose_laya_mode(requested: str, *, has_cuda: bool, has_laya: bool) -> str:
     """Pick how Laya runs. PCs without a GPU or without the ml extra get cached answers."""
     if not has_laya:
@@ -84,12 +109,13 @@ def main(argv: list[str] | None = None) -> None:
     real_components.warm()
 
     server = uvicorn.Server(uvicorn.Config(build_app(load_config(mode)), host="127.0.0.1", port=port, log_level="warning"))
-    threading.Thread(target=server.run, daemon=True).start()
+    threading.Thread(target=server.run, kwargs={"sockets": loopback_sockets(port)}, daemon=True).start()
     # Loading Laya on the GPU takes up to ~2 minutes on first run (model download), so wait generously.
     if not wait_for_server(f"{base}/health", timeout=300):
         raise SystemExit("tracd backend did not start; see the console output above.")
 
-    webview.create_window("tracd", base, width=1360, height=860, min_size=(1024, 700))
+    print(f"tracd console: {window_url(port)}  (open this in Edge if the passkey prompt does not work in the window)")
+    webview.create_window("tracd", window_url(port), width=1360, height=860, min_size=(1024, 700))
     webview.start()
     server.should_exit = True
 

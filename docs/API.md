@@ -156,3 +156,29 @@ never sets it. Budget: 50 scored bookings, at most 2 changed fields; fewest fiel
 nothing softens the decision within the budget, `found` is false, `counterfactuals` is empty, `message` says so and
 `closest` holds the change that came nearest. 404 for an unknown decision, 409 for a replayed record without a booking.
 Red-team results with the same search: `artifacts/results_redteam.md`.
+
+## Owner passkey "was this you?" (v1.4)
+
+Design and limits: `docs/PASSKEY.md`. RP ID `localhost`; the console must be opened at `http://localhost:<port>`.
+Binary WebAuthn fields are base64url strings. The owner device is simulated by the demo laptop
+(`simulated_owner_device: true`).
+
+- `GET /passkey/accounts/{account_id}` -> `{"account_id","enrolled":true,"rp_id":"localhost","credential_id_hash","enrolled_at","simulated_owner_device":true}`
+- `POST /passkey/enroll/options {"account_id"}` -> `{"nonce_id","expires_in_s":120,"publicKey":{challenge, rp, user, pubKeyCredParams:[{"type":"public-key","alg":-7}], timeout, attestation:"none", authenticatorSelection}}`
+- `POST /passkey/enroll/verify {"nonce_id","account_id","credential":{id, rawId, type, response:{clientDataJSON, attestationObject}}}`
+  -> `{"enrolled":true,"credential_id_hash","replaced":false,"audit_hash"}` or `{"enrolled":false,"code","reason"}`. Audit `passkey_enrolled`.
+- `POST /decisions/{id}/owner_confirm/options` -> `{"nonce_id","challenge","rp_id","allow_credentials":[{"type":"public-key","id"}],"timeout","user_verification":"required","expires_in_s":120,"bound_fields":{booking_id, account_id, carrier_cost, declared_value, dest_zip3, consignee_id},"bound_fields_hash","release_action"}`.
+  `challenge = sha256(nonce || canonical JSON of bound_fields)`. 409 if the decision is not `owner_confirm`, `hold` or
+  `review`, if no passkey is enrolled for the booking's account, or if it is already confirmed.
+- `POST /decisions/{id}/owner_confirm/verify {"nonce_id","credential":{id, rawId, type, response:{clientDataJSON, authenticatorData, signature, userHandle}}}`
+  -> `{"verified":true,"released_action":"allow"|"allow_scan_gated","original_action","credential_id_hash","bound_fields_hash","sign_count","verify_ms","server_ms","audit_hash","at"}`
+  or `{"verified":false,"code","reason","audit_hash","bound_fields_hash"}`. The nonce is single use (spent on the first
+  attempt) and expires after 120 s. Audit `owner_confirmed` / `owner_confirm_failed`. `GET /decisions/{id}` gains
+  `owner_confirmation` (the same body); the decision's `action` is not rewritten.
+- `POST /decisions/{id}/owner_confirm/tamper_test {"nonce_id","credential","field":"carrier_cost","delta":100}` (text
+  fields: `"value"`) -> `{"verified":false,"code":"challenge","reason","original_fields","tampered_fields","original_bound_fields_hash","tampered_bound_fields_hash","verify_ms","audit_hash"}`.
+  Dry run on a modified copy of the booking; never releases anything. Audited as `owner_confirm_failed` with `tamper_test: true`.
+
+Config (`passkey:` in app.yaml, all optional): `rp_id`, `rp_name`, `extra_origins` (default `["http://localhost:5173"]`),
+`nonce_ttl_s` (120), `timeout_ms` (60000), `require_uv` (true), `store_dir` (default `artifacts/passkeys` next to
+`artifacts/audit`).
