@@ -1,6 +1,6 @@
 import type {
   AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, DashboardMetrics,
-  DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, Health, LearningStatus, RetrainResponse, RollbackResponse,
+  DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
 } from './types'
 
@@ -39,7 +39,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     })
   } catch {
-    throw new ApiError(0, `Cannot reach the FraudShield API (${API_LABEL}). Start the backend or run the console in mock mode.`)
+    throw new ApiError(0, `Cannot reach the tracd API (${API_LABEL}). Start the backend or run the console in mock mode.`)
   }
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`
@@ -68,10 +68,12 @@ export const api = {
   decision: (id: string) => request<DecisionDetail>(`/decisions/${encodeURIComponent(id)}`),
   analyst: (id: string, body: AnalystRequest) => post<AnalystResponse>(`/decisions/${encodeURIComponent(id)}/analyst`, body),
   ask: (id: string, body: AskRequest) => post<AskResponse>(`/decisions/${encodeURIComponent(id)}/ask`, body),
+  firstScan: (id: string, measured_weight_kg: number) =>
+    post<FirstScan>(`/decisions/${encodeURIComponent(id)}/first-scan`, { measured_weight_kg }),
   accountStory: (id: string) => request<AccountStory>(`/decisions/${encodeURIComponent(id)}/account-story`),
   checkExplanation: (id: string, text: string) =>
     post<ExplanationCheck>(`/decisions/${encodeURIComponent(id)}/explanation/check`, { text }),
-  dashboard: () => request<DashboardMetrics>('/dashboard/metrics'),
+  dashboard: (source: 'app' | 'stream' | 'all' = 'app') => request<DashboardMetrics>(`/dashboard/metrics?source=${source}`),
   auditVerify: () => request<AuditVerify>('/audit/verify'),
   learningStatus: () => request<LearningStatus>('/learning/status'),
   // advance_days: the realistic simulation only releases labels after their delays (analyst 1 day, disputes 7-60 days)

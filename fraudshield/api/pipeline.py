@@ -25,15 +25,34 @@ from fraudshield.policy.reasons import booking_signals, reason_codes
 MODE_QUESTIONS = ("foreign_senders", "payoff_max", "drop_consignee")
 
 
+HARD_SIGNALS = ("LAYA_MISUSE_AND_MODE_HIGH", "LINK_TO_CONFIRMED_FRAUD")
+SCAN_TOLERANCE_KG = 0.227   # 0.5 lb: UPS / FedEx weight tolerance is the greater of 0.5 lb or 3%
+SCAN_TOLERANCE_SHARE = 0.03
+
+
+def scan_mismatch(declared_kg: float, measured_kg: float) -> bool:
+    """True when the depot scale shows more weight than declared, beyond the carrier tolerance."""
+    return measured_kg - declared_kg > max(SCAN_TOLERANCE_KG, SCAN_TOLERANCE_SHARE * declared_kg)
+DROP_PRIOR = 0.5  # risk added by a drop-address pattern hit: misuse = 1 - (1 - p)(1 - DROP_PRIOR); fixed, not fitted
+
+
 def default_rules(booking: Booking, values: dict[str, Any], probs: dict[str, float], degraded: bool):
-    """Rules floor and hard signal. Hard signal: Laya says misuse and names a fraud mode, each >= 0.8,
-    or the booking links to confirmed fraud (DESIGN 6, phase3 3.5)."""
+    """Rules floor, hard signal and rule hits. Hard signal (needed for a block): Laya says misuse and names a fraud
+    mode, each >= 0.8, or the booking links to confirmed fraud (DESIGN 6, phase3 3.5). Soft rules
+    (fraudshield/features/mix.py): a drop-address pattern raises the risk; a parcel declared far smaller than
+    the account's usual ones gets at least a first-scan check, where the depot scale settles it."""
     hits = []
+    floor = "allow"
     if probs.get("misuse", 0) >= 0.8 and any(probs.get(q, 0) >= 0.8 for q in MODE_QUESTIONS):
         hits.append("LAYA_MISUSE_AND_MODE_HIGH")
     if float(values.get("links_confirmed_fraud", 0) or 0) >= 1:
         hits.append("LINK_TO_CONFIRMED_FRAUD")
-    return "allow", bool(hits), hits
+    if int(values.get("drop_pattern", 0) or 0):
+        hits.append("DROP_ADDRESS_PATTERN")
+    if int(values.get("under_declared", 0) or 0):
+        hits.append("UNDER_DECLARED_PARCEL")
+        floor = "allow_scan_gated"
+    return floor, any(h in HARD_SIGNALS for h in hits), hits
 
 
 def _parse_ts(s: str) -> datetime:
@@ -65,6 +84,8 @@ class Pipeline:
         self.label_store = label_store  # learning.LabelStore-like (append); None = labels only audited
         # Question model for "ask a new question" while the decision Laya is not live (stock, not fine-tuned).
         self.ask_laya = ask_laya
+        # Accounts whose parcel failed a depot weight check: their later parcels always get a first-scan check.
+        self.scan_failed_accounts: set[str] = set()
         self.id_prefix = id_prefix  # the live stream uses "str_" so its ids never collide with the main service
         self.on_label: Callable | None = None  # optional hook(label_record), e.g. the Laya export
         self.last_degraded: bool | None = None
@@ -172,6 +193,12 @@ class Pipeline:
             cal_probs, cal_info = apply_calibration(raw, self.calibration)
             probs = {q: p_yes(v) for q, v in cal_probs.items()}
         floor, hard, rule_hits = self.rules(b, values, probs, degraded)
+        if b.account_id in self.scan_failed_accounts:
+            rule_hits = [*rule_hits, "ACCOUNT_FAILED_DEPOT_SCAN"]
+            if floor == "allow":
+                floor = "allow_scan_gated"
+        if "DROP_ADDRESS_PATTERN" in rule_hits and "misuse" in probs:
+            probs = {**probs, "misuse": 1.0 - (1.0 - probs["misuse"]) * (1.0 - DROP_PRIOR)}
         at = _parse_ts(b.booked_at)
         ctx = PolicyContext(
             carrier_cost=float(b.carrier_cost),
@@ -181,6 +208,8 @@ class Pipeline:
             blocks_last_24h=self._blocks_24h(b.account_id, at), degraded=degraded,
         )
         codes, top = reason_codes(values)
+        if "ACCOUNT_FAILED_DEPOT_SCAN" in rule_hits:
+            codes = ["ACCOUNT_FAILED_DEPOT_SCAN", *codes]
         rng = random.Random(f"{self.seed}:{b.booking_id}")
         d, trace = decide_with_trace(probs, ctx, self.costs, self.policy, rng, reasons=codes)
         trace["rule_hits"] = rule_hits
@@ -230,6 +259,24 @@ class Pipeline:
             if d.action == "block":
                 self._blocks.setdefault(b.account_id, []).append(at)
         return rec
+
+    # ---------- first (depot) scan ----------
+    def record_first_scan(self, decision_id: str, measured_weight_kg: float, source: str = "depot") -> dict[str, Any]:
+        """The depot scale's reading for a booking. Weight above the declared one beyond the carrier tolerance is
+        proof of under-declaration: the account's later parcels get a first-scan check. Audited."""
+        rec = self._by_id[decision_id]
+        b = rec.get("booking") or {}
+        declared = float(b.get("weight_kg") or 0.0)
+        mismatch = scan_mismatch(declared, float(measured_weight_kg))
+        with self._lock:
+            if mismatch:
+                self.scan_failed_accounts.add(b.get("account_id"))
+            result = {"decision_id": decision_id, "declared_weight_kg": declared,
+                      "measured_weight_kg": round(float(measured_weight_kg), 3), "mismatch": mismatch, "source": source}
+            rec["first_scan"] = result
+        _, h = self.audit.append("first_scan", {**result, "booking_id": rec["booking_id"],
+                                                "account_id": b.get("account_id")})
+        return {**result, "audit_hash": h}
 
     # ---------- async explanation ----------
     def explain_decision(self, decision_id: str, use_llm: bool = True) -> None:

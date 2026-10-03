@@ -87,9 +87,9 @@ def main(argv: list[str] | None = None) -> None:
     threading.Thread(target=server.run, daemon=True).start()
     # Loading Laya on the GPU takes up to ~2 minutes on first run (model download), so wait generously.
     if not wait_for_server(f"{base}/health", timeout=300):
-        raise SystemExit("FraudShield backend did not start; see the console output above.")
+        raise SystemExit("tracd backend did not start; see the console output above.")
 
-    webview.create_window("FraudShield", base, width=1360, height=860, min_size=(1024, 700))
+    webview.create_window("tracd", base, width=1360, height=860, min_size=(1024, 700))
     webview.start()
     server.should_exit = True
 

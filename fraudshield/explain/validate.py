@@ -25,6 +25,8 @@ REASON_WORDS = {
     "CONSIGNEE_MANY_SENDERS": ["consignee"], "WEIGHT_UNUSUAL": ["weight"], "DIMS_UNUSUAL": ["dimension", "size"],
     "BURST_LAST_24H": ["24 hours", "burst"], "NEW_ACCOUNT": ["new account", "days old"],
     "UNUSUAL_HOUR": ["hour"], "LINK_TO_CONFIRMED_FRAUD": ["link"],
+    "DROP_ADDRESS_PATTERN": ["receiver", "consignee", "drop"], "UNDER_DECLARED_PARCEL": ["declared", "weight", "size"],
+    "ACCOUNT_FAILED_DEPOT_SCAN": ["depot", "weigh", "scan"],
 }
 
 

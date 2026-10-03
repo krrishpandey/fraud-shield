@@ -101,3 +101,59 @@ def test_deterministic_with_exploration_seeded(tmp_path):
     a = make_pipeline(tmp_path / "a", policy=cfg).score(make_booking(booking_id="x1"))
     b = make_pipeline(tmp_path / "b", policy=cfg).score(make_booking(booking_id="x1"))
     assert (a["action"], a["propensity"]) == (b["action"], b["propensity"])
+
+
+def _featurize_with(**extra):
+    from fraudshield.contracts import FeatureVector
+
+    def f(booking):
+        base = fakes.fake_featurize(booking).values
+        return FeatureVector(booking.booking_id, booking.booked_at, {**base, "tenure_days": 400.0, **extra})
+    return f
+
+
+def _low_gbm(fv):
+    return 0.002  # an ordinary-looking booking for the model
+
+
+def test_drop_address_pattern_raises_risk_and_is_a_named_reason(tmp_path):
+    p = make_pipeline(tmp_path, laya=fakes.DownLaya())  # backup model decides
+    p.featurize, p.gbm = _featurize_with(drop_pattern=1, under_declared=0), _low_gbm
+    d = p.score(make_booking(booking_id="drop-1"))
+    assert d["probabilities"]["misuse"] == pytest.approx(1 - (1 - 0.002) * 0.5, abs=1e-4)
+    assert d["gbm_score"] == pytest.approx(0.002, abs=1e-4)  # the model score itself is unchanged
+    assert "DROP_ADDRESS_PATTERN" in d["reasons"] and d["action"] != "allow"
+
+
+def test_under_declared_parcel_gets_at_least_a_first_scan_check(tmp_path):
+    p = make_pipeline(tmp_path, laya=fakes.DownLaya())
+    p.featurize, p.gbm = _featurize_with(drop_pattern=0, under_declared=1), _low_gbm
+    d = p.score(make_booking(booking_id="small-1"))
+    assert d["action"] != "allow" and "UNDER_DECLARED_PARCEL" in d["reasons"]
+    plain = make_pipeline(tmp_path / "b", laya=fakes.DownLaya())
+    plain.featurize, plain.gbm = _featurize_with(drop_pattern=0, under_declared=0), _low_gbm
+    assert plain.score(make_booking(booking_id="plain-1"))["action"] == "allow"
+
+
+def test_failed_depot_scan_sends_the_accounts_later_parcels_to_a_scan_check(tmp_path):
+    p = make_pipeline(tmp_path, laya=fakes.DownLaya())
+    p.featurize, p.gbm = _featurize_with(drop_pattern=0, under_declared=1), _low_gbm
+    first = p.score(make_booking(booking_id="s1", account_id="accZ", weight_kg=3.0))
+    assert first["action"] == "allow_scan_gated"
+    ok = p.record_first_scan(first["decision_id"], measured_weight_kg=3.05)  # within 0.5 lb / 3%
+    assert ok["mismatch"] is False and "accZ" not in p.scan_failed_accounts
+    bad = p.record_first_scan(first["decision_id"], measured_weight_kg=7.0)
+    assert bad["mismatch"] is True and bad["audit_hash"] and "accZ" in p.scan_failed_accounts
+    p.featurize = _featurize_with(drop_pattern=0, under_declared=0)  # the next parcel looks ordinary
+    nxt = p.score(make_booking(booking_id="s2", account_id="accZ", booked_at="2018-06-15T10:00:00"))
+    assert nxt["action"] != "allow" and "ACCOUNT_FAILED_DEPOT_SCAN" in nxt["reasons"]
+    other = p.score(make_booking(booking_id="s3", account_id="accY", booked_at="2018-06-15T10:00:00"))
+    assert other["action"] == "allow"
+
+
+def test_carrier_weight_tolerance():
+    from fraudshield.api.pipeline import scan_mismatch
+    assert scan_mismatch(10.0, 10.29) is False   # within 3%
+    assert scan_mismatch(10.0, 10.31) is True
+    assert scan_mismatch(1.0, 1.2) is False      # within 0.5 lb (0.227 kg)
+    assert scan_mismatch(1.0, 1.3) is True

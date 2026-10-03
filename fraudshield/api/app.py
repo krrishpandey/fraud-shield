@@ -106,6 +106,10 @@ class StreamStartIn(BaseModel):
     limit: int | None = None
 
 
+class ScanIn(BaseModel):
+    measured_weight_kg: float = Field(gt=0)
+
+
 class CheckIn(BaseModel):
     text: str
 
@@ -353,7 +357,7 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         except Exception as e:  # learning must never stop the decision service
             warnings.append(f"continuous learning disabled: {type(e).__name__}: {e}")
 
-    app = FastAPI(title="FraudShield decision service", version="1")
+    app = FastAPI(title="tracd decision service", version="1")
     app.state.pipeline = pipe
     app.state.learning = learning
     app.add_middleware(CORSMiddleware, allow_origins=cfg.get("cors_origins") or [], allow_methods=["*"],
@@ -410,7 +414,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     def get_decision(decision_id: str):
         rec = _get(decision_id)
         return {**public_view(rec), "booking": rec.get("booking"), "explanation": rec.get("explanation"),
-                "analyst": rec.get("analyst"), "policy_trace": rec.get("policy_trace")}
+                "analyst": rec.get("analyst"), "policy_trace": rec.get("policy_trace"),
+                "first_scan": rec.get("first_scan")}
 
     @r.post("/decisions/{decision_id}/analyst")
     def analyst(decision_id: str, body: AnalystIn):
@@ -431,6 +436,12 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         if story is None:
             raise HTTPException(503, "account history is not available in this configuration")
         return story(Booking(**rec["booking"]))
+
+    @r.post("/decisions/{decision_id}/first-scan")
+    def first_scan(decision_id: str, body: ScanIn):
+        """Depot scale reading for a booking (integration point for the carrier's scanners)."""
+        _get(decision_id)
+        return _owner(decision_id).record_first_scan(decision_id, body.measured_weight_kg)
 
     @r.post("/decisions/{decision_id}/explanation/check")
     def check_explanation(decision_id: str, body: CheckIn):
@@ -461,6 +472,14 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
 
         def send(b: Booking) -> dict:
             out = spipe.score(b)
+            if out["action"] == "allow_scan_gated":
+                # SIMULATED depot scan: the replayed dataset knows the parcel's true weight
+                it = (stream.get("truth") or {}).get(b.booking_id)
+                true_w = getattr(it, "true_weight_kg", None) or b.weight_kg
+                scan = spipe.record_first_scan(out["decision_id"], true_w, source="simulated depot scan")
+                with lock:
+                    metrics.scans["checked"] += 1
+                    metrics.scans["mismatch"] += int(scan["mismatch"])
             if out.get("explanation_status") == "pending":
                 if out["action"] in always and spipe.llm_client is not None:
                     with lock:
@@ -510,7 +529,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         metrics.explanations["llm_always_for"] = sorted(always)
         runner = StreamRunner(items, _stream_send_factory(spipe, metrics, cap, always), metrics,
                               rate=body.rate, concurrency=body.concurrency)
-        stream.update({"runner": runner, "metrics": metrics, "pipe": spipe, "seed": body.seed})
+        stream.update({"runner": runner, "metrics": metrics, "pipe": spipe, "seed": body.seed,
+                       "truth": {it.booking.booking_id: it for it in items}})
         runner.start()
         return _stream_status()
 
@@ -614,9 +634,28 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         except ValueError as e:
             raise HTTPException(409, str(e))
 
+    def _stream_records_with_truth() -> list[dict]:
+        """Streamed decisions for the dashboard. The replayed dataset's truth is attached to these copies only (the
+        decision records and the model never see it); an analyst label on a streamed decision still wins."""
+        sp, truth = stream.get("pipe"), stream.get("truth") or {}
+        out = []
+        for rec in (sp.list() if sp is not None else []):
+            it = truth.get(rec["booking_id"])
+            if it is None:
+                out.append(rec)
+                continue
+            b = dict(rec.get("booking") or {})
+            b["meta"] = {**(b.get("meta") or {}), "typology": it.typology if it.is_fraud else None,
+                         "hard_negative": bool(getattr(it, "hard_negative", False))}
+            out.append({**rec, "booking": b, "label": "fraud" if it.is_fraud else "legit",
+                        "label_source": "replayed dataset"})
+        return out
+
     @r.get("/dashboard/metrics")
-    def metrics():
-        return dashboard_metrics(pipe.list(), costs)
+    def metrics(source: Literal["app", "stream", "all"] = "app"):
+        recs = (pipe.list() if source in ("app", "all") else []) + (_stream_records_with_truth() if source in ("stream", "all") else [])
+        return {**dashboard_metrics(recs, costs), "source": source,
+                "stream_bookings": len(stream["pipe"].list()) if stream.get("pipe") is not None else 0}
 
     @r.get("/audit/verify")
     def audit_verify():

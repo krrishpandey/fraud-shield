@@ -22,3 +22,6 @@ kaggle/dist/
 # runtime decision logs (main and live stream)
 artifacts/audit/
 artifacts/feedback/
+# runtime state of the continuous-learning registry on this machine
+artifacts/models/registry.json
+artifacts/models/versions/

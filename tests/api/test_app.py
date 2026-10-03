@@ -339,3 +339,11 @@ def test_question_model_falls_back_to_stock_when_the_fine_tuned_folder_is_missin
     r = c.post(f"/decisions/{did}/ask", json=ASK)
     assert r.status_code == 200 and r.json()["answered_by"] == "stock Laya (not fine-tuned)"
     assert seen["path"] == "convaiinnovations/laya"
+
+
+def test_first_scan_route(client):
+    did = client.post("/score", json=booking_json()).json()["decision_id"]
+    r = client.post(f"/decisions/{did}/first-scan", json={"measured_weight_kg": 99.0})
+    assert r.status_code == 200 and r.json()["mismatch"] is True
+    assert client.post("/decisions/nope/first-scan", json={"measured_weight_kg": 1.0}).status_code == 404
+    assert client.post(f"/decisions/{did}/first-scan", json={"measured_weight_kg": -1}).status_code == 422

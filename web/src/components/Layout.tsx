@@ -58,7 +58,7 @@ export default function Layout() {
     <div className="flex h-screen flex-col overflow-hidden">
       {MOCK && (
         <div data-testid="mock-banner" role="note" className="shrink-0 bg-tape px-4 py-1 text-center text-[0.8rem] font-semibold text-[#14212e]">
-          Mock data: running on built-in fixtures, not the FraudShield API. All numbers are invented.
+          Mock data: running on built-in fixtures, not the tracd API. All numbers are invented.
         </div>
       )}
       <div className="flex min-h-0 flex-1">
@@ -73,7 +73,7 @@ export default function Layout() {
               <rect x="19" y="5" width="2" height="12" fill="var(--brand-ink)" />
               <rect x="23" y="5" width="1" height="12" fill="var(--brand-ink)" />
             </svg>
-            <span className="condensed text-lg font-extrabold tracking-tight">FraudShield</span>
+            <span className="condensed text-lg font-extrabold tracking-tight">tracd</span>
           </div>
           <nav aria-label="Views">
             <ul className="flex flex-col gap-0.5 px-2">

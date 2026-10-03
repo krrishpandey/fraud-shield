@@ -16,6 +16,7 @@ import pandas as pd
 
 from fraudshield.contracts import Booking, FeatureVector
 from fraudshield.data.olist import CATEGORY_VOCAB, HIGH_VALUE_CATEGORIES
+from fraudshield.features.mix import FAR_KM, account_mix, rule_flags
 from fraudshield.features.geo import dist_km
 from fraudshield.features.spec import CATEGORY_INDEX, CHANNELS, FEATURES, PAYMENTS
 from fraudshield.features.store import FeatureStore, booking_to_row, to_ts
@@ -121,6 +122,13 @@ def featurize(booking: Booking, store: FeatureStore) -> FeatureVector:
     v = raw_features(row)
     _reference_history(v, row, H, C)
     _events(v, row["account_id"], t, _entities(row), store.changes, store.confirmed)
+    if len(H):
+        hv = H.category.map(lambda c: int(_cat(c) in HIGH_VALUE_CATEGORIES)).to_numpy(float)
+        dist = np.array([dist_km(r.origin_zip3, r.origin_uf, r.dest_zip3, r.dest_uf) for r in H.itertuples()])
+        v.update(account_mix(len(H), hv.sum(), float((dist >= FAR_KM).sum()), dist.sum()))
+    else:
+        v.update(account_mix(0, 0.0, 0.0, 0.0))
+    v.update(rule_flags(v))
     return FeatureVector(booking_id=booking.booking_id, as_of=t.isoformat(), values=v)
 
 
@@ -191,7 +199,7 @@ def _reference_history(v: dict, row: dict, H: pd.DataFrame, C: pd.DataFrame) -> 
 class _Acc:
     __slots__ = ("ts", "origin", "sender", "cons", "dest", "w", "vol", "val", "cost", "hour", "exp",
                  "f_cons", "f_origin", "f_sender", "pair_cnt", "o_cnt", "o_first", "s_cnt", "s_first",
-                 "lane", "dest_cnt", "cat_cnt", "cons_seen")
+                 "lane", "dest_cnt", "cat_cnt", "cons_seen", "hv_sum", "far_sum", "dist_sum")
 
     def __init__(self):
         for s in self.__slots__[:14]:
@@ -200,6 +208,7 @@ class _Acc:
         self.o_first, self.s_first = {}, {}
         self.lane, self.dest_cnt, self.cat_cnt = Counter(), Counter(), Counter()
         self.cons_seen = set()
+        self.hv_sum = self.far_sum = self.dist_sum = 0.0
 
 
 def _stream_one(v: dict, row: dict, tn: int, a: _Acc | None, cons: tuple[list, list] | None) -> dict:
@@ -287,6 +296,7 @@ def _push(a: _Acc, row: dict, v: dict, tn: int, flags: dict) -> None:
     a.s_cnt[snd] += 1; a.s_first.setdefault(snd, tn)
     a.lane[(o, row["dest_uf"])] += 1; a.dest_cnt[row["dest_uf"]] += 1; a.cat_cnt[v["category"]] += 1
     a.cons_seen.add(row["consignee_id"])
+    a.hv_sum += v["high_value"]; a.far_sum += float(v["dist_km"] >= FAR_KM); a.dist_sum += v["dist_km"]
 
 
 def featurize_frame(df: pd.DataFrame, changes: pd.DataFrame | None = None,
@@ -332,6 +342,8 @@ def featurize_frame(df: pd.DataFrame, changes: pd.DataFrame | None = None,
                                                for c in ch_by_acc.get(acc, ())))
             v["prior_confirmed_fraud"] = conf_cnt[acc]
             v["links_confirmed_fraud"] = sum(1 for e in _entities(row) if e in conf_ent)
+            prev = accs.get(acc)
+            v.update(account_mix(len(prev.ts) if prev else 0, *((prev.hv_sum, prev.far_sum, prev.dist_sum) if prev else (0, 0, 0))))
             v["booking_id"] = row["booking_id"]
             out.append(v)
             group.append((row, v, tns[k], flags))

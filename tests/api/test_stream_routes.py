@@ -185,3 +185,18 @@ def test_held_booking_falls_back_to_the_template_when_the_llm_text_fails_the_che
         time.sleep(0.1)
     assert rows and all(r["explanation"]["source"] == "template" for r in rows)
     assert all("99999" not in r["explanation"]["text"] for r in rows)
+
+
+def test_dashboard_can_show_the_live_stream_the_app_bookings_or_both(scfg):
+    from tests.policy.fixtures import booking_json
+    c = TestClient(build_app(scfg, components=components(stream_source=source(8))))
+    c.post("/score", json=booking_json())  # one booking scored in the app
+    c.post("/stream/start", json={"rate": 200, "concurrency": 1})
+    wait_done(c)
+    app_only = c.get("/dashboard/metrics").json()  # default: the app's own bookings, as before
+    stream = c.get("/dashboard/metrics?source=stream").json()
+    both = c.get("/dashboard/metrics?source=all").json()
+    assert app_only["totals"]["bookings"] == 1 and stream["totals"]["bookings"] == 8 and both["totals"]["bookings"] == 9
+    assert stream["source"] == "stream" and stream["labels"]["sources"].get("replayed dataset", 0) == 8
+    assert stream["fpr_legit"] is not None  # truth from the replay makes the stream's numbers measurable
+    assert c.get("/dashboard/metrics?source=nope").status_code == 422

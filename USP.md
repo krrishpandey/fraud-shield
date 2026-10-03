@@ -38,7 +38,7 @@ We drafted 8 candidates and ran each through three tests:
 - **Proof:** On real Olist data, established sellers send 94.9% of bookings to postcodes they never used before. The pattern comes from the DOJ Wilson/Harrod case (stolen UPS login used to sell labels, >$900K loss) and Hao et al., ACM CCS 2015 ("Drops for Stuff").
 - **Demo moment:** Show an account's history where every booking comes from its own sender addresses, with brand-new destinations scoring as normal. Then book a parcel the account pays for on behalf of a stranger sender. The named question "is this account paying for senders outside its customer base?" jumps, and the action changes.
 - **Judge challenge:** "Your account data is synthetic. How do you know real stolen accounts look like this?"
-- **Our answer:** "The pattern comes from a prosecuted case and peer-reviewed research, the 94.9% is real data, and we report real-column results separately (LightGBM PR-AUC 0.73) so nothing synthetic is hidden."
+- **Our answer:** "The pattern comes from a prosecuted case and peer-reviewed research, the 94.9% is real data, and we report real-column results separately (PR-AUC 0.79 with the app's score, 0.74 for LightGBM alone) so nothing synthetic is hidden."
 
 ### USP 2: We price risk the way fraudsters do
 

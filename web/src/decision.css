@@ -458,3 +458,14 @@
     text-align: left;
   }
 }
+
+.scan-result {
+  padding: 0.5rem 0.7rem;
+  border-left: 4px solid var(--ok);
+  background: var(--surface);
+  font-size: 0.92rem;
+}
+.scan-result.is-bad {
+  border-left-color: var(--danger);
+  font-weight: 600;
+}

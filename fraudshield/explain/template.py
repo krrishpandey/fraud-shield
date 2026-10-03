@@ -28,6 +28,9 @@ CHECK_BY_CODE = {
     "NEW_ACCOUNT": "check the account's registration details",
     "UNUSUAL_HOUR": "check whether the account usually books at this hour",
     "LINK_TO_CONFIRMED_FRAUD": "review the linked confirmed fraud case",
+    "DROP_ADDRESS_PATTERN": "look up the other parcels going to this receiver and who paid for them",
+    "UNDER_DECLARED_PARCEL": "weigh and measure the parcel at first scan",
+    "ACCOUNT_FAILED_DEPOT_SCAN": "weigh this parcel at first scan and review the account's earlier parcels",
 }
 
 
@@ -37,7 +40,14 @@ def _fmt(v: Any) -> str:
     return str(v)
 
 
+STATE_REASONS = {  # reasons from account state rather than a feature value
+    "ACCOUNT_FAILED_DEPOT_SCAN": "a parcel from this account weighed more at the depot than was declared",
+}
+
+
 def _reason_text(code: str, value: Any, baseline: Any) -> str:
+    if code in STATE_REASONS:
+        return STATE_REASONS[code]
     r = RULES_BY_CODE.get(code)
     if r is None:
         return code.replace("_", " ").lower()

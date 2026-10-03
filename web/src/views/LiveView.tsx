@@ -424,6 +424,12 @@ export default function LiveView() {
                 <div><dt>Errors / retries</dt><dd className="tnum">{fmtInt(load?.errors)} / {fmtInt(load?.retries)}</dd></div>
                 <div><dt>Decided by the backup model</dt><dd className="tnum">{pct(metrics?.degraded_share, 0)}</dd></div>
               </dl>
+              {metrics?.scans && (
+                <p className="live-note" data-testid="live-scans">
+                  Depot scans (simulated from the dataset's true weights): {fmtInt(metrics.scans.checked)} parcels weighed,{' '}
+                  {fmtInt(metrics.scans.mismatch)} heavier than declared. Their accounts' next parcels are weighed too.
+                </p>
+              )}
               {metrics?.explanations && (
                 <p className="live-note" data-testid="live-explanations">
                   Explanations: every held or blocked booking gets one from the language model

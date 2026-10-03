@@ -111,8 +111,17 @@ def stream_source(seed: int = 0) -> list:
     from fraudshield.features.store import FeatureStore
     from fraudshield.sim.stream import StreamItem
 
+    from fraudshield.api.pipeline import DROP_PRIOR
+    from fraudshield.features.mix import rule_flags_frame
+
     truth = pd.read_parquet(PROC / "features" / "seed_0.parquet",
-                            columns=["booking_id", "split", "booked_at", "is_fraud", "typology"])
+                            columns=["booking_id", "split", "booked_at", "is_fraud", "typology",
+                                     "consignee_first_seen_days", "consignee_bookings_30d", "consignee_other_accts_30d",
+                                     "dims_z", "weight_z", "n_prior", "hn_new_state", "hn_new_seller",
+                                     "hn_billing_change", "hn_injected", "hn_multi_account_consignee"])
+    hn_cols = ["hn_new_state", "hn_new_seller", "hn_billing_change", "hn_injected", "hn_multi_account_consignee"]
+    hn_of = dict(zip(truth.booking_id, truth[hn_cols].fillna(False).astype(bool).any(axis=1)))
+    truth = truth.assign(_drop=rule_flags_frame(truth).drop_pattern)
     truth = truth[truth.split.isin(STREAM_WINDOW)].sort_values(["booked_at", "booking_id"], kind="mergesort")
     offline = pd.read_parquet(PROC / "gbm_scores_seed0.parquet", columns=["booking_id", "gbm_b2f"])
     off = dict(zip(offline.booking_id, offline.gbm_b2f))
@@ -120,6 +129,9 @@ def stream_source(seed: int = 0) -> list:
     demo = {x["booking"]["booking_id"]: x["booking"]
             for x in _json.loads((PROC / "demo_bookings.json").read_text(encoding="utf-8"))}
     items = []
+    drop_of = dict(zip(truth.booking_id, truth._drop))
+    inj = pd.read_parquet(PROC / "features" / "injected_seed_0.parquet", columns=["booking_id", "true_weight_kg"])
+    true_w = dict(zip(inj.booking_id, inj.true_weight_kg))
     for bid, fraud, typ in zip(truth.booking_id, truth.is_fraud, truth.typology):
         if bid in frame.index:
             b = FeatureStore.booking_from_row(frame.loc[bid])
@@ -127,7 +139,11 @@ def stream_source(seed: int = 0) -> list:
             b = Booking(**{**demo[bid], "meta": None})
         b = Booking(**{**b.__dict__, "meta": {"scenario": "stream", "source": "replay of seed 0 test window"}})
         items.append(StreamItem(b, is_fraud=bool(fraud), typology=str(typ) if fraud else "none",
-                                offline_score=float(off[bid]) if bid in off else None))
+                                offline_gbm=float(off[bid]) if bid in off else None,
+                                hard_negative=bool(hn_of.get(bid, False)) and not bool(fraud),
+                                true_weight_kg=float(true_w[bid]) if bid in true_w and true_w[bid] == true_w[bid] else None,
+                                offline_score=(1 - (1 - float(off[bid])) * (1 - DROP_PRIOR * drop_of[bid]))
+                                if bid in off else None))
     with _lock:
         _stream_cache[0] = items
     return items

@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LightGBM Results</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --s1: #2a78d6;  /* validation */
+    --s2: #eb6834;  /* train */
+    --s3: #1baf7a;  /* test */
+    --bar: #2a78d6;
+    --bar-dim: #b7d3f6;
+    --ref: #898781;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+      --bar: #3987e5; --bar-dim: #1c5cab;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --bar: #3987e5; --bar-dim: #1c5cab;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.7rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lede { color: var(--ink-2); max-width: 70ch; margin: 0 0 28px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  figure { margin: 0; background: var(--surface); border: 1px solid var(--grid); border-radius: 8px; padding: 18px 18px 14px; position: relative; }
+  figure h2 { font-size: 1.05rem; margin: 0 0 2px; }
+  figure .sub { color: var(--ink-2); font-size: 0.86rem; margin: 0 0 10px; }
+  figure .take { font-size: 0.9rem; margin: 10px 0 0; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tick text, .lab { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .dlab { fill: var(--ink-2); font-size: 11.5px; font-weight: 600; }
+  .vlab { fill: var(--ink); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .baseline { stroke: var(--axis); stroke-width: 1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.82rem; color: var(--ink-2); margin: 0 0 6px; }
+  .legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px;
+                         margin-right: 6px; vertical-align: middle; background: var(--c); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink);
+         border: 1px solid var(--axis); border-radius: 6px; padding: 6px 9px; font-size: 0.8rem;
+         box-shadow: 0 4px 14px rgba(0,0,0,.12); white-space: nowrap; display: none; z-index: 2; }
+  .tip b { font-variant-numeric: tabular-nums; }
+  details { margin-top: 28px; background: var(--surface); border: 1px solid var(--grid); border-radius: 8px; padding: 12px 16px; }
+  summary { cursor: pointer; font-weight: 600; }
+  table { border-collapse: collapse; margin: 10px 0 4px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 3px 12px 3px 0; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  .note { color: var(--ink-2); font-size: 0.85rem; max-width: 80ch; }
+  .why { background: var(--surface); border: 1px solid var(--grid); border-radius: 8px; padding: 14px 16px; margin: 0 0 20px; max-width: 80ch; }
+</style>
+</head>
+<body>
+<main>
+  <h1>LightGBM and the app score: how well it learns and how accurate it is</h1>
+  <p class="lede">The scoring model, measured on the test window (2018-05-15 to 2018-08-31). The "app score" is what the
+    decision service uses: LightGBM plus a drop-address rule from published research (Hao et al., CCS 2015).
+    Fraud is rare (about 1.3% of bookings), so the charts use PR-AUC, precision and recall rather than accuracy.</p>
+  <p class="why"><strong>Why not plain accuracy?</strong> A model that calls every booking legitimate is already
+    <span id="acc-trivial"></span> accurate and catches no fraud at all. PR-AUC asks the useful question: when the model
+    ranks bookings by risk, how much of the fraud sits at the top? It runs from 0 to 1, and random guessing scores
+    about <span id="prev-txt"></span>.</p>
+
+  <div class="grid">
+    <figure id="f-learn" data-png="lightgbm_learning_curve">
+      <h2>Learning curve</h2>
+      <p class="sub">PR-AUC as trees are added (seed 0 model, real data columns)</p>
+      <div class="legend" id="learn-legend"></div>
+      <svg id="learn" viewBox="0 0 480 300" role="img" aria-label="Learning curve: PR-AUC by number of trees for train, validation and test"></svg>
+      <p class="take" id="learn-take"></p>
+      <div class="tip"></div>
+    </figure>
+
+    <figure id="f-models" data-png="lightgbm_vs_rules">
+      <h2>Model comparison</h2>
+      <p class="sub">PR-AUC on the test window, mean of <span class="nseeds"></span> seeds, whiskers show ±1 sd</p>
+      <svg id="models" viewBox="0 0 480 300" role="img" aria-label="PR-AUC by model"></svg>
+      <p class="take">LightGBM on real columns scores <span id="b2r"></span>; with the drop-address rule the app scores
+        <span id="appr"></span>, more than 4 times the rules-only baseline.</p>
+      <div class="tip"></div>
+    </figure>
+
+    <figure id="f-prc" data-png="lightgbm_precision_recall">
+      <h2>Precision and recall</h2>
+      <p class="sub">App score, best precision at each level of recall; test window, seed 0 model, real columns</p>
+      <svg id="prc" viewBox="0 0 480 300" role="img" aria-label="Precision-recall curve for LightGBM"></svg>
+      <p class="take" id="prc-take"></p>
+      <div class="tip"></div>
+    </figure>
+
+    <figure id="f-types" data-png="fraud_caught_by_type">
+      <h2>Fraud caught, by type</h2>
+      <p class="sub">Share of each fraud type caught, mean of <span class="nseeds"></span> seeds, real columns. Caught = in the top 1% of risk per day, or weighed at the first depot scan</p>
+      <div class="legend" id="types-legend"></div>
+      <svg id="types" viewBox="0 0 480 330" role="img" aria-label="Share of each fraud type caught, model only and full system"></svg>
+      <p class="take" id="types-take"></p>
+      <div class="tip"></div>
+    </figure>
+  </div>
+
+  <details>
+    <summary>Data table</summary>
+    <div id="tables"></div>
+    <p class="note">Sources: artifacts/results_gbm.json (10 injection seeds) and the saved seed 0 models in
+      artifacts/models, scored on data/processed/features/seed_0.parquet. The learning curve scores the saved model
+      with its first k trees; nothing was retrained. Validation is the calibration window, which the model never
+      trained on.</p>
+  </details>
+</main>
+<script>
+const D = __DATA__;
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const f2 = (v) => v.toFixed(2), f3 = (v) => v.toFixed(3), pct = (v, d = 1) => (v * 100).toFixed(d) + "%";
+document.querySelectorAll(".nseeds").forEach((n) => (n.textContent = D.n_seeds));
+document.getElementById("acc-trivial").textContent = pct(1 - D.prevalence_mean);
+document.getElementById("prev-txt").textContent = f3(D.prevalence_mean);
+
+function tipFor(svgId) {
+  const fig = document.getElementById(svgId).closest("figure");
+  const tip = fig.querySelector(".tip");
+  return {
+    show(html, evt) {
+      tip.innerHTML = html; tip.style.display = "block";
+      const r = fig.getBoundingClientRect();
+      let x = evt.clientX - r.left + 14, y = evt.clientY - r.top - 10;
+      if (x + tip.offsetWidth > r.width - 6) x = evt.clientX - r.left - tip.offsetWidth - 14;
+      tip.style.left = x + "px"; tip.style.top = y + "px";
+    },
+    hide() { tip.style.display = "none"; },
+  };
+}
+function axes(svg, x0, x1, y0, y1, yTicks, yFmt) {
+  const g = el("g", {}, svg);
+  yTicks.forEach((t) => {
+    const y = y0.scale(t);
+    el("line", { x1: x0.px, x2: x1.px, y1: y, y2: y, class: "gridline" }, g);
+    const tx = el("text", { x: x0.px - 8, y: y + 4, "text-anchor": "end", class: "lab" }, g);
+    tx.textContent = yFmt(t);
+  });
+  return g;
+}
+
+/* 1. Learning curve */
+(function () {
+  const svg = document.getElementById("learn"), L = D.learning, tip = tipFor("learn");
+  const m = { l: 42, r: 82, t: 10, b: 34 }, W = 480, H = 300;
+  const xs = (v) => m.l + (v / 400) * (W - m.l - m.r);
+  const ymin = 0.6, ys = (v) => m.t + (1 - (v - ymin) / (1 - ymin)) * (H - m.t - m.b);
+  [0.6, 0.7, 0.8, 0.9, 1.0].forEach((t) => {
+    el("line", { x1: m.l, x2: W - m.r, y1: ys(t), y2: ys(t), class: t === 0.6 ? "baseline" : "gridline" }, svg);
+    el("text", { x: m.l - 8, y: ys(t) + 4, "text-anchor": "end", class: "lab" }, svg).textContent = t.toFixed(1);
+  });
+  [0, 100, 200, 300, 400].forEach((t) => {
+    el("text", { x: xs(t), y: H - m.b + 18, "text-anchor": "middle", class: "lab" }, svg).textContent = t;
+  });
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 2, "text-anchor": "middle", class: "lab" }, svg).textContent = "Number of trees";
+  // plateau marker
+  el("line", { x1: xs(40), x2: xs(40), y1: m.t, y2: H - m.b, stroke: "var(--axis)", "stroke-dasharray": "3 3" }, svg);
+  el("text", { x: xs(40) + 6, y: ys(0.86), class: "lab" }, svg).textContent = "validation levels off near 40 trees";
+  const series = [["train", "Train", "var(--s2)"], ["cal", "Validation", "var(--s1)"], ["test", "Test", "var(--s3)"]];
+  const legend = document.getElementById("learn-legend");
+  const ends = [];
+  series.forEach(([k, name, c]) => {
+    const d = L.map((r, i) => `${i ? "L" : "M"}${xs(r.trees).toFixed(1)},${ys(r[k]).toFixed(1)}`).join("");
+    el("path", { d, fill: "none", stroke: c, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    const last = L[L.length - 1];
+    ends.push({ y: ys(last[k]), text: `${name} ${f2(last[k])}`, c });
+    const s = document.createElement("span"); s.style.setProperty("--c", c); s.textContent = name; legend.appendChild(s);
+  });
+  ends.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
+  ends.forEach((e) => { el("text", { x: W - m.r + 6, y: e.y + 4, class: "dlab" }, svg).textContent = e.text; });
+  // crosshair hover
+  const cross = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-2)", "stroke-width": 1, opacity: 0 }, svg);
+  const dots = series.map(([, , c]) => el("circle", { r: 4.5, fill: c, stroke: "var(--surface)", "stroke-width": 2, opacity: 0 }, svg));
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }, svg);
+  hit.addEventListener("mousemove", (evt) => {
+    const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const r = L.reduce((a, b) => (Math.abs(xs(b.trees) - p.x) < Math.abs(xs(a.trees) - p.x) ? b : a));
+    cross.setAttribute("x1", xs(r.trees)); cross.setAttribute("x2", xs(r.trees)); cross.setAttribute("opacity", 0.5);
+    series.forEach(([k], i) => { dots[i].setAttribute("cx", xs(r.trees)); dots[i].setAttribute("cy", ys(r[k])); dots[i].setAttribute("opacity", 1); });
+    tip.show(`${r.trees} trees<br>Train <b>${f3(r.train)}</b><br>Validation <b>${f3(r.cal)}</b><br>Test <b>${f3(r.test)}</b>`, evt);
+  });
+  hit.addEventListener("mouseleave", () => { tip.hide(); cross.setAttribute("opacity", 0); dots.forEach((d) => d.setAttribute("opacity", 0)); });
+  const at40 = L.find((r) => r.trees === 40), last = L[L.length - 1];
+  document.getElementById("learn-take").textContent =
+    `Training PR-AUC reaches ${f2(last.train)}: the model fits its training data perfectly. Validation rises to ${f2(at40.cal)} by 40 trees ` +
+    `and ends at ${f2(last.cal)} with 400, so the extra trees neither help nor hurt much. Test ends at ${f2(last.test)}.`;
+})();
+
+/* horizontal bars with whiskers */
+function hbars(id, rows, opts) {
+  const svg = document.getElementById(id), tip = tipFor(id);
+  const m = { l: opts.left, r: 46, t: 6, b: 30 }, W = 480, H = 300;
+  const xs = (v) => m.l + v * (W - m.l - m.r);
+  const band = (H - m.t - m.b) / rows.length, bh = Math.min(22, band * 0.62);
+  [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
+    el("line", { x1: xs(t), x2: xs(t), y1: m.t, y2: H - m.b, class: t === 0 ? "baseline" : "gridline" }, svg);
+    el("text", { x: xs(t), y: H - m.b + 16, "text-anchor": "middle", class: "lab" }, svg).textContent = t === 0 || t === 1 ? t : t.toFixed(2);
+  });
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 1, "text-anchor": "middle", class: "lab" }, svg).textContent = "PR-AUC";
+  if (opts.ref != null) {
+    el("line", { x1: xs(opts.ref), x2: xs(opts.ref), y1: m.t, y2: H - m.b, stroke: "var(--ref)", "stroke-dasharray": "2 3" }, svg);
+  }
+  rows.forEach((r, i) => {
+    const yc = m.t + band * i + band / 2, y = yc - bh / 2;
+    el("text", { x: m.l - 8, y: yc + 4, "text-anchor": "end", class: r.strong ? "dlab" : "lab" }, svg).textContent = r.label;
+    const w = Math.max(xs(r.mean) - xs(0), 1);
+    // square at the baseline, 4px rounded data end
+    const path = `M${xs(0)},${y}h${Math.max(w - 4, 0)}a4,4 0 0 1 4,4v${bh - 8}a4,4 0 0 1 -4,4h${-Math.max(w - 4, 0)}z`;
+    const bar = el("path", { d: path, fill: r.dim ? "var(--bar-dim)" : "var(--bar)" }, svg);
+    if (r.hatch) bar.setAttribute("fill", "url(#hatch)");
+    const lo = Math.max(r.mean - r.sd, 0), hi = Math.min(r.mean + r.sd, 1);
+    el("line", { x1: xs(lo), x2: xs(hi), y1: yc, y2: yc, stroke: "var(--ink-2)", "stroke-width": 1.25 }, svg);
+    [lo, hi].forEach((v) => el("line", { x1: xs(v), x2: xs(v), y1: yc - 4, y2: yc + 4, stroke: "var(--ink-2)", "stroke-width": 1.25 }, svg));
+    el("text", { x: xs(hi) + 6, y: yc + 4, class: "vlab" }, svg).textContent = f2(r.mean);
+    const hitbox = el("rect", { x: m.l, y: m.t + band * i, width: W - m.l - m.r, height: band, fill: "transparent" }, svg);
+    hitbox.addEventListener("mousemove", (evt) => tip.show(`${r.full || r.label}<br>PR-AUC <b>${f3(r.mean)}</b> ± ${f3(r.sd)}`, evt));
+    hitbox.addEventListener("mouseleave", () => tip.hide());
+  });
+  if (opts.ref != null) {
+    el("text", { x: xs(opts.ref) + 4, y: H - m.b - 4, class: "lab" }, svg).textContent = opts.refLabel;
+  }
+  return svg;
+}
+
+/* 2. Model comparison */
+(function () {
+  const S = D.summary;
+  const rows = [
+    { label: "Rules only", full: "Rules only (B0), real columns", mean: S.B0_R.pr_auc[0], sd: S.B0_R.pr_auc[1], dim: true },
+    { label: "Booking fields only", full: "LightGBM on booking fields only (B1), real columns", mean: S.B1_R.pr_auc[0], sd: S.B1_R.pr_auc[1], dim: true },
+    { label: "LightGBM, real columns", full: "LightGBM with account history (B2), real columns", mean: S.B2_R.pr_auc[0], sd: S.B2_R.pr_auc[1], strong: true },
+    { label: "App score, real columns", full: "LightGBM + drop-address rule (what the app uses), real columns", mean: S.APP_R.pr_auc[0], sd: S.APP_R.pr_auc[1], strong: true },
+  ];
+  hbars("models", rows, { left: 148, ref: D.prevalence_mean, refLabel: "random" });
+  document.getElementById("b2r").textContent = f2(S.B2_R.pr_auc[0]);
+  document.getElementById("appr").textContent = f2(S.APP_R.pr_auc[0]);
+})();
+
+/* 3. Precision-recall curve */
+(function () {
+  const svg = document.getElementById("prc"), P = D.prc, tip = tipFor("prc");
+  const m = { l: 42, r: 20, t: 10, b: 34 }, W = 480, H = 300;
+  const xs = (v) => m.l + v * (W - m.l - m.r), ys = (v) => m.t + (1 - v) * (H - m.t - m.b);
+  [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
+    el("line", { x1: m.l, x2: W - m.r, y1: ys(t), y2: ys(t), class: t === 0 ? "baseline" : "gridline" }, svg);
+    el("text", { x: m.l - 8, y: ys(t) + 4, "text-anchor": "end", class: "lab" }, svg).textContent = t === 0 || t === 1 ? t : t.toFixed(2);
+    el("text", { x: xs(t), y: H - m.b + 18, "text-anchor": "middle", class: "lab" }, svg).textContent = t === 0 || t === 1 ? t : t.toFixed(2);
+  });
+  el("text", { x: (m.l + W - m.r) / 2, y: H - 2, "text-anchor": "middle", class: "lab" }, svg).textContent = "Recall: share of fraud caught";
+  el("text", { x: 12, y: (m.t + H - m.b) / 2, "text-anchor": "middle", class: "lab", transform: `rotate(-90 12 ${(m.t + H - m.b) / 2})` }, svg).textContent = "Precision";
+  el("line", { x1: m.l, x2: W - m.r, y1: ys(P.prevalence), y2: ys(P.prevalence), stroke: "var(--ref)", "stroke-dasharray": "2 3" }, svg);
+  el("text", { x: m.l + 6, y: ys(P.prevalence) - 5, class: "lab" }, svg).textContent = `random guessing (${pct(P.prevalence)})`;
+  const pts = P.recall.map((r, i) => [r, P.precision[i]]).sort((a, b) => a[0] - b[0]);
+  const d = pts.map(([r, p], i) => `${i ? "L" : "M"}${xs(r).toFixed(1)},${ys(p).toFixed(1)}`).join("");
+  el("path", { d, fill: "none", stroke: "var(--s1)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  const dot = el("circle", { r: 4.5, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2, opacity: 0 }, svg);
+  const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }, svg);
+  hit.addEventListener("mousemove", (evt) => {
+    const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const q = pts.reduce((a, b) => (Math.abs(xs(b[0]) - p.x) < Math.abs(xs(a[0]) - p.x) ? b : a));
+    dot.setAttribute("cx", xs(q[0])); dot.setAttribute("cy", ys(q[1])); dot.setAttribute("opacity", 1);
+    tip.show(`Recall <b>${f2(q[0])}</b><br>Precision <b>${f2(q[1])}</b>`, evt);
+  });
+  hit.addEventListener("mouseleave", () => { tip.hide(); dot.setAttribute("opacity", 0); });
+  const at = (rr) => pts.find((q) => Math.abs(q[0] - rr) < 1e-9)[1];
+  document.getElementById("prc-take").textContent =
+    `Precision stays above ${f2(at(0.6))} until ${pct(0.6, 0)} of fraud is caught, then drops quickly. PR-AUC ${f2(P.pr_auc)} ` +
+    `(${P.n_fraud} fraud bookings among ${P.n_test.toLocaleString()}). The headline numbers use a stricter setting, flagging a fixed 1% ` +
+    `of bookings every day: there this model catches ${pct(P.op_recall, 0)} of fraud bookings and ${pct(P.op_precision, 0)} of its flags are fraud.`;
+})();
+
+/* 4. Share caught by type: model only vs full system */
+(function () {
+  const C = D.caught_by_type, svg = document.getElementById("types"), tip = tipFor("types");
+  const names = { T1: "Label-resale takeover", T2: "Bust-out new account", T3: "Reshipping drops*", T4: "Cost-maximizing takeover",
+                  T5: "Test then burst*", T6: "Weight manipulation", T7: "Third-party billing" };
+  const W = 480, H = 330, m = { l: 150, r: 46, t: 4, b: 30 }, keys = Object.keys(C);
+  const xs = (v) => m.l + v * (W - m.l - m.r), band = (H - m.t - m.b) / keys.length, bh = Math.min(11, band * 0.32);
+  const L = document.getElementById("types-legend");
+  [["Model only", "var(--bar-dim)"], ["Full system (drop rule, first-scan check, depot follow-up)", "var(--s1)"]].forEach(([n, c]) => {
+    const sp = document.createElement("span"); sp.style.setProperty("--c", c); sp.textContent = n; L.appendChild(sp); });
+  [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
+    el("line", { x1: xs(t), x2: xs(t), y1: m.t, y2: H - m.b, class: t === 0 ? "baseline" : "gridline" }, svg);
+    el("text", { x: xs(t), y: H - m.b + 16, "text-anchor": "middle", class: "lab" }, svg).textContent = Math.round(t * 100) + "%";
+  });
+  keys.forEach((k, i) => {
+    const y0 = m.t + band * i + band / 2 - bh - 1;
+    el("text", { x: m.l - 8, y: y0 + bh + 4, "text-anchor": "end", class: "lab" }, svg).textContent = `${k} ${names[k]}`;
+    [[C[k].model, "var(--bar-dim)"], [C[k].system, "var(--s1)"]].forEach(([v, c], j) => {
+      const y = y0 + j * (bh + 2), w = Math.max(xs(v) - xs(0), 1.5);
+      el("path", { d: `M${xs(0)},${y}h${Math.max(w - 3, 0)}a3,3 0 0 1 3,3v${bh - 6}a3,3 0 0 1 -3,3h${-Math.max(w - 3, 0)}z`, fill: c }, svg);
+      el("text", { x: xs(v) + 5, y: y + bh - 2, class: "vlab" }, svg).textContent = Math.round(v * 100) + "%";
+    });
+    const hit = el("rect", { x: m.l, y: m.t + band * i, width: W - m.l - m.r, height: band, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", (e) => tip.show(`${k} ${names[k]}<br>Model only <b>${Math.round(C[k].model * 100)}%</b><br>Full system <b>${Math.round(C[k].system * 100)}%</b>`, e));
+    hit.addEventListener("mouseleave", () => tip.hide());
+  });
+  document.getElementById("types-take").textContent =
+    `Reshipping drops: ${Math.round(C.T3.model * 100)}% to ${Math.round(C.T3.system * 100)}% (still never trained on). Weight manipulation: ` +
+    `${Math.round(C.T6.model * 100)}% to ${Math.round(C.T6.system * 100)}%, caught by the depot scale. * = held out of training. ` +
+    `Cost: ${(D.system_r.honest_scan * 100).toFixed(1)}% of honest parcels are weighed at the depot; ${(D.system_r.honest_stopped * 100).toFixed(1)}% are stopped.`;
+})();
+
+/* data tables */
+(function () {
+  const S = D.summary;
+  const t1 = ["<table><tr><th>Trees</th><th>Train</th><th>Validation</th><th>Test</th></tr>",
+    ...D.learning.map((r) => `<tr><td>${r.trees}</td><td>${f3(r.train)}</td><td>${f3(r.cal)}</td><td>${f3(r.test)}</td></tr>`), "</table>"].join("");
+  const lab = { B0_R: "Rules only (real)", B1_R: "Booking fields only (real)", B2_R: "LightGBM (real columns)", B2_F: "LightGBM (all columns)" };
+  const t2 = ["<table><tr><th>Model</th><th>PR-AUC</th><th>Precision top 1%/day</th><th>Recall top 1%/day</th><th>Campaign recall</th><th>False positives, legit</th></tr>",
+    ...Object.keys(lab).map((k) => `<tr><td>${lab[k]}</td><td>${f3(S[k].pr_auc[0])} ± ${f3(S[k].pr_auc[1])}</td><td>${f2(S[k].prec_top1pct_day[0])}</td><td>${f2(S[k].rec_top1pct_day[0])}</td><td>${f2(S[k].campaign_recall[0])}</td><td>${pct(S[k].fpr_legit[0])}</td></tr>`), "</table>"].join("");
+  const t3 = ["<table><tr><th>Fraud type</th><th>PR-AUC (real)</th><th>PR-AUC (all)</th></tr>",
+    ...["T1", "T2", "T3", "T4", "T5", "T6", "T7"].map((t) => `<tr><td>${t}${t === "T3" || t === "T5" ? " (held out)" : ""}</td><td>${f3(S.B2_R["pr_auc_" + t][0])}</td><td>${f3(S.B2_F["pr_auc_" + t][0])}</td></tr>`), "</table>"].join("");
+  document.getElementById("tables").innerHTML = "<h3>Learning curve (seed 0)</h3>" + t1 + "<h3>Models (mean of " + D.n_seeds + " seeds)</h3>" + t2 + "<h3>By fraud type, LightGBM</h3>" + t3;
+})();
+</script>
+</body>
+</html>

@@ -39,7 +39,9 @@ def test_booking_signals_never_use_meta():
 
 
 def test_rules_use_feature_spec_names_and_per_booking_baseline():
+    from fraudshield.features.mix import RULE_FLAGS
     from fraudshield.features.spec import FEATURES
-    assert {r.feature for r in REASON_RULES} - {"sender_differs"} <= set(FEATURES)
+    assert {r.feature for r in REASON_RULES} - {"sender_differs"} <= set(FEATURES) | set(RULE_FLAGS)
+    assert not set(RULE_FLAGS) & set(FEATURES)  # rule flags never feed the model
     _, top = reason_codes({"new_senders_l10": 6, "base_senders_l10": 0.4})
     assert top[0]["baseline"] == 0.4

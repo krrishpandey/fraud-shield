@@ -383,6 +383,58 @@ function AnalystPanel({ d, onDone }: { d: DecisionDetail; onDone: () => void }) 
   )
 }
 
+/* ---------- Depot scan (first-scan check) ---------- */
+
+function DepotScan({ d, onDone }: { d: DecisionDetail; onDone: () => void }) {
+  const declared = d.booking?.weight_kg ?? 0
+  const [w, setW] = useState(String(declared))
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const scan = d.first_scan
+  const send = async () => {
+    setBusy(true)
+    setErr(null)
+    try {
+      await api.firstScan(d.decision_id, Number(w))
+      onDone()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="mt-6 max-w-[60ch]" data-testid="depot-scan">
+      <h2 className="verdict-h2">Depot scan</h2>
+      {scan ? (
+        <p className={`scan-result${scan.mismatch ? ' is-bad' : ''}`} data-testid="depot-scan-result" data-mismatch={scan.mismatch} role="status">
+          {scan.mismatch
+            ? `Failed: declared ${scan.declared_weight_kg} kg, the scale read ${scan.measured_weight_kg} kg. Held at the depot; this account's next parcels are weighed too.`
+            : `Passed: declared ${scan.declared_weight_kg} kg, the scale read ${scan.measured_weight_kg} kg (within 0.5 lb or 3%).`}
+          {scan.source !== 'depot' && <span className="muted"> ({scan.source})</span>}
+        </p>
+      ) : (
+        <>
+          <p className="text-[0.85rem] text-ink-2">
+            The label was issued with a check at first scan. Enter what the depot scale reads (declared {declared} kg).
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label htmlFor="scan-w" className="sr-only">Measured weight in kg</label>
+            <input id="scan-w" className="field" style={{ width: '8rem' }} type="number" min="0.01" step="0.01" value={w}
+              onChange={(e) => setW(e.target.value)} data-testid="depot-scan-input" />
+            <span className="text-[0.85rem] text-ink-2">kg</span>
+            <button type="button" className="btn btn-primary" disabled={busy || !(Number(w) > 0)} onClick={send}
+              data-testid="depot-scan-record">
+              {busy ? 'Recording...' : 'Record first scan'}
+            </button>
+          </div>
+          {err && <p className="mt-2 text-[0.85rem] text-danger" role="alert">{err}</p>}
+        </>
+      )}
+    </div>
+  )
+}
+
 /* ---------- Page ---------- */
 
 const short = (id: string, n = 8) => (id.length > n ? id.slice(0, n) : id)
@@ -444,6 +496,7 @@ export default function DecisionView() {
               </ul>
             </div>
           )}
+          {(d.action === 'allow_scan_gated' || d.first_scan) && <DepotScan d={d} onDone={reload} />}
           <div className="mt-6 max-w-[60ch]" data-testid="analyst-panel">
             <h2 className="verdict-h2">Your decision as the analyst</h2>
             <AnalystPanel d={d} onDone={reload} />

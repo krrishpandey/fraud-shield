@@ -1,0 +1,66 @@
+{
+ "laya": {
+  "B2 GBM+graph (F)": {
+   "pr_auc": [
+    0.7765,
+    0.0311
+   ]
+  },
+  "B3 Laya stock zero-shot": {
+   "pr_auc": [
+    0.0184,
+    0.0032
+   ]
+  },
+  "M1 Laya fine-tuned": {
+   "pr_auc": [
+    0.2646,
+    0.0325
+   ]
+  }
+ },
+ "zero_shot": {
+  "B3": {
+   "auc": 0.4883,
+   "ci": [
+    0.4365,
+    0.5329
+   ]
+  },
+  "M1": {
+   "auc": 0.6033,
+   "ci": [
+    0.5523,
+    0.6608
+   ]
+  },
+  "B2_general_score": {
+   "auc": 0.8781,
+   "ci": [
+    0.8164,
+    0.9283
+   ]
+  }
+ },
+ "ece": {
+  "misuse": {
+   "stock": 0.6008,
+   "ft": 0.004
+  },
+  "foreign_senders": {
+   "stock": 0.5524,
+   "ft": 0.001
+  },
+  "payoff_max": {
+   "stock": 0.4826,
+   "ft": 0.0122
+  }
+ },
+ "gate": {
+  "catch_before": 0.28,
+  "catch_after": 0.69,
+  "fp_before": 0.0051,
+  "fp_after": 0.0248,
+  "fp_limit": 0.0101
+ }
+}

@@ -84,6 +84,15 @@ export interface DecisionDetail extends ScoreResponse {
   explanation: Explanation | null
   analyst: AnalystRecord | null
   policy_trace?: PolicyTrace | null
+  first_scan?: FirstScan | null
+}
+
+export interface FirstScan {
+  declared_weight_kg: number
+  measured_weight_kg: number
+  mismatch: boolean
+  source: string
+  audit_hash?: string
 }
 
 /** GET /decisions/{id}/account-story: the account's own bookings as of this booking. */
@@ -156,6 +165,8 @@ export interface AskResponse {
 }
 
 export interface DashboardMetrics {
+  source?: 'app' | 'stream' | 'all'
+  stream_bookings?: number
   window: { from: string; to: string }
   totals: { bookings: number; by_action: Partial<Record<Action, number>> }
   held_shipments: number
@@ -304,6 +315,7 @@ export interface StreamMetricsResponse {
   offline_full?: StreamAccuracy | null
   consistency?: { n_compared: number; max_abs_score_diff: number }
   explanations?: { llm: number; template: number; llm_cap_per_min: number | null; llm_held_blocked?: number }
+  scans?: { checked: number; mismatch: number }
   errors?: { booking_id: string; error: string }[]
 }
 export interface StreamFeedRow {

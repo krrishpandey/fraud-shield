@@ -47,6 +47,11 @@ REASON_RULES: tuple[ReasonRule, ...] = (
     ReasonRule("UNUSUAL_HOUR", "hour_pct", "<=", 2.0, 50.0, "the booking hour is at percentile {v} of the account's hours"),
     ReasonRule("LINK_TO_CONFIRMED_FRAUD", "links_confirmed_fraud", ">=", 1.0, 0.0,
                "the booking has {v} links to confirmed fraud cases"),
+    ReasonRule("DROP_ADDRESS_PATTERN", "drop_pattern", ">=", 1.0, 0.0,
+               "the receiver looks like a reshipping drop: first seen recently, already receiving parcels "
+               "paid by several other accounts"),
+    ReasonRule("UNDER_DECLARED_PARCEL", "under_declared", ">=", 1.0, 0.0,
+               "the declared weight and size are far below this account's usual parcels"),
 )
 RULES_BY_CODE = {r.code: r for r in REASON_RULES}
 
@@ -109,6 +114,9 @@ REASON_PLAIN: dict[str, str] = {
     "NEW_ACCOUNT": "Account is less than 30 days old",
     "UNUSUAL_HOUR": "Booked at an hour this account rarely uses",
     "LINK_TO_CONFIRMED_FRAUD": "Linked to a confirmed fraud case",
+    "DROP_ADDRESS_PATTERN": "Receiver looks like a reshipping drop",
+    "UNDER_DECLARED_PARCEL": "Declared weight and size far below the account's usual parcels",
+    "ACCOUNT_FAILED_DEPOT_SCAN": "A parcel from this account failed a depot weight check",
 }
 
 

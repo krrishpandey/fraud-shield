@@ -71,8 +71,9 @@
 </head>
 <body>
 <main>
-  <h1>LightGBM: how well it learns and how accurate it is</h1>
-  <p class="lede">FraudShield's backup scoring model, measured on the test window (2018-05-15 to 2018-08-31).
+  <h1>LightGBM and the app score: how well it learns and how accurate it is</h1>
+  <p class="lede">The scoring model, measured on the test window (2018-05-15 to 2018-08-31). The "app score" is what the
+    decision service uses: LightGBM plus a drop-address rule from published research (Hao et al., CCS 2015).
     Fraud is rare (about 1.3% of bookings), so the charts use PR-AUC, precision and recall rather than accuracy.</p>
   <p class="why"><strong>Why not plain accuracy?</strong> A model that calls every booking legitimate is already
     <span id="acc-trivial"></span> accurate and catches no fraud at all. PR-AUC asks the useful question: when the model
@@ -93,24 +94,25 @@
       <h2>Model comparison</h2>
       <p class="sub">PR-AUC on the test window, mean of <span class="nseeds"></span> seeds, whiskers show ±1 sd</p>
       <svg id="models" viewBox="0 0 480 300" role="img" aria-label="PR-AUC by model"></svg>
-      <p class="take">LightGBM on real columns scores <span id="b2r"></span>, about 4 times the rules-only baseline.</p>
+      <p class="take">LightGBM on real columns scores <span id="b2r"></span>; with the drop-address rule the app scores
+        <span id="appr"></span>, more than 4 times the rules-only baseline.</p>
       <div class="tip"></div>
     </figure>
 
     <figure id="f-prc" data-png="lightgbm_precision_recall">
       <h2>Precision and recall</h2>
-      <p class="sub">Best precision at each level of recall; test window, seed 0 model, real data columns</p>
+      <p class="sub">App score, best precision at each level of recall; test window, seed 0 model, real columns</p>
       <svg id="prc" viewBox="0 0 480 300" role="img" aria-label="Precision-recall curve for LightGBM"></svg>
       <p class="take" id="prc-take"></p>
       <div class="tip"></div>
     </figure>
 
-    <figure id="f-types" data-png="lightgbm_by_fraud_type">
-      <h2>Accuracy by fraud type</h2>
-      <p class="sub">PR-AUC per fraud type, mean of <span class="nseeds"></span> seeds, real data columns</p>
-      <svg id="types" viewBox="0 0 480 300" role="img" aria-label="PR-AUC by fraud type"></svg>
-      <p class="take">Strong on account takeovers (T1) and third-party billing (T7). Weak on the held-out reshipping
-        drops (T3) and on weight manipulation (T6), which is only visible at the first depot scan.</p>
+    <figure id="f-types" data-png="fraud_caught_by_type">
+      <h2>Fraud caught, by type</h2>
+      <p class="sub">Share of each fraud type caught, mean of <span class="nseeds"></span> seeds, real columns. Caught = in the top 1% of risk per day, or weighed at the first depot scan</p>
+      <div class="legend" id="types-legend"></div>
+      <svg id="types" viewBox="0 0 480 330" role="img" aria-label="Share of each fraud type caught, model only and full system"></svg>
+      <p class="take" id="types-take"></p>
       <div class="tip"></div>
     </figure>
   </div>
@@ -125,7 +127,7 @@
   </details>
 </main>
 <script>
-const D = {"learning":[{"trees":5,"train":0.8343,"cal":0.6651,"test":0.6286},{"trees":10,"train":0.8743,"cal":0.7251,"test":0.6691},{"trees":20,"train":0.9149,"cal":0.7572,"test":0.7023},{"trees":30,"train":0.9432,"cal":0.7685,"test":0.7099},{"trees":40,"train":0.9708,"cal":0.7709,"test":0.71},{"trees":60,"train":0.9892,"cal":0.7746,"test":0.7078},{"trees":80,"train":0.9961,"cal":0.7716,"test":0.7039},{"trees":100,"train":0.9984,"cal":0.7721,"test":0.7021},{"trees":130,"train":0.9998,"cal":0.7729,"test":0.7025},{"trees":160,"train":1.0,"cal":0.7749,"test":0.7047},{"trees":200,"train":1.0,"cal":0.775,"test":0.7041},{"trees":250,"train":1.0,"cal":0.7777,"test":0.7052},{"trees":300,"train":1.0,"cal":0.7795,"test":0.7063},{"trees":350,"train":1.0,"cal":0.7799,"test":0.7063},{"trees":400,"train":1.0,"cal":0.7828,"test":0.706}],"prc":{"recall":[0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.0],"precision":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.9904,0.9904,0.973,0.973,0.9661,0.9661,0.9577,0.9577,0.9577,0.9577,0.9577,0.9577,0.9577,0.9577,0.9456,0.94,0.929,0.9268,0.9268,0.9268,0.9249,0.9249,0.9153,0.8973,0.8973,0.8848,0.8473,0.8406,0.7973,0.7939,0.732,0.7227,0.6886,0.637,0.5951,0.5782,0.5223,0.4016,0.3445,0.3175,0.2561,0.2072,0.1809,0.1542,0.1346,0.0973,0.0826,0.0751,0.0672,0.0565,0.0513,0.0404,0.0387,0.0378,0.0301,0.0277,0.0252,0.0225,0.0195,0.0176,0.0159,0.0143,0.0132,0.0124,0.0123],"pr_auc":0.706,"op_precision":0.4708,"op_recall":0.4094,"prevalence":0.012,"n_test":22925,"n_fraud":276},"summary":{"B0_R":{"pr_auc":[0.1678,0.0409],"prec_top1pct_day":[0.2662,0.034],"rec_top1pct_day":[0.2135,0.0197],"campaign_recall":[0.5867,0.0834],"fpr_legit":[0.0077,0.0004],"pr_auc_T1":[0.1688,0.0515],"pr_auc_T2":[0.0058,0.0013],"pr_auc_T3":[0.0857,0.0342],"pr_auc_T4":[0.0358,0.0359],"pr_auc_T5":[0.1055,0.0441],"pr_auc_T6":[0.0014,0.0001],"pr_auc_T7":[0.0108,0.0102]},"B1_R":{"pr_auc":[0.0863,0.0251],"prec_top1pct_day":[0.1595,0.031],"rec_top1pct_day":[0.1287,0.0264],"campaign_recall":[0.6233,0.0649],"fpr_legit":[0.0088,0.0003],"pr_auc_T1":[0.0304,0.0202],"pr_auc_T2":[0.0474,0.0325],"pr_auc_T3":[0.002,0.0008],"pr_auc_T4":[0.0809,0.0497],"pr_auc_T5":[0.0222,0.0179],"pr_auc_T6":[0.0041,0.003],"pr_auc_T7":[0.0148,0.0108]},"B2_R":{"pr_auc":[0.7335,0.0422],"prec_top1pct_day":[0.5482,0.0471],"rec_top1pct_day":[0.4405,0.0279],"campaign_recall":[0.8667,0.0629],"fpr_legit":[0.0047,0.0005],"pr_auc_T1":[0.9609,0.0221],"pr_auc_T2":[0.3774,0.0989],"pr_auc_T3":[0.2167,0.1588],"pr_auc_T4":[0.6023,0.0971],"pr_auc_T5":[0.7546,0.0593],"pr_auc_T6":[0.0198,0.027],"pr_auc_T7":[0.8545,0.1166]},"B2_F":{"pr_auc":[0.7728,0.0389],"prec_top1pct_day":[0.5688,0.0525],"rec_top1pct_day":[0.4568,0.0299],"campaign_recall":[0.87,0.0711],"fpr_legit":[0.0045,0.0006],"pr_auc_T1":[0.9982,0.0048],"pr_auc_T2":[0.6347,0.204],"pr_auc_T3":[0.3075,0.1911],"pr_auc_T4":[0.5908,0.1491],"pr_auc_T5":[0.8014,0.0287],"pr_auc_T6":[0.0215,0.0282],"pr_auc_T7":[0.9927,0.0111]}},"n_seeds":10,"prevalence_mean":0.0129};
+const D = {"learning":[{"trees":5,"train":0.8467,"cal":0.6985,"test":0.623},{"trees":10,"train":0.8873,"cal":0.7393,"test":0.6712},{"trees":20,"train":0.9371,"cal":0.7564,"test":0.6952},{"trees":30,"train":0.9595,"cal":0.7646,"test":0.7061},{"trees":40,"train":0.976,"cal":0.7713,"test":0.7074},{"trees":60,"train":0.9915,"cal":0.7742,"test":0.7045},{"trees":80,"train":0.9973,"cal":0.7757,"test":0.7051},{"trees":100,"train":0.9993,"cal":0.7786,"test":0.7055},{"trees":130,"train":0.9999,"cal":0.7838,"test":0.7072},{"trees":160,"train":1.0,"cal":0.7841,"test":0.7085},{"trees":200,"train":1.0,"cal":0.7843,"test":0.7088},{"trees":250,"train":1.0,"cal":0.7862,"test":0.7086},{"trees":300,"train":1.0,"cal":0.7873,"test":0.7104},{"trees":350,"train":1.0,"cal":0.7888,"test":0.7099},{"trees":400,"train":1.0,"cal":0.7897,"test":0.7107}],"roc":{"R":{"fpr":[0.0,0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.011,0.012,0.013,0.014,0.015,0.016,0.017,0.018,0.019,0.02,0.021,0.022,0.023,0.024,0.025,0.026,0.027,0.028,0.029,0.03,0.031,0.032,0.033,0.034,0.035,0.036,0.037,0.038,0.039,0.04,0.041,0.042,0.043,0.044,0.045,0.046,0.047,0.048,0.049,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.0],"tpr":[0.3406,0.6812,0.7029,0.7246,0.7391,0.75,0.7609,0.7609,0.7645,0.7681,0.7681,0.7754,0.7754,0.7754,0.779,0.779,0.779,0.7862,0.7862,0.7899,0.7899,0.7935,0.7935,0.7935,0.7935,0.7935,0.7971,0.7971,0.7971,0.7971,0.8007,0.8043,0.8043,0.808,0.808,0.808,0.808,0.808,0.808,0.808,0.8152,0.8152,0.8152,0.8152,0.8152,0.8152,0.8152,0.8152,0.8152,0.8152,0.8152,0.8261,0.837,0.8406,0.8442,0.8587,0.8696,0.8696,0.8732,0.8768,0.8768,0.8768,0.8804,0.8841,0.8841,0.8877,0.8913,0.8949,0.8949,0.8986,0.9022,0.9058,0.9058,0.9094,0.913,0.913,0.913,0.913,0.9167,0.9167,0.9167,0.9203,0.9239,0.9275,0.9275,0.9275,0.9312,0.9348,0.9348,0.9348,0.9348,0.9384,0.9384,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.942,0.9457,0.9529,0.9529,0.9565,0.9565,0.9601,0.9601,0.9638,0.9638,0.971,0.971,0.9746,0.9746,0.9746,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9819,0.9819,0.9819,0.9855,0.9891,0.9891,0.9891,0.9891,0.9928,0.9928,0.9964,0.9964,1.0,1.0,1.0],"auc":0.9291},"F":{"fpr":[0.0,0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01,0.011,0.012,0.013,0.014,0.015,0.016,0.017,0.018,0.019,0.02,0.021,0.022,0.023,0.024,0.025,0.026,0.027,0.028,0.029,0.03,0.031,0.032,0.033,0.034,0.035,0.036,0.037,0.038,0.039,0.04,0.041,0.042,0.043,0.044,0.045,0.046,0.047,0.048,0.049,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.0],"tpr":[0.5942,0.7391,0.7464,0.7572,0.779,0.7935,0.7971,0.7971,0.8043,0.8043,0.8116,0.8116,0.8116,0.8116,0.8152,0.8152,0.8188,0.8188,0.8188,0.8188,0.8188,0.8188,0.8225,0.8297,0.8297,0.8297,0.8297,0.8297,0.8333,0.8333,0.8333,0.8333,0.8333,0.837,0.8406,0.8406,0.8406,0.8406,0.8442,0.8442,0.8442,0.8442,0.8442,0.8442,0.8442,0.8442,0.8442,0.8442,0.8442,0.8478,0.8514,0.8623,0.8768,0.8877,0.8877,0.8913,0.8913,0.8913,0.8913,0.8913,0.8949,0.8986,0.9022,0.9022,0.9022,0.9058,0.9094,0.9094,0.9094,0.9094,0.9203,0.9275,0.9312,0.9348,0.9384,0.9384,0.9384,0.9384,0.942,0.9493,0.9529,0.9529,0.9529,0.9529,0.9529,0.9529,0.9529,0.9565,0.9601,0.9601,0.9601,0.9601,0.9601,0.9638,0.9638,0.9638,0.9674,0.9674,0.971,0.971,0.971,0.971,0.971,0.971,0.9746,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9783,0.9819,0.9819,0.9819,0.9819,0.9855,0.9855,0.9855,0.9855,0.9855,0.9855,0.9855,0.9855,0.9855,0.9855,0.9891,0.9891,0.9928,0.9928,0.9928,0.9928,0.9928,0.9928,0.9964,0.9964,0.9964,0.9964,0.9964,0.9964,0.9964,1.0,1.0,1.0,1.0],"auc":0.9497}},"prc":{"recall":[0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.19,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.53,0.54,0.55,0.56,0.57,0.58,0.59,0.6,0.61,0.62,0.63,0.64,0.65,0.66,0.67,0.68,0.69,0.7,0.71,0.72,0.73,0.74,0.75,0.76,0.77,0.78,0.79,0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.0],"precision":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.9907,0.9907,0.9907,0.9907,0.9832,0.9832,0.9832,0.9832,0.9754,0.9692,0.9692,0.9632,0.9632,0.9608,0.9608,0.9608,0.9608,0.9608,0.9608,0.9568,0.9568,0.9568,0.9353,0.9351,0.9351,0.9351,0.9351,0.9351,0.9316,0.9316,0.9231,0.92,0.9113,0.8995,0.8761,0.8326,0.7903,0.7743,0.7088,0.6879,0.6635,0.6105,0.4683,0.3672,0.3192,0.2506,0.2,0.1467,0.137,0.1241,0.1003,0.0933,0.079,0.0601,0.0508,0.0437,0.0381,0.0309,0.0274,0.0238,0.0181,0.0173,0.0164,0.0138,0.0127,0.0123],"pr_auc":0.7554,"op_precision":0.4583,"op_recall":0.3986,"prevalence":0.012,"n_test":22925,"n_fraud":276},"summary":{"B0_F":{"pr_auc":[0.2021,0.046],"prec_top1pct_day":[0.2785,0.0434],"rec_top1pct_day":[0.223,0.0258],"campaign_recall":[0.6033,0.0693],"fpr_legit":[0.0076,0.0005],"pr_auc_T1":[0.1935,0.0534],"pr_auc_T2":[0.0053,0.0013],"pr_auc_T3":[0.0637,0.027],"pr_auc_T4":[0.0471,0.0431],"pr_auc_T5":[0.1358,0.0461],"pr_auc_T6":[0.0014,0.0001],"pr_auc_T7":[0.0236,0.0181]},"B0_R":{"pr_auc":[0.1678,0.0409],"prec_top1pct_day":[0.2662,0.034],"rec_top1pct_day":[0.2135,0.0197],"campaign_recall":[0.5867,0.0834],"fpr_legit":[0.0077,0.0004],"pr_auc_T1":[0.1688,0.0515],"pr_auc_T2":[0.0058,0.0013],"pr_auc_T3":[0.0857,0.0342],"pr_auc_T4":[0.0358,0.0359],"pr_auc_T5":[0.1055,0.0441],"pr_auc_T6":[0.0014,0.0001],"pr_auc_T7":[0.0108,0.0102]},"B1_F":{"pr_auc":[0.303,0.083],"prec_top1pct_day":[0.3264,0.0611],"rec_top1pct_day":[0.2627,0.0503],"campaign_recall":[0.5833,0.0593],"fpr_legit":[0.0071,0.0006],"pr_auc_T1":[0.1589,0.1215],"pr_auc_T2":[0.3456,0.1766],"pr_auc_T3":[0.0264,0.0374],"pr_auc_T4":[0.3694,0.1649],"pr_auc_T5":[0.149,0.1479],"pr_auc_T6":[0.0063,0.0058],"pr_auc_T7":[0.1012,0.1335]},"B1_R":{"pr_auc":[0.0863,0.0251],"prec_top1pct_day":[0.1595,0.031],"rec_top1pct_day":[0.1287,0.0264],"campaign_recall":[0.6233,0.0649],"fpr_legit":[0.0088,0.0003],"pr_auc_T1":[0.0304,0.0202],"pr_auc_T2":[0.0474,0.0325],"pr_auc_T3":[0.002,0.0008],"pr_auc_T4":[0.0809,0.0497],"pr_auc_T5":[0.0222,0.0179],"pr_auc_T6":[0.0041,0.003],"pr_auc_T7":[0.0148,0.0108]},"B2_F":{"pr_auc":[0.777,0.0432],"prec_top1pct_day":[0.5726,0.0483],"rec_top1pct_day":[0.4602,0.0308],"campaign_recall":[0.8633,0.0637],"fpr_legit":[0.0045,0.0005],"pr_auc_T1":[0.9972,0.0067],"pr_auc_T2":[0.7032,0.1788],"pr_auc_T3":[0.3049,0.1895],"pr_auc_T4":[0.6149,0.1335],"pr_auc_T5":[0.7962,0.029],"pr_auc_T6":[0.0244,0.0352],"pr_auc_T7":[0.9973,0.0064]},"B2_R":{"pr_auc":[0.7432,0.0499],"prec_top1pct_day":[0.5549,0.0519],"rec_top1pct_day":[0.4458,0.0315],"campaign_recall":[0.8667,0.0609],"fpr_legit":[0.0047,0.0006],"pr_auc_T1":[0.9639,0.0237],"pr_auc_T2":[0.4592,0.0939],"pr_auc_T3":[0.2315,0.1618],"pr_auc_T4":[0.6313,0.0971],"pr_auc_T5":[0.7562,0.0592],"pr_auc_T6":[0.0215,0.0366],"pr_auc_T7":[0.8504,0.1292]},"APP_R":{"pr_auc":[0.7898,0.0358]},"APP_F":{"pr_auc":[0.8209,0.0281]}},"n_seeds":10,"prevalence_mean":0.0129,"caught_by_type":{"T1":{"model":0.7025,"system":0.7068},"T2":{"model":0.4267,"system":0.3998},"T3":{"model":0.1829,"system":0.5282},"T4":{"model":0.5551,"system":0.5439},"T5":{"model":0.3937,"system":0.4019},"T6":{"model":0.0583,"system":0.4037},"T7":{"model":0.5942,"system":0.5934}},"system_r":{"caught_all":0.534,"honest_stopped":0.0044,"honest_scan":0.0184},"ranges":[{"label":"ROC-AUC","mean":95.5,"low":92.9,"high":97.4,"strong":true},{"label":"Precision when confident","mean":94.0,"low":93.0,"high":95.2,"strong":true},{"label":"Honest shippers untouched","mean":99.6,"low":99.4,"high":99.6,"strong":true},{"label":"PR-AUC, fraud visible at booking","mean":89.1,"low":83.4,"high":94.6,"strong":false},{"label":"Fraud campaigns caught","mean":87.3,"low":80.0,"high":96.7,"strong":false},{"label":"PR-AUC, all fraud","mean":79.0,"low":74.9,"high":87.6,"strong":false}],"live_vs_offline":[{"label":"PR-AUC","live":0.807,"offline":0.807},{"label":"ROC-AUC","live":0.949,"offline":0.949},{"label":"Precision, top 1%/day","live":0.487,"offline":0.487},{"label":"Recall, top 1%/day","live":0.424,"offline":0.424}],"load":[{"target":1.0,"achieved":1.0,"p99":37.0,"errors":0},{"target":5.0,"achieved":4.9,"p99":40.0,"errors":0},{"target":20.0,"achieved":19.7,"p99":34.0,"errors":0},{"target":50.0,"achieved":37.1,"p99":59.0,"errors":0},{"target":100.0,"achieved":37.7,"p99":85.0,"errors":0}]};
 const NS = "http://www.w3.org/2000/svg";
 const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
   for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
@@ -251,10 +253,11 @@ function hbars(id, rows, opts) {
     { label: "Rules only", full: "Rules only (B0), real columns", mean: S.B0_R.pr_auc[0], sd: S.B0_R.pr_auc[1], dim: true },
     { label: "Booking fields only", full: "LightGBM on booking fields only (B1), real columns", mean: S.B1_R.pr_auc[0], sd: S.B1_R.pr_auc[1], dim: true },
     { label: "LightGBM, real columns", full: "LightGBM with account history (B2), real columns", mean: S.B2_R.pr_auc[0], sd: S.B2_R.pr_auc[1], strong: true },
-    { label: "LightGBM, all columns", full: "LightGBM (B2) including the synthetic login and billing layer", mean: S.B2_F.pr_auc[0], sd: S.B2_F.pr_auc[1] },
+    { label: "App score, real columns", full: "LightGBM + drop-address rule (what the app uses), real columns", mean: S.APP_R.pr_auc[0], sd: S.APP_R.pr_auc[1], strong: true },
   ];
-  hbars("models", rows, { left: 138, ref: D.prevalence_mean, refLabel: "random" });
+  hbars("models", rows, { left: 148, ref: D.prevalence_mean, refLabel: "random" });
   document.getElementById("b2r").textContent = f2(S.B2_R.pr_auc[0]);
+  document.getElementById("appr").textContent = f2(S.APP_R.pr_auc[0]);
 })();
 
 /* 3. Precision-recall curve */
@@ -291,22 +294,36 @@ function hbars(id, rows, opts) {
     `of bookings every day: there this model catches ${pct(P.op_recall, 0)} of fraud bookings and ${pct(P.op_precision, 0)} of its flags are fraud.`;
 })();
 
-/* 4. By fraud type */
+/* 4. Share caught by type: model only vs full system */
 (function () {
-  const S = D.summary.B2_R;
-  const names = { T1: "Label-resale takeover", T2: "Bust-out new account", T3: "Reshipping drops", T4: "Cost-maximizing takeover",
-                  T5: "Test then burst", T6: "Weight manipulation", T7: "Third-party billing" };
-  const held = new Set(["T3", "T5"]);
-  const svg = document.getElementById("types");
-  const defs = el("defs", {}, svg);
-  const pat = el("pattern", { id: "hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
-  el("rect", { width: 6, height: 6, fill: "var(--bar-dim)" }, pat);
-  el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "var(--bar)", "stroke-width": 2.5 }, pat);
-  const rows = Object.keys(names).map((t) => ({
-    label: `${t} ${held.has(t) ? "(held out)" : ""}`.trim(), full: `${t} ${names[t]}${held.has(t) ? ", never in training" : ""}`,
-    mean: S[`pr_auc_${t}`][0], sd: S[`pr_auc_${t}`][1], hatch: held.has(t),
-  }));
-  hbars("types", rows, { left: 96 });
+  const C = D.caught_by_type, svg = document.getElementById("types"), tip = tipFor("types");
+  const names = { T1: "Label-resale takeover", T2: "Bust-out new account", T3: "Reshipping drops*", T4: "Cost-maximizing takeover",
+                  T5: "Test then burst*", T6: "Weight manipulation", T7: "Third-party billing" };
+  const W = 480, H = 330, m = { l: 150, r: 46, t: 4, b: 30 }, keys = Object.keys(C);
+  const xs = (v) => m.l + v * (W - m.l - m.r), band = (H - m.t - m.b) / keys.length, bh = Math.min(11, band * 0.32);
+  const L = document.getElementById("types-legend");
+  [["Model only", "var(--bar-dim)"], ["Full system (drop rule, first-scan check, depot follow-up)", "var(--s1)"]].forEach(([n, c]) => {
+    const sp = document.createElement("span"); sp.style.setProperty("--c", c); sp.textContent = n; L.appendChild(sp); });
+  [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
+    el("line", { x1: xs(t), x2: xs(t), y1: m.t, y2: H - m.b, class: t === 0 ? "baseline" : "gridline" }, svg);
+    el("text", { x: xs(t), y: H - m.b + 16, "text-anchor": "middle", class: "lab" }, svg).textContent = Math.round(t * 100) + "%";
+  });
+  keys.forEach((k, i) => {
+    const y0 = m.t + band * i + band / 2 - bh - 1;
+    el("text", { x: m.l - 8, y: y0 + bh + 4, "text-anchor": "end", class: "lab" }, svg).textContent = `${k} ${names[k]}`;
+    [[C[k].model, "var(--bar-dim)"], [C[k].system, "var(--s1)"]].forEach(([v, c], j) => {
+      const y = y0 + j * (bh + 2), w = Math.max(xs(v) - xs(0), 1.5);
+      el("path", { d: `M${xs(0)},${y}h${Math.max(w - 3, 0)}a3,3 0 0 1 3,3v${bh - 6}a3,3 0 0 1 -3,3h${-Math.max(w - 3, 0)}z`, fill: c }, svg);
+      el("text", { x: xs(v) + 5, y: y + bh - 2, class: "vlab" }, svg).textContent = Math.round(v * 100) + "%";
+    });
+    const hit = el("rect", { x: m.l, y: m.t + band * i, width: W - m.l - m.r, height: band, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", (e) => tip.show(`${k} ${names[k]}<br>Model only <b>${Math.round(C[k].model * 100)}%</b><br>Full system <b>${Math.round(C[k].system * 100)}%</b>`, e));
+    hit.addEventListener("mouseleave", () => tip.hide());
+  });
+  document.getElementById("types-take").textContent =
+    `Reshipping drops: ${Math.round(C.T3.model * 100)}% to ${Math.round(C.T3.system * 100)}% (still never trained on). Weight manipulation: ` +
+    `${Math.round(C.T6.model * 100)}% to ${Math.round(C.T6.system * 100)}%, caught by the depot scale. * = held out of training. ` +
+    `Cost: ${(D.system_r.honest_scan * 100).toFixed(1)}% of honest parcels are weighed at the depot; ${(D.system_r.honest_stopped * 100).toFixed(1)}% are stopped.`;
 })();
 
 /* data tables */

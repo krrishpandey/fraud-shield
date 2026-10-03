@@ -41,6 +41,8 @@ FEATURES: dict[str, FeatureSpec] = {
     "express_72h": _s("R", "account"), "mean_kg_72h": _s("R", "account"),
     "home_origin_uf": _s("R", "account", "str"), "home_origin_zip3": _s("R", "account", "str"),
     "is_home_origin": _s("R", "account"),
+    # what the account shipped before (bust-out accounts ship high-value goods far away from the start)
+    "acct_hv_share": _s("R", "account"), "acct_far_share": _s("R", "account"), "acct_mean_dist": _s("R", "account"),
     # profile vs own history
     "origin_seen": _s("R", "profile"), "payer_origin_pair_age_days": _s("R", "profile"),
     "lane_seen": _s("R", "profile"), "dest_region_seen": _s("R", "profile"), "cat_seen": _s("R", "profile"),

@@ -126,7 +126,7 @@ Show the probability that comes back.
 **Screen:** results slide (both tiers), then limitations slide.
 
 **Say:**
-> "Our baseline LightGBM scores PR-AUC 0.73 using only real data columns, 0.77 with all columns. We report them separately because part of our data, the account and login layer, is synthetic. Rules alone score 0.04 to 0.05 on our hardest setting, so the fraud we injected isn't trivially easy to catch. And LightGBM catches the unseen reshipping-drop pattern poorly, PR-AUC 0.31. That gap is exactly what Laya's new questions are meant to close.
+> "Our app's score reaches PR-AUC 0.79 using only real data columns, 0.82 with all columns, ROC-AUC 0.955. We report them separately because part of our data, the account and login layer, is synthetic. Rules alone score 0.04 to 0.05 on our hardest setting, so the fraud we injected isn't trivially easy to catch. For reshipping drops, a fraud type we never trained on, a rule from published research lifts the share caught from 18% to 53%. And weight fraud, which nobody can see on a booking form, goes from 6% to 40% because suspicious parcels are weighed at the first depot, and one failed scan puts the account's next parcels on the scale.
 >
 > Our limits: the account and login layer is synthetic, analyst feedback in the demo is simulated and labelled as such, and no retrained model has passed our gate yet.
 >
@@ -226,7 +226,8 @@ The action is chosen by comparing the expected cost of every option, using the c
 - **Data:** Olist (real Brazilian e-commerce, 100,010 bookings, 3,095 sellers). Fraud is injected and every injected row is labelled with its scenario, seed and settings. The account, login and billing layer is synthetic.
 - **Held-out fraud types:** reshipping mule drops (T3) and test-then-burst (T5) are never used in training.
 - **"Too easy?" checks:** rules alone reach PR-AUC 0.042 (real columns) and 0.050 (all) on the hardest camouflage level. Shuffled labels give 0.0108, about the fraud rate, as expected.
-- **Baselines:** LightGBM PR-AUC 0.73 (real columns), 0.77 (all columns), 0.31 on held-out mule drops.
+- **Results (artifacts/results_system.md):** LightGBM PR-AUC 0.74 (real columns), 0.78 (all). App score with the drop-address rule: 0.79 (real), 0.82 (all), ROC-AUC 0.955. Share caught, model only to full system: reshipping drops (held out) 18% to 53%, weight fraud 6% to 40% (depot scan + follow-up), all fraud 45% to 53%. Honest bookings stopped 0.4%, honest parcels weighed at the depot 1.8%.
+- **Depot scan (T6):** `POST /decisions/{id}/first-scan` takes the measured weight; heavier than declared beyond 0.5 lb or 3% (the UPS / FedEx tolerance) fails the scan, and the account's later parcels get a first-scan check with the reason "A parcel from this account failed a depot weight check". The decision page has a "Depot scan" box; the live stream simulates scans from the dataset's true weights.
 
 ### 2.10 Desktop app
 
@@ -242,11 +243,12 @@ The action is chosen by comparing the expected cost of every option, using the c
 | Likely question | Our answer |
 |---|---|
 | "Isn't this just XGBoost plus a chatbot?" | "No. The model answers named questions with probabilities, a cost rule picks one of six actions, and the explanation is checked against the decision record before anyone sees it." |
-| "Your account data is synthetic. Why trust it?" | "The pattern comes from a prosecuted DOJ case and peer-reviewed research, the 94.9% is real data, and we report real-column results separately (LightGBM PR-AUC 0.73)." |
+| "Your account data is synthetic. Why trust it?" | "The pattern comes from a prosecuted DOJ case and peer-reviewed research, the 94.9% is real data, and we report real-column results separately (PR-AUC 0.79 with the app's score, 0.74 for LightGBM alone)." |
 | "Does Laya beat LightGBM?" | "We don't know yet. Fine-tuning is running and we won't claim it until the numbers are in." |
 | "So continuous learning doesn't work?" | "It learned the unseen pattern, 0.28 to 0.69. It would also have hurt real customers, and a rule we wrote in advance stopped it." |
 | "Doesn't the price rule punish big customers?" | "It moves the allow line from about 3.9% to about 2.6% and adds a first-scan check, not a block." |
 | "What about a legit 3PL that ships for many senders?" | "We built that in as a legitimate hard case in testing, and a verified pre-announced change flow switches off the novelty signals for 30 days." |
 | "Why not reinforcement learning?" | "With known costs and calibrated probabilities, picking the cheapest expected cost is already optimal. RL would add risk without adding value." |
-| "What's the latency?" | "About 90 to 100 ms per booking on a laptop GPU." |
+| "What's the latency?" | "About 20 to 30 ms per booking for the decision (p99 under 100 ms), measured on a laptop CPU; the live stream keeps up with 20 bookings per second and peaks near 38. Asking fine-tuned Laya a question takes about 70 ms on the laptop GPU." |
+| "Can you catch weight fraud at booking?" | "Mostly not, and we say so: a booking form can't be weighed. Parcels declared far smaller than the account's norm are weighed at the first depot scan, and one failed scan puts the account's next parcels on the scale. That catches 40% of weight fraud while weighing 1.8% of honest parcels." |
 | "What would a carrier need to change?" | "A 'pending' label state at booking, read access to payment and login events, and a first-scan check record." |

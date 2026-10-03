@@ -130,3 +130,14 @@ def test_pacing_keeps_the_target_rate_despite_timer_oversleep():
     run(StreamRunner(items(n), ok_send, StreamMetrics(), rate=rate, concurrency=2))
     elapsed = time.monotonic() - t0
     assert elapsed < (n / rate) * 1.15, f"{n / elapsed:.1f}/s achieved for a {rate}/s target"
+
+
+def test_consistency_compares_the_model_score_and_accuracy_uses_the_system_score():
+    it = StreamItem(make_booking(booking_id="x1", booked_at="2018-06-01T10:00:00"), is_fraud=True, typology="T3",
+                    offline_score=0.55, offline_gbm=0.1)  # the drop rule lifted 0.1 to 0.55 offline
+    m = StreamMetrics()
+    m.record(it, {"decision_id": "d1", "action": "hold", "probabilities": {"misuse": 0.55}, "gbm_score": 0.1,
+                  "degraded": True, "latency_ms": {"total": 5.0}})
+    snap = m.snapshot()
+    assert snap["consistency"]["max_abs_score_diff"] == 0.0
+    assert m.rows()[0]["score"] == 0.55 and m.rows()[0]["offline"] == 0.55

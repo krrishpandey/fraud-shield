@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EVENT_TYPES = ("decision", "explanation", "analyst_feedback", "outcome", "ask", "retrain", "rollback",
+EVENT_TYPES = ("decision", "first_scan", "explanation", "analyst_feedback", "outcome", "ask", "retrain", "rollback",
                "config_change")
 GENESIS = "0" * 64
 

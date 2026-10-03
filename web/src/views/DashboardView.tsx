@@ -1,11 +1,10 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from 'recharts'
 import { api } from '../api/client'
 import { ACTIONS, type DashboardMetrics } from '../api/types'
 import { ErrorBox, Loading, PageTitle, Section } from '../components/common'
 import { ACTION_META, TYPOLOGY_META, typologyName } from '../lib/domain'
 import { fmtBRL, fmtInt, fmtMs, fmtPct } from '../lib/format'
-import { useAsync } from '../lib/useAsync'
 import { useCssVars } from '../lib/useCssVars'
 
 function Kpi({ name, label, value, sub }: { name: string; label: string; value: ReactNode; sub?: ReactNode }) {
@@ -198,13 +197,68 @@ function ActionMix({ m }: { m: DashboardMetrics }) {
   )
 }
 
+type Source = 'all' | 'app' | 'stream'
+const SOURCES: [Source, string][] = [
+  ['all', 'All bookings'],
+  ['app', 'Scored in the app'],
+  ['stream', 'Live stream'],
+]
+const REFRESH_MS = 3000
+
+/** Dashboard metrics that refresh every few seconds, so new decisions (and a running stream) show up. */
+function useDashboard(source: Source) {
+  const [m, setM] = useState<DashboardMetrics | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [updated, setUpdated] = useState<Date | null>(null)
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    let alive = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const load = async () => {
+      try {
+        const d = await api.dashboard(source)
+        if (!alive) return
+        setM(d)
+        setError(null)
+        setUpdated(new Date())
+      } catch (e) {
+        if (alive) setError(e instanceof Error ? e.message : String(e))
+      }
+      if (alive) timer = setTimeout(load, REFRESH_MS)
+    }
+    load()
+    return () => {
+      alive = false
+      if (timer) clearTimeout(timer)
+    }
+  }, [source, tick])
+  return { m, error, updated, reload: () => setTick((t) => t + 1) }
+}
+
 export default function DashboardView() {
-  const { data: m, error, loading, reload } = useAsync(() => api.dashboard(), [])
+  const [source, setSource] = useState<Source>('all')
+  const { m, error, updated, reload } = useDashboard(source)
+  const loading = !m && !error
   return (
     <div>
-      <PageTitle title="Dashboard" sub={m ? `Window ${m.window.from} to ${m.window.to}.` : undefined} />
+      <PageTitle title="Dashboard" sub={m && m.window.from ? `Window ${m.window.from} to ${m.window.to}.` : undefined} />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="live-rates" role="radiogroup" aria-label="Which bookings">
+          {SOURCES.map(([k, label]) => (
+            <button key={k} type="button" role="radio" aria-checked={source === k}
+              className={`live-rate${source === k ? ' is-on' : ''}`} style={{ padding: '0.4rem 0.8rem' }}
+              onClick={() => setSource(k)} data-testid={`dashboard-source-${k}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className="text-[0.8rem] text-muted" data-testid="dashboard-updated" role="status">
+          {updated ? `Updated ${updated.toLocaleTimeString()}, refreshes every ${REFRESH_MS / 1000} seconds` : 'Loading...'}
+          {source !== 'app' && m?.stream_bookings ? `. Live stream truth comes from the replayed dataset.` : ''}
+        </span>
+      </div>
       {error && <ErrorBox message={error} onRetry={reload} />}
-      {loading && !m && <Loading what="metrics" />}
+      {loading && <Loading what="metrics" />}
       {m && (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">

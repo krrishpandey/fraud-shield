@@ -98,4 +98,4 @@ def test_live_scores_match_offline_scores_booking_for_booking(rc):
     sample = items[:120] + [it for it in items if it.is_fraud][:60]
     for it in sample:
         live = rc.gbm(rc.featurizer(it.booking))
-        assert live == pytest.approx(it.offline_score, abs=1e-9), it.booking.booking_id
+        assert live == pytest.approx(it.offline_gbm, abs=1e-9), it.booking.booking_id

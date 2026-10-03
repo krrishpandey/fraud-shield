@@ -33,7 +33,10 @@ class StreamItem:
     booking: Booking
     is_fraud: bool
     typology: str = "none"
-    offline_score: float | None = None
+    offline_score: float | None = None  # offline score of the whole decision (model + drop rule)
+    offline_gbm: float | None = None    # offline LightGBM score alone; defaults to offline_score
+    hard_negative: bool = False         # an honest booking that looks unusual (dashboard slice)
+    true_weight_kg: float | None = None # what the depot scale would read (simulated first scan)
 
 
 RECORD_DECIMALS = 4  # the decision record stores scores with 4 decimals (pipeline.public_view)
@@ -73,6 +76,7 @@ class StreamMetrics:
         self._t0 = time.monotonic()
         self.offline_full: dict | None = None
         self.explanations = {"llm": 0, "template": 0, "llm_cap_per_min": None}
+        self.scans = {"checked": 0, "mismatch": 0}  # simulated depot scans of first-scan-check parcels
 
     # ---------- recording ----------
     def record(self, item: StreamItem, d: dict, latency_ms: float | None = None) -> None:
@@ -80,7 +84,9 @@ class StreamMetrics:
         b = item.booking
         row = {"booking_id": b.booking_id, "decision_id": d.get("decision_id"), "booked_at": b.booked_at,
                "action": d.get("action"), "score": float(probs.get("misuse", d.get("gbm_score") or 0.0)),
-               "gbm": d.get("gbm_score"), "offline": _rec(item.offline_score), "is_fraud": bool(item.is_fraud),
+               "gbm": d.get("gbm_score"), "offline": _rec(item.offline_score),
+               "offline_gbm": _rec(item.offline_gbm if item.offline_gbm is not None else item.offline_score),
+               "is_fraud": bool(item.is_fraud),
                "typology": item.typology, "degraded": bool(d.get("degraded")),
                "latency_ms": float(latency_ms if latency_ms is not None else (d.get("latency_ms") or {}).get("total", 0.0)),
                "t": time.monotonic(), "route": f"{b.origin_uf} {b.origin_zip3} to {b.dest_uf} {b.dest_zip3}",
@@ -140,7 +146,7 @@ class StreamMetrics:
                                     "stopped": sum(r["typology"] == t and r["action"] in STOPPED for r in fraud)}
                                 for t in sorted({r["typology"] for r in fraud})},
         })
-        compared = [r for r in rows if r["offline"] is not None and r["gbm"] is not None]
+        compared = [r for r in rows if r["offline_gbm"] is not None and r["gbm"] is not None]
         return {
             "load": {"scored": len(rows), "errors": len(errors), "retries": retries, "in_flight": in_flight,
                      "elapsed_s": round(elapsed, 2), "throughput_total": len(rows) / elapsed,
@@ -154,8 +160,9 @@ class StreamMetrics:
             "offline_same_rows": _accuracy([r for r in rows if r["offline"] is not None], "offline"),
             "offline_full": self.offline_full,
             "consistency": {"n_compared": len(compared),
-                            "max_abs_score_diff": max((abs(r["gbm"] - r["offline"]) for r in compared), default=0.0)},
+                            "max_abs_score_diff": max((abs(r["gbm"] - r["offline_gbm"]) for r in compared), default=0.0)},
             "explanations": dict(self.explanations),
+            "scans": dict(self.scans),
             "errors": errors[-20:],
         }
 
