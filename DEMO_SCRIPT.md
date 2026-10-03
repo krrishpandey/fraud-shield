@@ -14,6 +14,9 @@ Target length: about 5 minutes. All numbers come from our own runs (see `PROJECT
 - [ ] Check that `.env` has the Groq key. Without it, explanations fall back to a fixed template (still fine, just less fluent).
 - [ ] Have the backup screen recording ready in case the app fails on stage.
 - [ ] For the price demo in segment 4, make sure the booking you use scores between 2.6% and 3.9% risk, or the action will not flip.
+- [ ] Passkey beat (5b): Windows Hello must be set up on the demo laptop (Settings > Accounts > Sign-in options > PIN). Try one enroll + confirm before going on stage. If the prompt does not appear in the app window, open the `http://localhost:<port>` URL the app prints, in Edge.
+- [ ] Monitor beat (7b): start the live stream at least 30 seconds before you show the Live view, so the monitor card has stops to estimate from (precision shows n/a until the first stop; the drift number needs 500 decisions).
+- [ ] Learning beat (6): the banner shows whatever the gate decided on this run. Read it out as it is, green or amber.
 
 ---
 
@@ -131,6 +134,45 @@ Show the probability that comes back.
 > Our limits: the account and login layer is synthetic, analyst feedback in the demo is simulated and labelled as such, and no retrained model has passed our gate yet.
 >
 > We built the part that says no, including to us. Thank you."
+
+---
+
+## Part 1b: Round 3 beats (fit them into the 5 minutes)
+
+Each beat below replaces or extends a segment above, so the talk stays about 5 minutes. If time is short, keep 5a, 5b and 6, and say the red-team and monitor numbers in segment 9.
+
+### 5a. What would change this decision (replaces segment 5 if Laya is not shown; 0:20)
+
+**Screen:** Live tab, stream running. Open a held or blocked row. In the Decision view click **"Show what would change it"**. About 1 in 4 stopped decisions has no answer within the budget (the takeover demo is one: "no change within 50 evaluations"); if so, open another held row. Seen in rehearsal: `blk-06` (`docs/demo_block_bookings.json`) shows "allow if declared weight were 0.85 kg (not 20.00 kg) and declared value were R$30.10".
+
+**Say:**
+> "An analyst can ask what would have changed this decision. We search small changes to things the booker controls, the declared weight, value, service, sender, and run each one through the real model and cost rule. 73% of stopped decisions have an answer with two changes or fewer. This is analyst-only: showing it to the booker would teach evasion, so every view is written to the audit log."
+
+### 5b. "Was this you?" with a passkey tied to the booking (0:40)
+
+**Screen:** same Decision view, the "Was this you? The owner's passkey" box. Enroll, Windows Hello. Confirm as owner, Windows Hello: **released**. Then **Tamper test**: **rejected**.
+
+**Say:**
+> "When we ask the owner to confirm, it's a real passkey, not a text message a fraudster with the stolen login can answer. The challenge the passkey signs is built from this booking's amount, destination and receiver. Watch: we take the same signature and change only the price by R$100. It no longer verifies. The owner approved this parcel, not any parcel. On this laptop the laptop plays the owner's phone, and the screen says so."
+
+### 6. (extends segment 6) Which model is in use from now on (0:10 extra)
+
+**Screen:** Learning tab after **Retrain**. Read the banner aloud: amber "Still using gbm-B2-F-v1 ... not deployed because: ..." or green "From now on, new bookings are scored by ...". Then open any decision: "LightGBM model that scored this booking".
+
+**Say:**
+> "After every retrain the system says in one sentence which model scores new bookings from now on, and if it kept the old one, why, in plain words. Every booking records the exact model version that scored it."
+
+### 7b. A monitor that knows where it is blind (replaces segment 7 if the Dashboard is skipped; 0:20)
+
+**Screen:** Live tab, the **"Label-free monitor"** card.
+
+**Say:**
+> "Fraud labels arrive weeks late. This card estimates how precise our stops are and how much fraud we let through, today, from calibrated scores alone. And we measured where it fails: on fraud types the model never learned, it under-counts missed fraud by 1.45 per week. Our drift alarm doesn't see those types either. So we say it on screen instead of trusting a green light."
+
+### 9. (extends segment 9) We attacked our own model (one sentence)
+
+**Say:**
+> "We also attacked our own model. An attacker who only sees our decision and changes at most two fields gets 18% of the fraud we stop through as a plain allow, and 63% to some softer action, mostly by reusing a sender the account already knows. We retrained on those evasions and our own gate rejected that model too, because it bothered honest shippers."
 
 ---
 
@@ -255,6 +297,53 @@ The action is chosen by comparing the expected cost of every option, using the c
 
 ---
 
+### 2.11 What would change this decision (analyst-only counterfactuals)
+
+- `GET /decisions/{id}/counterfactual`, the "Show what would change it" panel on the Decision view. Code: `fraudshield/redteam/search.py`.
+- Searches changes to fields the booker controls: declared value, declared weight, parcel size, service, a sender the account already used, booking time. Carrier cost follows the declared weight at the lane freight slope (R$2.727/kg, fitted on the train window); the booker never sets it.
+- Every hypothetical booking goes through the real path (features, LightGBM, Platt, rules floor, cost rule) with no stored decision, no feature-store write. Checked: same action and probability as `/score` on 30 real bookings.
+- Budget 50 scored bookings, at most 2 changed fields; fewest fields first, then the smallest change.
+- Measured (test window, seed 0, 60 of 265 stopped decisions): 73.3% have a softer action within 2 changes (fraud 70.2%, legit 84.6%), 21.7% reach plain allow; median latency 1118 ms.
+- Analyst-only: every view writes a `counterfactual_view` audit record first; if that write fails, nothing is shown. There is no role check on the endpoint yet (docs and audit only).
+- Sources: Khouna et al., "Optimal Counterfactual Search in Tree Ensembles", arXiv 2605.06561 (May 2026).
+
+### 2.12 Red team: we attack our own model
+
+- `scripts/redteam.py` -> `artifacts/results_redteam.md`. Same search as 2.11, but the attacker sees only the returned action (not the probability). At most 50 queries and 2 changed fields per booking.
+- Population: fraud of the trained types that the system stops, test window, seeds 0-7, at most 40 per seed (n = 320), run once. Fraud is injected (synthetic) on real Olist histories.
+- Flip to plain allow 18.1 ± 7.6%, to any softer action 63.1 ± 7.3%. By type (allow / softer): T1 18.8% / 74.4%, T2 0.0% / 13.2%, T4 21.9% / 57.5%, T7 26.9% / 84.5%. Never-trained T3/T5 (n = 80): 11.3% / 45.0%. "Softer" includes allow_scan_gated, where the parcel is still weighed at the depot.
+- Most evasions reuse a sender the account already used (159 of the 238 changed fields). Under-declaring weight also lowers the carrier cost, so it shrinks the fraudster's payoff.
+- Hardening: 113 evasions made from train-window fraud only were added as labels and went through the unchanged retrain and gate. **Rejected**: hard-negative false positives would rise from 0.27% to 1.68% (limit +0.5 points).
+- Source: Fok et al., "Foe for Fraud: Transferable Adversarial Attacks in Credit Card Fraud Detection", arXiv 2508.14699 (Aug 2025).
+
+### 2.13 Owner passkey "was this you?"
+
+- Full design: `docs/PASSKEY.md`. Code: `fraudshield/identity/webauthn.py`, `fraudshield/api/passkey.py`.
+- The passkey signs `sha256(nonce || booking_id, account_id, carrier_cost, declared_value, dest_zip3, consignee_id)`. The server recomputes it from the booking it holds, so a signature for one booking cannot approve another amount or address. Nonce single use, 120 s expiry.
+- A confirmed owner_confirm becomes allow; a confirmed hold or review becomes allow_scan_gated (still weighed at the depot); a block cannot be confirmed by the owner. Success and failure both go to the audit log.
+- Measured: signature check 0.176 ms p50 warm (n = 1000), verify endpoint 2.61 ms p50 server side (n = 300). Real Windows Hello prompt time not measured.
+- Honest limits: the laptop plays the owner's phone (labelled in UI and audit); enrollment in the demo happens right before confirming, in production it happens at onboarding and changing it is itself a risky event; attestation `none` (we check it's the same passkey, not which device model); the OS prompt doesn't show the amount.
+- Sources: FIDO Alliance Passkey Index, Oct 2025; W3C Secure Payment Confirmation (same idea: the signature is bound to the transaction).
+
+### 2.14 Label-free monitor
+
+- `GET /monitor/estimate`, the "Label-free monitor" card on the Live view. Code: `fraudshield/monitor/cbpe.py`. Results: `artifacts/results_monitor.md`.
+- From calibrated probabilities p and the actions, without labels: estimated precision of stops = mean p over stopped bookings, estimated missed fraud = sum p over bookings let through, estimated recall. Weekly periods (chosen on the calibration window).
+- Calibration window (sanity): precision 0.764 estimated vs 0.745 real, recall 0.810 vs 0.797.
+- Test window, all 10 seeds: with held-out T3/T5 present it under-counts missed fraud (52.8 estimated vs 67.4 real; recall 0.803 estimated vs 0.771 real). Per week the paired gap is -1.45 ± 0.43 missed frauds. The 23.5 held-out frauds let through per window add up to only 0.23 expected frauds.
+- Also blind: T6 (weight fraud, mean p 0.036), a trained type the booking score can't see. And the score-drift signal (PSI) is the same with or without T3/T5 (difference at most 0.002), so drift alarms don't see new fraud either.
+- Sources: Kivimäki et al., arXiv 2505.05295 (ACML 2025); Solozobov, arXiv 2604.15740 (Apr 2026).
+
+### 2.15 Model handover and learning attempt 5
+
+- After every retrain or rollback, `POST /learning/retrain`, `/learning/rollback` and `GET /learning/status` return a `handover` verdict, also written to the audit log. The Learning view shows it as a banner; the Decision view shows the LightGBM version that scored the booking, the Live view the model in use.
+- Banners: green "From now on, new bookings are scored by {v} (since HH:MM). Previous model {prev} kept for rollback."; amber "Still using {v} (since HH:MM). Candidate {c} learned the new pattern (+x points recall on new patterns) but was not deployed because: ..." with one plain-language line per failed check; blue after a rollback.
+- Two bugs fixed on the way: decisions logged the generic name "gbm" instead of the version, and a running live stream logged the old version name after a deploy.
+- Attempt 5 (pre-registered in `docs/LEARNING_GATE.md` before it ran, chosen on training data only, run once): R3 regularisation plus "device age may only interact with channel". **Rejected**, on cost only: cost improvement CI [-9.61, +21.41] BRL per 1k, needs >= -5.98. It passed the other checks: hard-negative FPR 0.32% -> 0.64% (inside +0.5 points), PR-AUC 0.807 -> 0.830, new-pattern recall 0.535 -> 0.577 (CI [+0.016, +0.071]). Caveat: v1 was retrained after the R0-R3 runs, so attempt 5 compares with today's v1, not with the R3 row. No 6th configuration will be tried on this eval set.
+- There is no reinforcement learning here: it is gated retraining plus 5% logged exploration. Don't call it RL.
+
+---
+
 ## Part 3: Q&A backup
 
 | Likely question | Our answer |
@@ -269,3 +358,10 @@ The action is chosen by comparing the expected cost of every option, using the c
 | "What's the latency?" | "About 20 to 30 ms per booking for the decision (p99 under 100 ms), measured on a laptop CPU; the live stream keeps up with 20 bookings per second and peaks near 38. Asking fine-tuned Laya a question takes about 70 ms on the laptop GPU." |
 | "Can you catch weight fraud at booking?" | "Mostly not, and we say so: a booking form can't be weighed. Parcels declared far smaller than the account's norm are weighed at the first depot scan, and one failed scan puts the account's next parcels on the scale. That catches 40% of weight fraud while weighing 1.8% of honest parcels. If the carrier wants more, the depot weighing dial on the dashboard goes up to 94% caught for 11.4% of honest parcels weighed; it's their trade-off, and we show the measured cost of each level." |
 | "What would a carrier need to change?" | "A 'pending' label state at booking, read access to payment and login events, and a first-scan check record." |
+| "Doesn't 'what would change this decision' teach fraudsters how to evade?" | "Only if a booker sees it, so they never do. It's analyst-only, and every view is written to the audit log before it's shown. An attacker can search the same way by trial and error, and our red team measured exactly that: it's why we publish the 18% and 63% numbers instead of hiding them." |
+| "So 63% of your caught fraud can evade you?" | "63% can get some softer action with up to two changes and 50 tries, 18% get a plain allow. Most of them do it by claiming a sender the account already uses, which a carrier can check against where the parcel is actually picked up; we haven't tested that check, so we don't claim it. And retraining on those evasions would have hurt honest shippers, so our gate refused it." |
+| "Is the passkey real, or a mock-up?" | "It's a real WebAuthn ceremony with a real signature check on our server. The only simulated part is the device: this laptop plays the owner's phone, and the screen and the audit record say so." |
+| "Couldn't the fraudster just enroll their own passkey with the stolen login?" | "In the demo we enroll on stage for speed. In production enrollment happens at onboarding, and changing the passkey is itself a risky account event that gets its own checks, like our rule that an owner contact younger than 30 days doesn't count. The binding is what the demo proves: a signature for one parcel can't approve a different price or address." |
+| "How do you know your model still works before the fraud labels arrive?" | "We estimate precision and missed fraud from calibrated scores, and we measured where that breaks: it under-counts missed fraud from types the model never learned by 1.45 per week, and the drift alarm doesn't see them. That's why the dashboard says so, and why new types come in through analyst feedback and the gate." |
+| "Did the retrained model go live?" | "None of our recorded real-data runs has passed the gate (`docs/LEARNING_GATE.md`), and the Learning tab says which model is in use, in one sentence, after every retrain, including the one we just did on stage. Our latest attempt fixed the false-positive problem and improved every point estimate, but the cost check's confidence interval was still too wide, so v1 keeps scoring new bookings." |
+| "Is that 0.28 to 0.69 number from your current model?" | "It's from the run against the earlier version of v1. v1 has been retrained since; on today's v1 the latest attempt raised new-pattern recall from 0.535 to 0.577. The pattern held: learning the new fraud, blocked for safety." |

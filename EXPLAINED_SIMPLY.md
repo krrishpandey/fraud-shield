@@ -111,6 +111,38 @@ All of this takes well under a second.
 - **What it is:** a normal Windows app. Double-click `FraudShield.bat` and a window opens. No website or server setup.
 - **Tabs:** Score (try a booking), Decision (see details), Queue (bookings waiting for review), Dashboard, Learning (retraining), Audit (check the log).
 
+### Feature 10: "What would change this decision?" (for analysts only)
+
+- **What it is:** for a stopped booking, the app tries small changes the person booking could make (a lower declared value, a lighter declared weight, a different service, a sender the account has used before) and tells the analyst the smallest change that would have made the decision softer. Example: "allowed if the declared weight were 0.85 kg instead of 20 kg".
+- **Analogy:** asking a bank clerk "what would you have needed to see to say yes?"
+- **Why only analysts:** if the person booking saw it, it would be a recipe for getting fraud through. So it is never shown to them, and every time an analyst looks, it is written in the tamper-proof log.
+- **Result:** 73% of stopped bookings have an answer with at most two changes.
+
+### Feature 11: We attack our own model (red team)
+
+- **What it is:** we played the fraudster. Our "attacker" only sees the decision, and may change at most two things on a booking, with up to 50 tries. We counted how often it got stopped fraud through.
+- **Result (inserted fraud, test period):** 18% got a plain "allow", 63% got some softer action. Most did it by pretending to ship from a sender the account already uses.
+- **What we did with it:** we retrained the model on those tricks. Our own safety gate (Feature 7) refused the new model, because it would have bothered more honest customers.
+- **Why it matters:** we report how easily we can be fooled, instead of only how often we are right.
+
+### Feature 12: "Was this you?" with a passkey, tied to the parcel
+
+- **What it is:** when the app asks the account owner to confirm a booking, the owner answers with a **passkey** (the fingerprint, face or PIN unlock on their phone or laptop, like Windows Hello). A text message can be answered by a criminal who stole the account; a passkey lives on the owner's own device.
+- **The clever bit:** the passkey signs the details of **this parcel**: its price, destination and receiver. Change the price by R$100 and the same signature no longer fits. The owner approves *this* parcel, not "any parcel".
+- **Honest note:** in the demo, the laptop plays the owner's phone, and the screen says so.
+
+### Feature 13: A health check that knows where it is blind
+
+- **What it is:** fraud is only confirmed weeks later. This card on the Live tab estimates **today** how accurate our stops are and how much fraud we are letting through, using only the model's own (calibrated) scores.
+- **Analogy:** a weather forecast for our own accuracy, before the "real weather" (the confirmed fraud reports) arrives.
+- **Where it fails, measured:** for fraud types the model has never seen, it under-counts the fraud we miss (by about 1.45 per week in our test). The usual "something changed" alarm doesn't notice those types either. We show that warning on screen instead of hiding it.
+
+### Feature 14: Which model is in charge, said in one sentence
+
+- **What it is:** after every retraining, the Learning tab says plainly either **"From now on, new bookings are scored by the new model"** or **"Still using the old model, because..."**, with the reason in everyday words (for example, "honest customers would be wrongly stopped more often"). Every decision shows which model version made it.
+- **Latest try:** we made one more, honestly pre-announced attempt to fix the new model. It fixed the "bothers honest customers" problem and was better on every average, but the gate's money check was still too uncertain, so the old model stays in charge.
+- **Note:** this is not "reinforcement learning". It is retraining with a safety gate.
+
 ---
 
 ## 5. Where the data comes from (and what is fake)
@@ -139,9 +171,10 @@ All of this takes well under a second.
 |---|---|
 | App, scoring, actions, explanations, audit, dashboard, learning | Working |
 | LightGBM model | Working, results measured |
-| Laya fine-tuning | **Not done yet** (runs on Kaggle) |
-| "Ask a new question" | Needs the fine-tuned Laya to work well |
-| Demo | Run it in **cached mode** until fine-tuned Laya is ready |
+| Laya fine-tuning | Done. It lost to LightGBM at deciding (PR-AUC 0.356 vs 0.777), so **LightGBM decides** and Laya only answers analyst questions |
+| "Ask a new question" | Works with the fine-tuned Laya; its answers are not calibrated |
+| What would change this decision, red team, owner passkey, label-free monitor, model handover banner | Working, tested (added for round 3) |
+| Retrained model | Not deployed: no run has passed the safety gate yet |
 
 ---
 
