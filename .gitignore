@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/raw/
+data/processed/*.parquet
+!data/processed/feature_store_demo.parquet
+artifacts/laya/
+node_modules/
+# web/dist is committed so teammates can run the app without Node.js
+e2e/test-results/
+e2e/playwright-report/
+.env
+audit_log*.jsonl
+data/processed/*.jsonl
+data/processed/features/
+data/processed/events/
+data/processed/*manifest*.json
+# Kaggle bundle (contains Olist-derived data, CC BY-NC-SA) and downloaded outputs
+kaggle/dist/
+*fraudshield_laya_output*.zip

@@ -1,0 +1,59 @@
+# FraudShield decision service config. Relative paths resolve against the repo root.
+laya:
+  mode: auto                     # auto | local | http | cached. auto = local on CUDA if laya loads, else cached
+  model_path: convaiinnovations/laya   # or a local fine-tuned checkpoint dir
+  device: cuda
+  timeout_s: 0.18                # hard timeout; on timeout the decision degrades to the calibrated GBM
+  http_url: http://localhost:8001
+  api_key_env: LAYA_API_KEY
+  cache_path: artifacts/laya_cache.json   # sha256(state + question ids) -> answers; demo fallback
+  record_cache: null             # set a path to record live answers into a cache file
+calibration_path: artifacts/calibration.json
+costs_path: config/costs.yaml
+policy:
+  version: policy-v1
+  explore_eps: 0.05              # logging policy; 0 = deterministic
+  explore_delta_brl: 5.0         # ASSUMPTION
+  explore_p_max: 0.6             # ASSUMPTION
+  block_cap_24h: 1
+  degraded_lambda_allow: 0.02    # ASSUMPTION
+  degraded_high_risk: 0.30       # ASSUMPTION
+  seed: 0
+explain:
+  model_id: claude-haiku-4-5-20251001   # used if ANTHROPIC_API_KEY is set
+  groq_model_id: openai/gpt-oss-120b     # used if only GROQ_API_KEY is set (in .env)
+  llm_for_allow: false           # plain allows get the template only
+replay_path: data/processed/replay_decisions.jsonl
+demo_bookings_path: data/processed/demo_bookings.json
+audit_path: artifacts/audit/audit.jsonl
+web_dist: web/dist
+cors_origins: ["http://localhost:5173", "http://127.0.0.1:5173"]
+# Real components as "module:callable" import strings (set by the orchestrator at integration):
+#   featurizer(booking) -> FeatureVector, serializer(booking, fv) -> str, gbm(fv) -> calibrated P(fraud)
+components:
+  featurizer: fraudshield.api.real_components:featurizer
+  serializer: fraudshield.api.real_components:serializer
+  gbm: fraudshield.api.real_components:gbm
+# Continuous learning (fraudshield/learning, docs/API.md v1.2). Defaults in fraudshield/learning/wiring.py.
+learning:
+  enabled: true
+  system: B2                     # which saved GBM the loop retrains (artifacts/models/B2_F.lgb = v1)
+  tier: F
+  models_dir: artifacts/models   # registry.json and versions/ live here
+  features_path: data/processed/features/seed_0.parquet   # the seed the saved models were trained on
+  bookings_path: data/processed/bookings_all.parquet
+  max_train_rows: null           # retrain takes ~10 s on the full train window; set to subsample if slower
+  bootstrap_B: 200
+  min_new_labels: 20
+  gate_mode: noninferiority      # pre-registered gate, docs/LEARNING_GATE.md; "strict" = original gate
+  cost_margin_rel: 0.05          # non-inferiority: cost improvement CI lower bound >= -5% of current
+  pr_auc_margin: 0.02            # non-inferiority: candidate PR-AUC >= current - 0.02
+  cost_tolerance_rel: 0.02       # strict gate only: CI lower bound >= -2% of current cost
+  max_ece_increase: 0.02
+  max_fpr_hn_increase: 0.005     # 0.5 percentage points
+  wire_active: true              # after a deploy, restarts score with the registry's active version
+  new_pattern_glob: data/processed/features/seed_*.parquet   # eval set (b): unseen typologies, all seeds
+  # training-side options (docs/LEARNING_GATE.md "Training changes after run 4"); none passed the gate, defaults kept
+  max_feedback_share: null       # e.g. 0.3 = feedback may carry at most 30% of total sample weight
+  ipw_clip: 20                   # propensity-weight clip for explored feedback
+  lgb_params: {min_child_samples: 100, lambda_l2: 10}   # run R3 in docs/LEARNING_GATE.md: best candidate so far, gate still decides

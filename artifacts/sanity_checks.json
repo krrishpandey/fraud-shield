@@ -1,0 +1,56 @@
+{
+  "b0_pr_auc_cam2": {
+    "F": {
+      "mean": 0.05025805402222223,
+      "sd": 0.029688203009329624
+    },
+    "R": {
+      "mean": 0.042329621533333334,
+      "sd": 0.026497042614395852
+    }
+  },
+  "check1_pass": true,
+  "artifact_injected_legit_plain": 0.7507094237883543,
+  "artifact_injected_legit_grouped": 0.6173831898654792,
+  "artifact_injected_legit_per_column_grouped": {
+    "weight_kg": 0.468,
+    "length_cm": 0.467,
+    "width_cm": 0.465,
+    "height_cm": 0.478,
+    "declared_value": 0.478,
+    "carrier_cost": 0.501,
+    "distance_km": 0.519,
+    "n_items": 0.5,
+    "category_code": 0.482,
+    "express": 0.533,
+    "tod_seconds": 0.497,
+    "second": 0.499,
+    "cost_cents": 0.495,
+    "freight_residual": 0.503,
+    "scan_lag_h": 0.51,
+    "scan_missing": 0.507
+  },
+  "artifact_all_injected_non_semantic_plain": 0.5502759278203297,
+  "artifact_all_injected_non_semantic_grouped": 0.5351762276301895,
+  "artifact_all_injected_non_semantic_per_column_grouped": {
+    "second": 0.502,
+    "cost_cents": 0.502,
+    "freight_residual": 0.511,
+    "scan_lag_h": 0.513,
+    "scan_missing": 0.508
+  },
+  "placebo_real_groups_grouped": 0.5305064097326602,
+  "info_auc_fraud_vs_real_all_columns_grouped": 0.8128803927622527,
+  "check2_pass_grouped": false,
+  "check2_pass_plain": false,
+  "shuffled_label_pr_auc_runs": [
+    0.01525016298519669,
+    0.007914911688754918,
+    0.007317618981877075,
+    0.009274289275380137,
+    0.01414153129359529
+  ],
+  "shuffled_label_pr_auc": 0.01077970284496082,
+  "test_prevalence": 0.012039258451472192,
+  "check3_pass": true
+}

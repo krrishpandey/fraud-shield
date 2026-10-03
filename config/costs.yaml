@@ -1,0 +1,27 @@
+# FraudShield cost matrix, BRL. Only F (the booking's carrier_cost) comes from data.
+# EVERY number below is an ASSUMPTION chosen for the prototype; vary them in the sensitivity table.
+version: costs-v1
+params:
+  c_dispute:       {value: 30.0, note: "ASSUMPTION: ops + dispute handling per fraud that passes"}
+  margin:          {value: 0.30, note: "ASSUMPTION: carrier contribution margin on freight"}
+  goodwill:        {value: 15.0, note: "ASSUMPTION: churn/goodwill proxy when a legit booking is lost"}
+  c_scan:          {value: 0.50, note: "ASSUMPTION: cost of a first-scan gate check"}
+  q_scan:          {value: 0.40, note: "ASSUMPTION: share of fraud caught at first scan (mode not known)"}
+  q_scan_takeover: {value: 0.40, note: "ASSUMPTION: scan catch rate, takeover/foreign-sender mode"}
+  q_scan_payoff:   {value: 0.60, note: "ASSUMPTION: scan catch rate, payoff-max mode (weight/dims mismatch)"}
+  q_scan_drop:     {value: 0.30, note: "ASSUMPTION: scan catch rate, drop-consignee mode"}
+  q_scan_other:    {value: 0.40, note: "ASSUMPTION: scan catch rate, unexplained fraud"}
+  c_intercept:     {value: 8.0,  note: "ASSUMPTION: cost to intercept a parcel at first scan"}
+  ab_scan:         {value: 0.02, note: "ASSUMPTION: legit abandonment under scan gate"}
+  c_msg:           {value: 0.20, note: "ASSUMPTION: owner message cost"}
+  fatigue:         {value: 2.0,  note: "ASSUMPTION: owner fatigue cost per confirm"}
+  p_unreach:       {value: 0.30, note: "ASSUMPTION: owner unreachable within 30 min"}
+  ab_wait:         {value: 0.30, note: "ASSUMPTION: legit abandonment while waiting for owner"}
+  p_spoof:         {value: 0.10, note: "ASSUMPTION: fraudster controls the owner channel"}
+  analyst_per_min: {value: 1.00, note: "ASSUMPTION: analyst cost per minute"}
+  review_min:      {value: 6.0,  note: "ASSUMPTION: minutes per review"}
+  ab_review:       {value: 0.05, note: "ASSUMPTION: legit abandonment under review"}
+  analyst_miss:    {value: 0.10, note: "ASSUMPTION: analyst miss rate"}
+  c_hold:          {value: 3.0,  note: "ASSUMPTION: cost of holding and verifying"}
+  ab_hold:         {value: 0.25, note: "ASSUMPTION: legit abandonment under hold"}
+  c_block_support: {value: 5.0,  note: "ASSUMPTION: support cost of a block"}

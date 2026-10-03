@@ -1,0 +1,18 @@
+{
+  "name": "fraudshield-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:llm": "cross-env E2E_LLM=1 playwright test --grep @llm",
+    "server": "node start-server.mjs",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "cross-env": "^10.1.0",
+    "typescript": "^7.0.2"
+  }
+}

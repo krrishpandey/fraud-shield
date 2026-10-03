@@ -1,0 +1,84 @@
+"""Groq (OpenAI-compatible) client exposing the small part of the Anthropic SDK interface that
+explain/llm.py uses: client.messages.create(...) -> obj with .content[*].type/.text and .stop_reason.
+Lets the explanation layer run on Groq-hosted open models with no change to prompt, validator or audit.
+"""
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import httpx
+
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
+REASONING_PREFIXES = ("openai/gpt-oss",)
+
+
+@dataclass
+class _Block:
+    text: str
+    type: str = "text"
+
+
+@dataclass
+class _Response:
+    content: list[_Block]
+    stop_reason: str
+
+
+class _Messages:
+    def __init__(self, owner: "GroqClient"):
+        self._o = owner
+
+    def create(self, *, model: str, max_tokens: int, temperature: float, system: str,
+               messages: list[dict[str, Any]]) -> _Response:
+        body = {"model": model, "max_tokens": max_tokens, "temperature": temperature,
+                "messages": [{"role": "system", "content": system}, *messages]}
+        if model.startswith(REASONING_PREFIXES):
+            # Hidden reasoning tokens count against max_tokens; without room the answer is cut off.
+            body["reasoning_effort"] = "low"
+            body["max_tokens"] = max(max_tokens, 2000)
+        r = self._o.http.post(GROQ_URL, json=body, headers={"Authorization": f"Bearer {self._o.api_key}"},
+                              timeout=self._o.timeout)
+        r.raise_for_status()
+        choice = r.json()["choices"][0]
+        text = (choice.get("message") or {}).get("content") or ""
+        stop = "end_turn" if choice.get("finish_reason") == "stop" else str(choice.get("finish_reason"))
+        return _Response([_Block(text.strip())], stop)
+
+
+class GroqClient:
+    def __init__(self, api_key: str, http: httpx.Client | None = None, timeout: float = 15.0):
+        self.api_key = api_key
+        self.http = http or httpx.Client()
+        self.timeout = timeout
+        self.messages = _Messages(self)
+
+
+def pick_llm(explain_cfg: dict[str, Any]) -> tuple[Any, str | None, str | None]:
+    """(client, model_id, provider). Anthropic if its key is set, else Groq, else no LLM (template)."""
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        import anthropic  # noqa: PLC0415
+
+        from fraudshield.explain.llm import DEFAULT_MODEL_ID
+        return (anthropic.Anthropic(timeout=15.0, max_retries=1),
+                explain_cfg.get("model_id", DEFAULT_MODEL_ID), "anthropic")
+    if os.environ.get("GROQ_API_KEY"):
+        return (GroqClient(os.environ["GROQ_API_KEY"]),
+                explain_cfg.get("groq_model_id", DEFAULT_GROQ_MODEL), "groq")
+    return None, None, None
+
+
+def load_dotenv(path: str | Path) -> None:
+    """Minimal .env loader: KEY=VALUE lines; existing environment variables win."""
+    p = Path(path)
+    if not p.exists():
+        return
+    for line in p.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = (s.strip() for s in line.split("=", 1))
+        os.environ.setdefault(k, v.strip('"').strip("'"))

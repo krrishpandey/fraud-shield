@@ -1,0 +1,247 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+/*
+  FraudShield console tokens.
+  Subject: a carrier's booking desk. Cool label-stock greys, freight navy, routing-label ink.
+  Action colors always ship with a text label and a glyph, never color alone.
+*/
+:root {
+  color-scheme: light;
+  --page: #eceff2;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --ink: #14212e;
+  --ink-2: #485868;
+  --muted: #687886;
+  --rule: #d2d9e0;
+  --rule-strong: #14212e;
+  --brand: #163a5c;
+  --brand-ink: #ffffff;
+  --tape: #f2c230;
+  --focus: #1f5fbf;
+  --danger: #b42318;
+  --ok: #1f7a3e;
+
+  --act-allow: #1f7a3e;
+  --act-allow_scan_gated: #0f6e7a;
+  --act-owner_confirm: #2d5bb8;
+  --act-review: #6a45b0;
+  --act-hold: #a35a00;
+  --act-block: #b42318;
+
+  /* Reference categorical palette (dataviz skill), fixed order. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #4a3aa7;
+  --series-8: #e34948;
+  --grid: #e1e5e9;
+  --axis: #b9c2cb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --page: #0d1318;
+    --surface: #151d25;
+    --surface-2: #1b252f;
+    --ink: #e6ecf1;
+    --ink-2: #aab7c3;
+    --muted: #8593a0;
+    --rule: #2a3641;
+    --rule-strong: #c9d4de;
+    --brand: #9cc0e4;
+    --brand-ink: #0d1318;
+    --focus: #f2c230;
+    --danger: #f07066;
+    --ok: #4cb872;
+    --act-allow: #4cb872;
+    --act-allow_scan_gated: #3fb3c2;
+    --act-owner_confirm: #7fa3f0;
+    --act-review: #a88beb;
+    --act-hold: #f0a33a;
+    --act-block: #f07066;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --grid: #26313b;
+    --axis: #3a4752;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0d1318;
+  --surface: #151d25;
+  --surface-2: #1b252f;
+  --ink: #e6ecf1;
+  --ink-2: #aab7c3;
+  --muted: #8593a0;
+  --rule: #2a3641;
+  --rule-strong: #c9d4de;
+  --brand: #9cc0e4;
+  --brand-ink: #0d1318;
+  --focus: #f2c230;
+  --danger: #f07066;
+  --ok: #4cb872;
+  --act-allow: #4cb872;
+  --act-allow_scan_gated: #3fb3c2;
+  --act-owner_confirm: #7fa3f0;
+  --act-review: #a88beb;
+  --act-hold: #f0a33a;
+  --act-block: #f07066;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --grid: #26313b;
+  --axis: #3a4752;
+}
+
+@theme {
+  --font-sans: 'Archivo Variable', 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-tape: var(--tape);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--ink);
+}
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+}
+
+.condensed {
+  font-stretch: 78%;
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 4px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand);
+  filter: brightness(1.12);
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.9rem;
+}
+.field:focus-visible {
+  border-color: var(--focus);
+}
+
+/* Routing-label stamp: the one loud element. A barcode band in the action color over a framed label. */
+.route-label {
+  border: 3px solid var(--rule-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.route-label .band {
+  height: 18px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--act) 0 3px,
+    transparent 3px 5px,
+    var(--act) 5px 6px,
+    transparent 6px 9px,
+    var(--act) 9px 13px,
+    transparent 13px 15px
+  );
+  border-bottom: 3px solid var(--rule-strong);
+}
+
+.prob-track {
+  position: relative;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.field::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}

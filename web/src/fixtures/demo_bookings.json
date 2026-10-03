@@ -1,0 +1,72 @@
+[
+  {
+    "scenario": "legit-tenured",
+    "title": "Tenured seller, usual parcel",
+    "description": "A seller with two years of history ships a typical housewares parcel from its own warehouse to a state it serves every week.",
+    "expected": "allow",
+    "booking": {
+      "booking_id": "demo-legit-01", "account_id": "acc_3f10", "booked_at": "2018-06-14T10:12:00", "channel": "web",
+      "login_device_age_days": 640, "payment_method": "account_billing", "sender_id": "acc_3f10",
+      "origin_uf": "SP", "origin_zip3": "130", "dest_uf": "RJ", "dest_zip3": "220", "consignee_id": "cns_0a17",
+      "weight_kg": 1.4, "length_cm": 30, "width_cm": 20, "height_cm": 12, "service": "standard",
+      "category": "housewares", "declared_value": 89.9, "carrier_cost": 18.4, "owner_contact_age_days": 700,
+      "meta": { "scenario": "legit" }
+    }
+  },
+  {
+    "scenario": "hard-negative-new-state",
+    "title": "Established seller, first shipment to a new state",
+    "description": "A real pattern from the Olist data: an established seller ships to Bahia for the first time. New destination, but same sender, device and package profile.",
+    "expected": "allow_scan_gated",
+    "booking": {
+      "booking_id": "demo-hardneg-01", "account_id": "acc_51b2", "booked_at": "2018-06-14T14:05:00", "channel": "web",
+      "login_device_age_days": 410, "payment_method": "account_billing", "sender_id": "acc_51b2",
+      "origin_uf": "MG", "origin_zip3": "301", "dest_uf": "BA", "dest_zip3": "402", "consignee_id": "cns_2c88",
+      "weight_kg": 2.1, "length_cm": 35, "width_cm": 25, "height_cm": 15, "service": "standard",
+      "category": "health_beauty", "declared_value": 129.0, "carrier_cost": 31.7, "owner_contact_age_days": 455,
+      "meta": { "scenario": "hard_negative_new_state" }
+    }
+  },
+  {
+    "scenario": "takeover",
+    "title": "Label-resale takeover",
+    "description": "At 02:41 a brand-new device on the API channel books a heavy express parcel from a sender and origin this account has never paid for. It is the eighth new sender in ten bookings.",
+    "expected": "hold",
+    "booking": {
+      "booking_id": "demo-takeover-01", "account_id": "acc_7c3e", "booked_at": "2018-06-14T02:41:00", "channel": "api",
+      "login_device_age_days": 0, "payment_method": "account_billing", "sender_id": "snd_91aa",
+      "origin_uf": "PR", "origin_zip3": "806", "dest_uf": "AM", "dest_zip3": "690", "consignee_id": "cns_4410",
+      "weight_kg": 9.8, "length_cm": 50, "width_cm": 40, "height_cm": 35, "service": "express",
+      "category": "electronics", "declared_value": 1450.0, "carrier_cost": 212.6, "owner_contact_age_days": 412,
+      "meta": { "scenario": "T1" }
+    }
+  },
+  {
+    "scenario": "reshipping-drop",
+    "title": "Parcel to a reshipping drop",
+    "description": "The consignee address is three weeks old and has received parcels paid for by eleven unrelated accounts. This pattern was held out of training.",
+    "expected": "review",
+    "booking": {
+      "booking_id": "demo-drop-01", "account_id": "acc_9d04", "booked_at": "2018-06-14T19:22:00", "channel": "web",
+      "login_device_age_days": 3, "payment_method": "card", "sender_id": "acc_9d04",
+      "origin_uf": "SP", "origin_zip3": "041", "dest_uf": "SP", "dest_zip3": "087", "consignee_id": "cns_d7f1",
+      "weight_kg": 3.2, "length_cm": 40, "width_cm": 30, "height_cm": 20, "service": "express",
+      "category": "computers_accessories", "declared_value": 899.0, "carrier_cost": 64.3, "owner_contact_age_days": 95,
+      "meta": { "scenario": "T3" }
+    }
+  },
+  {
+    "scenario": "weight-manipulation",
+    "title": "Declared weight far below the package size",
+    "description": "A 60 x 50 x 45 cm box declared at 0.8 kg. The account is otherwise normal; the gap only shows when the parcel is weighed at first scan.",
+    "expected": "allow_scan_gated",
+    "booking": {
+      "booking_id": "demo-weight-01", "account_id": "acc_22e9", "booked_at": "2018-06-14T11:48:00", "channel": "web",
+      "login_device_age_days": 220, "payment_method": "account_billing", "sender_id": "acc_22e9",
+      "origin_uf": "SC", "origin_zip3": "890", "dest_uf": "PE", "dest_zip3": "500", "consignee_id": "cns_61a0",
+      "weight_kg": 0.8, "length_cm": 60, "width_cm": 50, "height_cm": 45, "service": "standard",
+      "category": "furniture_decor", "declared_value": 310.0, "carrier_cost": 47.9, "owner_contact_age_days": 260,
+      "meta": { "scenario": "T6" }
+    }
+  }
+]
