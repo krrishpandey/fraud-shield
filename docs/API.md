@@ -103,3 +103,28 @@ audit record and returns the same body plus `audit_hash`. An unknown level retur
 `under_score` (`-(dims_z + weight_z)`, accounts with 5+ earlier bookings) reaches the level's threshold gets the reason
 `UNDER_DECLARED_PARCEL` and at least `allow_scan_gated`. The starting level is `first_scan.level` in the config
 (default `standard`).
+
+## Label-free monitor (v1.4)
+
+`GET /monitor/estimate` (also under `/api`) estimates, over the live stream's decisions so far and without labels,
+the precision of the stops and the fraud missed, from the decision score (`probabilities.misuse`, Platt-calibrated)
+and the action taken (CBPE, `fraudshield/monitor/cbpe.py`). Stopped = `owner_confirm`, `review`, `hold`, `block`;
+let through = `allow`, `allow_scan_gated`. Before a stream starts it returns `n: 0` and nulls.
+
+```json
+{"n":1200,"source":"stream","status":{"state":"running"},
+ "estimated":{"n":1200,"n_stopped":14,"n_let_through":1186,"precision_stopped":0.71,"fraud_caught":9.9,
+   "fraud_missed":2.6,"recall":0.79,"label":"from calibrated scores and the actions taken, no labels needed"},
+ "realized":{"n":1200,"n_stopped":14,"n_let_through":1186,"precision_stopped":0.79,"fraud_caught":11,"fraud_missed":3,
+   "recall":0.79,"missed_by_type":{"T3":1,"T6":2},"missed_held_out":1,
+   "label":"simulation ground truth, not available in production until labels arrive"},
+ "drift":{"psi":0.08,"min_n":500,"reference":"calibration window, seed 0, ...","note":"..."},
+ "blind_spot":{"ui_note":"Blind spot: ...","missed_gap_per_period":-1.45,"missed_gap_per_period_sd":0.43,
+   "period":"week","seeds":10,"split":"test window 2018-05-15..2018-08-31","held_out_let_through":23.5,
+   "held_out_sum_p_let_through":0.23},
+ "evidence":"artifacts/results_monitor.md"}
+```
+
+`realized` exists only because the stream replays a labelled dataset. `blind_spot` and the PSI reference come from
+`artifacts/results_monitor.json` (`scripts/eval_monitor.py`; config key `monitor_results_path`); without that file
+both are null. In the example the stream numbers are illustrative; the `blind_spot` numbers are the measured ones.

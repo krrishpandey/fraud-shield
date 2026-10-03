@@ -38,6 +38,7 @@ from fraudshield.policy.costs import load_costs
 from fraudshield.policy.decide import PolicyConfig
 from fraudshield.policy.reasons import booking_signals, reason_catalog
 from fraudshield.sim.stream import StreamMetrics, StreamRunner, offline_metrics
+from fraudshield.monitor.live import live_estimate, load_results as load_monitor_results
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG: dict[str, Any] = {
@@ -643,6 +644,16 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     def stream_feed(limit: int = 30):
         m = stream.get("metrics")
         return [] if m is None else _json_safe(m.feed(max(1, min(limit, 200))))
+
+    # ---------- label-free monitor (fraudshield/monitor) ----------
+    monitor_results = load_monitor_results(_path(cfg.get("monitor_results_path") or "artifacts/results_monitor.json"))
+
+    @r.get("/monitor/estimate")
+    def monitor_estimate():
+        """Estimated precision of stops and missed fraud over the stream's decisions so far, without labels."""
+        m = stream.get("metrics")
+        return _json_safe({**live_estimate(m.rows() if m is not None else [], monitor_results),
+                           "source": "stream", "status": _stream_status()})
 
     def _learning():
         if learning is None:

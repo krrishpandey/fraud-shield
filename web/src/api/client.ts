@@ -3,6 +3,7 @@ import type {
   DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, FirstScanDial, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
 } from './types'
+import type { MonitorEstimate } from './types'
 
 export const MOCK = import.meta.env.VITE_MOCK === '1' || import.meta.env.VITE_MOCK === 'true'
 // Empty VITE_API_URL means same origin (the desktop app serves web/dist and the API together).
@@ -91,6 +92,7 @@ export const api = {
   streamMetrics: () => request<StreamMetricsResponse>('/stream/metrics'),
   streamFlagged: (actions = 'hold,block') => request<StreamFlagged>(`/stream/flagged?actions=${actions}`),
   streamFeed: (limit = 30) => request<StreamFeedRow[]>(`/stream/feed?limit=${limit}`),
+  monitorEstimate: () => request<MonitorEstimate>('/monitor/estimate'),
   /** GET /demo/bookings. In mock mode the local fixture is served by the mock layer. */
   demoBookings: async (): Promise<DemoBooking[]> => {
     const raw = await request<unknown[]>('/demo/bookings')
