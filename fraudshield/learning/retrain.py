@@ -45,6 +45,21 @@ def cap_feedback_weight(w: np.ndarray, ref_total: float, max_share: float | None
     return w * (limit / w.sum()) if w.sum() > limit else w
 
 
+def interaction_constraints(features: list[str], limits: dict[str, list[str]] | None) -> list[list[int]] | None:
+    """LightGBM interaction_constraints from {feature: [features it may interact with]}: each limited feature gets
+    its own group with its partners; every other feature stays free to interact with every other one.
+    Attempt 5 in docs/LEARNING_GATE.md: {"login_device_age_days": ["channel_code"]}."""
+    if not limits:
+        return None
+    idx = {f: i for i, f in enumerate(features)}
+    missing = [f for f in [*limits, *(x for v in limits.values() for x in v)] if f not in idx]
+    if missing:
+        raise ValueError(f"interaction_limits names unknown features: {missing}")
+    groups = [[idx[f], *(idx[x] for x in partners)] for f, partners in limits.items()]
+    groups.append([i for f, i in idx.items() if f not in limits])
+    return groups
+
+
 def split_feedback_by_time(labels: list[dict[str, Any]], train_frac: float = 0.7):
     """Earliest `train_frac` by booking time -> training; latest rest -> evaluation."""
     s = sorted(labels, key=lambda x: (str(x.get("booked_at")), str(x.get("labelled_at")), str(x["decision_id"])))
@@ -195,7 +210,8 @@ def run_retrain(registry, reference: pd.DataFrame, labels: list[dict[str, Any]],
                 policy, gate_cfg: GateConfig, fit_fn: Callable = fit_weighted, max_train_rows: int | None = None,
                 B: int = 200, seed: int = 0, train_frac: float = 0.7,
                 new_pattern_pool: pd.DataFrame | None = None, max_feedback_share: float | None = None,
-                ipw_clip: float = IPW_CLIP, lgb_params: dict | None = None) -> RetrainResult:
+                ipw_clip: float = IPW_CLIP, lgb_params: dict | None = None,
+                interaction_limits: dict[str, list[str]] | None = None) -> RetrainResult:
     """Build, evaluate and gate a candidate against the active version. Never deploys."""
     t0 = time.perf_counter()
     notes: list[str] = []
@@ -235,6 +251,9 @@ def run_retrain(registry, reference: pd.DataFrame, labels: list[dict[str, Any]],
     cal_fit = ref_cal[~ref_cal.booking_id.astype(str).isin(fb_ids)]
 
     ev = _eval_frame(cal_fit, fb_ev, feats)
+    ic = interaction_constraints(feats, interaction_limits)
+    if ic is not None:
+        lgb_params = {**(lgb_params or {}), "interaction_constraints": ic}
     fit_kw = {"params": lgb_params} if lgb_params else {}
     candidate = fit_fn(registry.system, registry.tier, X, y, w, cal_fit[feats], cal_fit.is_fraud.to_numpy(bool),
                        **fit_kw)
@@ -294,7 +313,8 @@ def run_retrain(registry, reference: pd.DataFrame, labels: list[dict[str, Any]],
                          "explored_weight": round(float(w_fb[[bool(x.get("explored")) for x in fb_train_l]].sum()), 2)
                          if len(fb_train_l) else 0.0,
                          "n_reference_hard_negatives": int(_hn_mask(ref_tr).sum()),
-                         "lgb_params_override": lgb_params or {}},
+                         "lgb_params_override": lgb_params or {},
+                         "interaction_limits": interaction_limits or {}},
         "current": {"version": cur_version, **m_cur},
         "candidate": {"version": None, **m_cand},
         "bootstrap": {"B": B, "clusters": int(len(set(clusters))), "unit": "fraud campaign, else account",

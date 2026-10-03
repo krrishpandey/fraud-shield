@@ -47,3 +47,33 @@ def test_lgb_param_overrides_applied():
     m = fit_weighted(SYSTEM, TIER, tr, tr.is_fraud, np.ones(len(tr)), cal, cal.is_fraud,
                      params={"min_child_samples": 100, "lambda_l2": 10.0})
     assert m.metadata["params"]["min_child_samples"] == 100 and m.metadata["params"]["lambda_l2"] == 10.0
+
+
+def test_interaction_limits_map_to_lightgbm_groups():
+    from fraudshield.learning.retrain import interaction_constraints
+    feats = ["a", "dev", "ch", "b"]
+    assert interaction_constraints(feats, {"dev": ["ch"]}) == [[1, 2], [0, 2, 3]]
+    assert interaction_constraints(feats, None) is None
+    with pytest.raises(ValueError, match="unknown features"):
+        interaction_constraints(feats, {"dev": ["nope"]})
+
+
+def _tree_paths(node, path=()):
+    if "split_feature" not in node:
+        yield path
+        return
+    p = (*path, node["split_feature"])
+    yield from _tree_paths(node["left_child"], p)
+    yield from _tree_paths(node["right_child"], p)
+
+
+def test_run_retrain_applies_interaction_limits(world, tmp_path):  # noqa: F811
+    from tests.learning.helpers import FEATS
+    lim, partner = FEATS[0], FEATS[1]
+    _, res = _run(world, tmp_path, interaction_limits={lim: [partner]})
+    ts = res.report["training_set"]
+    assert ts["interaction_limits"] == {lim: [partner]} and "interaction_constraints" in ts["lgb_params_override"]
+    for t in res.candidate.booster.dump_model()["tree_info"]:
+        for path in _tree_paths(t["tree_structure"]):
+            names = {FEATS[i] for i in path}
+            assert lim not in names or names <= {lim, partner}  # the limited feature only meets its partner

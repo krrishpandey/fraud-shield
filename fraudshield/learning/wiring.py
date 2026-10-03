@@ -29,7 +29,7 @@ DEFAULTS: dict[str, Any] = {
     "gate_mode": "noninferiority", "cost_margin_rel": 0.05, "pr_auc_margin": 0.02,
     "new_pattern_glob": "data/processed/features/seed_*.parquet",
     # training-side options (docs/LEARNING_GATE.md "Training changes after run ...")
-    "max_feedback_share": None, "ipw_clip": 20.0, "lgb_params": None,
+    "max_feedback_share": None, "ipw_clip": 20.0, "lgb_params": None, "interaction_limits": None,
 }
 
 
@@ -94,4 +94,5 @@ def build_learning(cfg: dict, pipeline, audit, audit_path: Path, resolve: Callab
         new_pattern=(lambda: load_new_pattern_pool(np_paths)) if np_paths else None,
         train_options={"max_feedback_share": None if lc.get("max_feedback_share") is None
                        else float(lc["max_feedback_share"]),
-                       "ipw_clip": float(lc["ipw_clip"]), "lgb_params": lc.get("lgb_params") or None})
+                       "ipw_clip": float(lc["ipw_clip"]), "lgb_params": lc.get("lgb_params") or None,
+                       "interaction_limits": lc.get("interaction_limits") or None})
