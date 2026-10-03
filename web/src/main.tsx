@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import './index.css'
 import './decision.css'
+import './live.css'
 import Layout from './components/Layout'
 import ScoreView from './views/ScoreView'
 import DecisionView from './views/DecisionView'
@@ -10,6 +11,7 @@ import QueueView from './views/QueueView'
 import DashboardView from './views/DashboardView'
 import AuditView from './views/AuditView'
 import LearningView from './views/LearningView'
+import LiveView from './views/LiveView'
 
 // Hash routing: refresh works when web/dist is served as static files inside the desktop window.
 createRoot(document.getElementById('root')!).render(
@@ -19,6 +21,7 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<Layout />}>
           <Route index element={<ScoreView />} />
           <Route path="decisions/:id" element={<DecisionView />} />
+          <Route path="live" element={<LiveView />} />
           <Route path="queue" element={<QueueView />} />
           <Route path="dashboard" element={<DashboardView />} />
           <Route path="learning" element={<LearningView />} />

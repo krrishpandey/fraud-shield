@@ -46,7 +46,7 @@ class Pipeline:
                  policy: PolicyConfig | None = None, rules: Callable = default_rules, seed: int = 0,
                  llm_client: Any = None, llm_model_id: str = DEFAULT_MODEL_ID, llm_for_allow: bool = False,
                  versions: dict[str, str] | None = None, explainer: Callable | None = None,
-                 label_store: Any = None):
+                 label_store: Any = None, ask_laya: Any = None, id_prefix: str = "dec_"):
         self.featurize, self.serialize, self.gbm, self.laya, self.audit = featurize, serialize, gbm, laya, audit
         self.calibration = calibration
         self.costs = costs or CostConfig.default()
@@ -63,6 +63,9 @@ class Pipeline:
         self.versions = versions or {}
         self.explainer = explainer
         self.label_store = label_store  # learning.LabelStore-like (append); None = labels only audited
+        # Question model for "ask a new question" while the decision Laya is not live (stock, not fine-tuned).
+        self.ask_laya = ask_laya
+        self.id_prefix = id_prefix  # the live stream uses "str_" so its ids never collide with the main service
         self.on_label: Callable | None = None  # optional hook(label_record), e.g. the Laya export
         self.last_degraded: bool | None = None
         self._lock = threading.RLock()
@@ -76,7 +79,7 @@ class Pipeline:
     # ---------- store ----------
     def _next_id(self) -> str:
         self._n += 1
-        return f"dec_{self._n:06d}"
+        return f"{self.id_prefix}{self._n:06d}"
 
     def add_record(self, rec: dict[str, Any]) -> None:
         """Insert a pre-scored decision (replay file). Keeps idempotency on booking_id."""
@@ -229,7 +232,8 @@ class Pipeline:
         return rec
 
     # ---------- async explanation ----------
-    def explain_decision(self, decision_id: str) -> None:
+    def explain_decision(self, decision_id: str, use_llm: bool = True) -> None:
+        """use_llm=False: the fixed template only (the live stream caps LLM calls)."""
         rec = self._by_id.get(decision_id)
         if rec is None:
             return
@@ -237,7 +241,7 @@ class Pipeline:
             if self.explainer is not None:
                 exp, log = self.explainer(rec)
             else:
-                client = self.llm_client if (rec["action"] != "allow" or self.llm_for_allow) else None
+                client = self.llm_client if use_llm and (rec["action"] != "allow" or self.llm_for_allow) else None
                 exp, log = explain(rec, client=client, model_id=self.llm_model_id, use_default_client=False)
         except Exception as e:  # never lose the decision because of the explainer
             try:
@@ -276,21 +280,36 @@ class Pipeline:
                 self.on_label(lab)
         return h
 
+    def _ask_client(self) -> tuple[Any, str]:
+        """The live decision Laya answers questions; until it is live, the separate question model does."""
+        if self.ask_laya is not None and getattr(self.laya, "mode", None) not in ("local", "http"):
+            return self.ask_laya, self.ask_laya.label
+        model = getattr(self.laya, "model", None)
+        return self.laya, f"Laya ({model})" if model else "Laya"
+
+    def ask_model(self) -> dict[str, Any] | None:
+        client, label = self._ask_client()
+        state = client.state() if hasattr(client, "state") else getattr(client, "mode", None)
+        return {"label": label, "state": state}
+
     def ask(self, decision_id: str, instructions: str, yes: str, no: str) -> dict[str, Any]:
         rec = self._by_id[decision_id]
+        client, label = self._ask_client()
         with self._lock:
             self._custom_q += 1
             qid = f"custom_{self._custom_q}"
         q = {"type": "choice", "instructions": instructions, "criteria": {"a": yes, "b": no}}
-        res = self.laya.ask(rec["state_text"], q, qid=qid)
+        res = client.ask(rec["state_text"], q, qid=qid)
         probs = res.raw[qid]
         out = {"qid": qid, "probability_yes": round(p_yes(probs), 4), "raw_probabilities": probs,
-               "latency_ms": round(res.latency_ms, 2), "calibrated": False, "cached": res.cached}
-        model_version = str(getattr(res, "revision", None) or getattr(self.laya, "revision", None) or "none")
+               "latency_ms": round(res.latency_ms, 2), "calibrated": False, "cached": res.cached,
+               "answered_by": label}
+        model_version = str(getattr(res, "revision", None) or getattr(client, "revision", None) or "none")
         _, h = self.audit.append("ask", {"decision_id": decision_id, "booking_id": rec["booking_id"], "qid": qid,
                                          "instructions": instructions, "criteria": {"a": yes, "b": no},
                                          "probability_yes": out["probability_yes"], "raw_probabilities": probs,
                                          "calibrated": False, "cached": res.cached, "model_version": model_version,
+                                         "answered_by": label,
                                          "state_sha256": rec.get("state_sha256")})
         out["audit_hash"] = h
         return out

@@ -24,7 +24,8 @@ def choose_laya_mode(requested: str, *, has_cuda: bool, has_laya: bool) -> str:
     if not has_laya:
         return "cached"
     if requested == "auto":
-        return "local" if has_cuda else "cached"
+        # The app decides: fine-tuned checkpoint present -> Laya decides; otherwise cached answers.
+        return "auto" if has_cuda else "cached"
     return requested
 
 

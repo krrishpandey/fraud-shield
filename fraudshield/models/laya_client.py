@@ -182,3 +182,72 @@ class LayaClient:
     def health(self) -> dict[str, Any]:
         return {"mode": self.mode, "reason": self.mode_reason, "model": self.model, "revision": self.revision,
                 "cache_entries": len(self._cache) if self.mode == "cached" else None}
+
+
+class LazyLaya:
+    """A Laya client that is built on first use, or in the background with warm().
+
+    Used for "ask a new question" while the decision model is not live (no fine-tuned checkpoint yet):
+    the stock model answers questions only and never feeds a decision. While it is still loading,
+    a question gets LayaUnavailable instead of blocking the request.
+    """
+
+    def __init__(self, factory: Callable[[], Any], label: str):
+        self._factory = factory
+        self.label = label
+        self._client: Any = None
+        self._error: str | None = None
+        self._thread: threading.Thread | None = None
+        self._lock = threading.Lock()
+
+    def _load(self) -> None:
+        try:
+            client = self._factory()
+        except Exception as e:  # missing laya, download failure, out of GPU memory
+            with self._lock:
+                self._error = f"{type(e).__name__}: {e}"
+            return
+        with self._lock:
+            self._client, self._error = client, None
+
+    def warm(self) -> threading.Thread:
+        with self._lock:
+            if self._thread is None and self._client is None:
+                self._thread = threading.Thread(target=self._load, name="laya-ask-load", daemon=True)
+                self._thread.start()
+            if self._thread is not None:
+                return self._thread
+        done = threading.Thread(target=lambda: None)  # already loaded: a finished thread, safe to join
+        done.start()
+        return done
+
+    def state(self) -> str:
+        if self._client is not None:
+            return "ready"
+        if self._error:
+            return f"failed: {self._error}"
+        if self._thread is not None and self._thread.is_alive():
+            return "loading"
+        return "not loaded"
+
+    def _ensure(self):
+        if self._client is not None:
+            return self._client
+        if self._thread is not None and self._thread.is_alive():
+            raise LayaUnavailable(f"{self.label} is still loading; try again in a moment")
+        if self._error is None and self._thread is None:
+            self._load()
+        if self._client is None:
+            raise LayaUnavailable(f"{self.label} could not be loaded: {self._error}")
+        return self._client
+
+    @property
+    def model(self) -> str | None:
+        return getattr(self._client, "model", None)
+
+    @property
+    def revision(self) -> str | None:
+        return getattr(self._client, "revision", None)
+
+    def ask(self, state: str, question: dict[str, Any], qid: str = "custom") -> LayaResult:
+        return self._ensure().ask(state, question, qid=qid)

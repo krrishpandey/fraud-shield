@@ -5,6 +5,7 @@ import { useAsync } from '../lib/useAsync'
 
 const NAV = [
   { to: '/', label: 'Score a booking', id: 'score', end: true, icon: 'M3 4h14v12H3zM6 7v6M9 7v6M11 7v6M14 7v6' },
+  { to: '/live', label: 'Live stream', id: 'live', icon: 'M2 10h4l2-5 4 10 2-5h4' },
   { to: '/queue', label: 'Review queue', id: 'queue', icon: 'M3 5h14M3 10h14M3 15h9' },
   { to: '/dashboard', label: 'Dashboard', id: 'dashboard', icon: 'M4 16V9M8 16V5M12 16v-4M16 16V7' },
   { to: '/learning', label: 'Learning', id: 'learning', icon: 'M3 15l4-4 3 3 7-7M13 7h4v4' },

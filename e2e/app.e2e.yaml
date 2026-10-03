@@ -8,6 +8,18 @@ laya:
   api_key_env: LAYA_API_KEY
   cache_path: artifacts/laya_cache.json   # sha256(state + question ids) -> answers; demo fallback
   record_cache: null             # set a path to record live answers into a cache file
+# "Ask a new question" while no fine-tuned Laya is live: e2e: never load a model, never touch the GPU.
+# Once laya.model_path points at the imported fine-tuned checkpoint, Laya answers both.
+laya_ask:
+  enabled: false
+  model_path: convaiinnovations/laya
+  device: cuda
+  timeout_s: 3.0
+# Live booking stream: replays the seed-0 test window into a separate decision-service instance.
+stream:
+  audit_path: e2e/.tmp/audit/stream_audit.jsonl   # never the main audit log
+  explain_llm_per_min: 10   # LLM explanations per minute; the rest use the fixed template
+  max_rate: 200
 calibration_path: artifacts/calibration.json
 costs_path: config/costs.yaml
 policy:
@@ -35,6 +47,7 @@ components:
   serializer: fraudshield.api.real_components:serializer
   gbm: fraudshield.api.real_components:gbm
   story: fraudshield.api.real_components:account_story
+  stream_source: fraudshield.api.real_components:stream_source
 # Continuous learning (fraudshield/learning, docs/API.md v1.2). Defaults in fraudshield/learning/wiring.py.
 learning:
   enabled: true

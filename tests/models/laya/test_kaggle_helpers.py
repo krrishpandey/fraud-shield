@@ -67,3 +67,11 @@ def test_find_bundle_missing(tmp_path):
     (tmp_path / "input").mkdir()
     with pytest.raises(FileNotFoundError):
         K.find_bundle(tmp_path / "input")
+
+
+def test_native_bf16_only_from_compute_capability_8():
+    # PyTorch reports bf16 as "supported" on a T4 through slow emulation; training must use fp16 there.
+    assert K.native_bf16((7, 5)) is False   # Tesla T4 (Kaggle)
+    assert K.native_bf16((8, 0)) is True    # A100
+    assert K.native_bf16((8, 9)) is True    # RTX 40xx laptop
+    assert K.select_precision("cuda", bf16_supported=K.native_bf16((7, 5)))["dtype"] == "fp16"

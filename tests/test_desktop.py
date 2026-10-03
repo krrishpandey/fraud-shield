@@ -15,7 +15,7 @@ def test_find_free_port_returns_bindable_port():
 
 @pytest.mark.parametrize(
     "has_cuda,has_laya,expected",
-    [(True, True, "local"), (False, True, "cached"), (True, False, "cached"), (False, False, "cached")],
+    [(True, True, "auto"), (False, True, "cached"), (True, False, "cached"), (False, False, "cached")],
 )
 def test_choose_laya_mode_auto(has_cuda, has_laya, expected):
     assert desktop.choose_laya_mode("auto", has_cuda=has_cuda, has_laya=has_laya) == expected

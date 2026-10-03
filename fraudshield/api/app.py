@@ -12,6 +12,8 @@ import importlib
 import json
 import math
 import os
+import threading
+import time
 from dataclasses import asdict, fields
 from pathlib import Path
 from typing import Any, Literal
@@ -35,9 +37,12 @@ from fraudshield.models.laya_client import LayaClient, LayaUnavailable, cuda_ava
 from fraudshield.policy.costs import load_costs
 from fraudshield.policy.decide import PolicyConfig
 from fraudshield.policy.reasons import booking_signals, reason_catalog
+from fraudshield.sim.stream import StreamMetrics, StreamRunner, offline_metrics
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG: dict[str, Any] = {
+    "stream": {"audit_path": "artifacts/audit/stream_audit.jsonl", "explain_llm_per_min": 10, "max_rate": 200},
+    "laya_ask": {"enabled": False, "model_path": "convaiinnovations/laya", "device": "cuda", "timeout_s": 3.0},
     "laya": {"mode": "auto", "model_path": "convaiinnovations/laya", "device": "cuda", "timeout_s": 0.18,
              "http_url": "http://localhost:8001", "api_key_env": "LAYA_API_KEY",
              "cache_path": "artifacts/laya_cache.json", "record_cache": None},
@@ -91,6 +96,13 @@ class AskIn(BaseModel):
     instructions: str
     yes: str = "yes"
     no: str = "no"
+
+
+class StreamStartIn(BaseModel):
+    rate: float = 20.0
+    concurrency: int = 4
+    seed: int = 0
+    limit: int | None = None
 
 
 class CheckIn(BaseModel):
@@ -155,6 +167,17 @@ def _merge(base: dict, over: dict) -> dict:
     return out
 
 
+def _json_safe(x):
+    """NaN and infinity are not valid JSON: send them as null."""
+    if isinstance(x, float):
+        return None if (math.isnan(x) or math.isinf(x)) else x
+    if isinstance(x, dict):
+        return {k: _json_safe(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_json_safe(v) for v in x]
+    return x
+
+
 def _path(p: str | None) -> Path | None:
     if not p:
         return None
@@ -186,6 +209,9 @@ def _build_laya(cfg: dict, warnings: list[str]):
     lc["model_path"] = resolve_model_path(lc.get("model_path", "convaiinnovations/laya"))
     mode = lc.get("mode", "auto")
     cache = _path(lc.get("cache_path"))
+    if mode == "auto" and not Path(lc["model_path"]).is_dir():
+        return LayaClient.cached(cache, mode_reason="no fine-tuned Laya imported yet (laya.model_path is the stock "
+                                 "model), so decisions use cached answers or the backup model")
     try:
         if mode == "auto":
             return LayaClient.auto(lc["model_path"], cache, device=lc.get("device", "cuda"),
@@ -244,6 +270,22 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         except Exception as e:
             warnings.append(f"story: could not import {story_spec} ({e}); account story unavailable")
     report["story"] = "injected" if "story" in comps else (f"real ({story_spec})" if story else "none")
+    stream_source = comps.get("stream_source")
+    src_spec = (cfg.get("components") or {}).get("stream_source")
+    if stream_source is None and src_spec:
+        try:
+            stream_source = _import(src_spec)
+        except Exception as e:
+            warnings.append(f"stream_source: could not import {src_spec} ({e}); live stream unavailable")
+
+    ask_laya = comps.get("ask_laya")
+    ac = cfg.get("laya_ask") or {}
+    if ask_laya is None and ac.get("enabled") and getattr(laya, "mode", None) not in ("local", "http") and cuda_available():
+        from fraudshield.models.laya_client import LazyLaya  # noqa: PLC0415
+        ask_laya = LazyLaya(lambda: LayaClient.local(resolve_model_path(ac.get("model_path", "convaiinnovations/laya")),
+                                                     ac.get("device", "cuda"), timeout_s=float(ac.get("timeout_s", 3.0))),
+                            label="stock Laya (not fine-tuned)")
+        ask_laya.warm()
 
     calibration = load_calibration(_path(cfg["calibration_path"]))
     if calibration is None:
@@ -274,7 +316,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     pipe = Pipeline(featurize, serialize, gbm, laya, audit, calibration=calibration, costs=costs, policy=policy,
                     seed=int(pol.get("seed", 0)), llm_client=llm_client,
                     llm_model_id=llm_model_id,
-                    llm_for_allow=bool(explain_cfg.get("llm_for_allow", False)), versions=versions)
+                    llm_for_allow=bool(explain_cfg.get("llm_for_allow", False)), versions=versions,
+                    ask_laya=ask_laya)
 
     replay = {"path": str(_path(cfg.get("replay_path"))), "loaded": 0, "error": None}
     rp = _path(cfg.get("replay_path"))
@@ -306,10 +349,16 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     app.add_middleware(CORSMiddleware, allow_origins=cfg.get("cors_origins") or [], allow_methods=["*"],
                        allow_headers=["*"])
     scheduled: set[str] = set()
+    stream: dict[str, Any] = {}
+    app.state.stream = stream
     r = APIRouter()
 
+    def _owner(did: str) -> Pipeline:
+        sp = stream.get("pipe")
+        return sp if (did.startswith("str_") and sp is not None) else pipe
+
     def _get(did: str) -> dict:
-        rec = pipe.get(did)
+        rec = _owner(did).get(did)
         if rec is None:
             raise HTTPException(404, "decision not found")
         return rec
@@ -356,13 +405,13 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     @r.post("/decisions/{decision_id}/analyst")
     def analyst(decision_id: str, body: AnalystIn):
         _get(decision_id)
-        return {"ok": True, "audit_hash": pipe.analyst_feedback(decision_id, body.label, body.note)}
+        return {"ok": True, "audit_hash": _owner(decision_id).analyst_feedback(decision_id, body.label, body.note)}
 
     @r.post("/decisions/{decision_id}/ask")
     def ask(decision_id: str, body: AskIn):
         _get(decision_id)
         try:
-            return pipe.ask(decision_id, body.instructions, body.yes, body.no)
+            return _owner(decision_id).ask(decision_id, body.instructions, body.yes, body.no)
         except LayaUnavailable as e:
             raise HTTPException(503, f"Laya unavailable: {e}")
 
@@ -376,6 +425,131 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     @r.post("/decisions/{decision_id}/explanation/check")
     def check_explanation(decision_id: str, body: CheckIn):
         return check_text(_get(decision_id), body.text)
+
+    # ---------- live booking stream ----------
+    def _stream_status() -> dict:
+        r = stream.get("runner")
+        if r is None:
+            return {"state": "idle", "available": stream_source is not None}
+        return {**r.status(), "seed": stream["seed"], "available": True}
+
+    def _stream_send_factory(spipe: Pipeline, metrics: StreamMetrics, cap: int):
+        import collections  # noqa: PLC0415
+        from concurrent.futures import ThreadPoolExecutor  # noqa: PLC0415
+        llm_times: collections.deque = collections.deque()
+        lock = threading.Lock()
+        pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="stream-explain")
+        stream["explain_pool"] = pool
+
+        def explain(did: str, use_llm: bool) -> None:
+            spipe.explain_decision(did, use_llm=use_llm)
+
+        def send(b: Booking) -> dict:
+            out = spipe.score(b)
+            if out.get("explanation_status") == "pending":
+                now = time.monotonic()
+                with lock:
+                    while llm_times and now - llm_times[0] > 60:
+                        llm_times.popleft()
+                    use_llm = spipe.llm_client is not None and out["action"] != "allow" and len(llm_times) < cap
+                    if use_llm:
+                        llm_times.append(now)
+                    metrics.explanations["llm" if use_llm else "template"] += 1
+                pool.submit(explain, out["decision_id"], use_llm)
+            return out
+        return send
+
+    @r.post("/stream/start")
+    def stream_start(body: StreamStartIn):
+        if stream_source is None:
+            raise HTTPException(503, "the live stream needs the dataset (components.stream_source is not configured)")
+        cur = stream.get("runner")
+        if cur is not None and cur.status()["state"] in ("running", "paused"):
+            raise HTTPException(409, "a stream is already running; stop it first")
+        scfg = cfg.get("stream") or {}
+        if not (0 < body.rate <= float(scfg.get("max_rate", 200))) or not (1 <= body.concurrency <= 16):
+            raise HTTPException(422, "rate must be above 0 and at most max_rate; concurrency between 1 and 16")
+        try:
+            items = stream_source(body.seed)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        if body.limit:
+            items = items[: body.limit]
+        spipe = Pipeline(featurize, serialize, lambda fv: pipe.gbm(fv), laya, AuditLog(_path(scfg["audit_path"])),
+                         calibration=calibration, costs=costs, policy=policy, seed=int(pol.get("seed", 0)),
+                         llm_client=llm_client, llm_model_id=llm_model_id,
+                         llm_for_allow=bool(explain_cfg.get("llm_for_allow", False)), versions=dict(pipe.versions),
+                         ask_laya=ask_laya, id_prefix="str_")
+        metrics = StreamMetrics()
+        metrics.offline_full = offline_metrics(items)
+        cap = int(scfg.get("explain_llm_per_min", 10))
+        metrics.explanations["llm_cap_per_min"] = cap
+        runner = StreamRunner(items, _stream_send_factory(spipe, metrics, cap), metrics,
+                              rate=body.rate, concurrency=body.concurrency)
+        stream.update({"runner": runner, "metrics": metrics, "pipe": spipe, "seed": body.seed})
+        runner.start()
+        return _stream_status()
+
+    def _runner():
+        r = stream.get("runner")
+        if r is None:
+            raise HTTPException(404, "no stream has been started")
+        return r
+
+    @r.post("/stream/pause")
+    def stream_pause():
+        _runner().pause()
+        return _stream_status()
+
+    @r.post("/stream/resume")
+    def stream_resume():
+        _runner().resume()
+        return _stream_status()
+
+    @r.post("/stream/stop")
+    def stream_stop():
+        _runner().stop()
+        return _stream_status()
+
+    @r.get("/stream/status")
+    def stream_status():
+        return _stream_status()
+
+    @r.get("/stream/metrics")
+    def stream_metrics():
+        m = stream.get("metrics")
+        if m is None:
+            return {"status": _stream_status()}
+        return _json_safe({**m.snapshot(), "status": _stream_status()})
+
+    @r.get("/stream/flagged")
+    def stream_flagged(actions: str = "hold,block", limit: int = 2000):
+        """Every streamed booking that was held or blocked, newest first, for the analyst panel."""
+        want = {a.strip() for a in actions.split(",") if a.strip()}
+        sp = stream.get("pipe")
+        rows, counts = [], {"hold": 0, "block": 0, "unreviewed": 0}
+        for rec in (sp.list() if sp is not None else []):
+            act = rec.get("action")
+            if act not in ("hold", "block"):
+                continue
+            counts[act] += 1
+            label = (rec.get("analyst") or {}).get("label")
+            counts["unreviewed"] += label is None
+            if act not in want or len(rows) >= max(1, min(limit, 5000)):
+                continue
+            b = rec.get("booking") or {}
+            rows.append({"decision_id": rec["decision_id"], "booking_id": rec["booking_id"],
+                         "booked_at": b.get("booked_at"), "account_id": b.get("account_id"),
+                         "route": f"{b.get('origin_uf')} {b.get('origin_zip3')} to {b.get('dest_uf')} {b.get('dest_zip3')}",
+                         "carrier_cost": b.get("carrier_cost"), "action": act,
+                         "score": (rec.get("probabilities") or {}).get("misuse", rec.get("gbm_score")),
+                         "reasons": list(rec.get("reasons") or [])[:3], "reviewed": label})
+        return _json_safe({"rows": rows, "counts": counts})
+
+    @r.get("/stream/feed")
+    def stream_feed(limit: int = 30):
+        m = stream.get("metrics")
+        return [] if m is None else _json_safe(m.feed(max(1, min(limit, 200))))
 
     def _learning():
         if learning is None:
@@ -441,7 +615,9 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
             degraded = pipe.last_degraded
         else:  # nothing scored yet: degraded if Laya is cached with an empty cache
             degraded = lh.get("mode") == "cached" and not lh.get("cache_entries")
+        ask_model = pipe.ask_model()
         return {"ok": True, "degraded": bool(degraded), "laya_mode": lh.get("mode", getattr(laya, "mode", None)),
+                "ask_model": ask_model,
                 "laya_reason": lh.get("reason"), "gpu": cuda_available(),
                 "versions": {**versions, "gbm": pipe.versions.get("gbm", versions.get("gbm")),
                              "calibration": (pipe.calibration or {}).get("version", "uncalibrated"),

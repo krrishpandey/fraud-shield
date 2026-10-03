@@ -77,3 +77,25 @@ def test_account_story_for_takeover_shows_new_senders(rc):
     assert s["last10"]["new_senders"] >= 5
     legit = _demo("legit-tenured")
     assert rc.account_story(legit)["last10"]["new_senders"] == 0
+
+
+def test_stream_source_replays_the_seed0_test_window_in_time_order(rc):
+    items = rc.stream_source(0)
+    assert len(items) == 22925
+    ts = [it.booking.booked_at for it in items]
+    assert ts == sorted(ts) and ts[0] >= "2018-05-15" and ts[-1] < "2018-09-01"
+    assert 0.010 < sum(it.is_fraud for it in items) / len(items) < 0.014
+    assert all(it.offline_score is not None for it in items)
+    # ground truth rides beside the booking, never inside it
+    assert all("is_fraud" not in (it.booking.meta or {}) for it in items[:500])
+    with pytest.raises(ValueError, match="seed 0"):
+        rc.stream_source(1)
+
+
+def test_live_scores_match_offline_scores_booking_for_booking(rc):
+    """The stream must not change accuracy: live featurizer + model reproduce the offline score per booking."""
+    items = rc.stream_source(0)
+    sample = items[:120] + [it for it in items if it.is_fraud][:60]
+    for it in sample:
+        live = rc.gbm(rc.featurizer(it.booking))
+        assert live == pytest.approx(it.offline_score, abs=1e-9), it.booking.booking_id

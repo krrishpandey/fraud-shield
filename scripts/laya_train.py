@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT))
 
 from fraudshield.models.laya_train.modeling import (  # noqa: E402
     collate, export_config, freeze_lower, load_tokenizer, stock_model_dir)
-from fraudshield.models.laya_train.kaggle import select_precision  # noqa: E402
+from fraudshield.models.laya_train.kaggle import native_bf16, select_precision  # noqa: E402
 from fraudshield.models.laya_train.objective import compute_loss, sigma_at  # noqa: E402
 
 ART = Path(os.environ.get("FS_LAYA_ART", ROOT / "artifacts" / "laya"))
@@ -83,7 +83,7 @@ def main() -> None:
     torch.manual_seed(a.seed)
     dev = torch.device(a.device)
     is_cuda = dev.type == "cuda"
-    prec = select_precision(dev.type, is_cuda and torch.cuda.is_bf16_supported())
+    prec = select_precision(dev.type, is_cuda and native_bf16(torch.cuda.get_device_capability(dev)))
     amp_dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[prec["dtype"]]
     if is_cuda:
         torch.cuda.set_device(dev)

@@ -19,3 +19,6 @@ data/processed/*manifest*.json
 # Kaggle bundle (contains Olist-derived data, CC BY-NC-SA) and downloaded outputs
 kaggle/dist/
 *fraudshield_laya_output*.zip
+# runtime decision logs (main and live stream)
+artifacts/audit/
+artifacts/feedback/

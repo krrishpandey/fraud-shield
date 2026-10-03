@@ -178,3 +178,40 @@ def test_cuda_available_is_checked_once(monkeypatch):
     laya_client.cuda_available()
     assert calls["n"] == 1
     laya_client.cuda_available.cache_clear()
+
+
+# ---------- LazyLaya: stock model for "ask a new question" while the fine-tuned model is not live ----------
+def test_lazy_laya_loads_once_on_first_ask():
+    from fraudshield.models.laya_client import LazyLaya
+    made = []
+
+    def factory():
+        made.append(1)
+        return LayaClient.local(agent=FakeAgent(), revision="stock")
+
+    lz = LazyLaya(factory, label="stock Laya (not fine-tuned)")
+    assert made == [] and lz.state() == "not loaded"
+    q = {"type": "choice", "instructions": "Is it odd?", "criteria": {"a": "yes", "b": "no"}}
+    r1 = lz.ask(STATE, q, qid="custom_1")
+    r2 = lz.ask(STATE, q, qid="custom_2")
+    assert made == [1] and set(r1.raw["custom_1"]) == {"a", "b"} and "custom_2" in r2.raw
+    assert lz.state() == "ready" and lz.label == "stock Laya (not fine-tuned)"
+
+
+def test_lazy_laya_warm_loads_in_the_background():
+    from fraudshield.models.laya_client import LazyLaya
+    lz = LazyLaya(lambda: LayaClient.local(agent=FakeAgent(), revision="stock"), label="stock")
+    lz.warm().join(timeout=5)
+    assert lz.state() == "ready"
+
+
+def test_lazy_laya_load_failure_is_laya_unavailable_with_reason():
+    from fraudshield.models.laya_client import LazyLaya
+
+    def factory():
+        raise RuntimeError("CUDA out of memory")
+
+    lz = LazyLaya(factory, label="stock")
+    with pytest.raises(LayaUnavailable, match="CUDA out of memory"):
+        lz.ask(STATE, {"type": "choice", "instructions": "x", "criteria": {"a": "y", "b": "n"}})
+    assert lz.state().startswith("failed")

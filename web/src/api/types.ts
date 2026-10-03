@@ -151,6 +151,8 @@ export interface AskResponse {
   raw_probabilities: Record<string, number>
   latency_ms: number
   calibrated: boolean
+  /** Which model answered, e.g. "stock Laya (not fine-tuned)" while the fine-tuned model is not live. */
+  answered_by?: string
 }
 
 export interface DashboardMetrics {
@@ -252,4 +254,80 @@ export interface RetrainResponse {
 export interface RollbackResponse {
   active_version: string
   audit_hash: string
+}
+
+/* ---------- live booking stream (GET /stream/...) ---------- */
+export interface StreamStatus {
+  state: 'idle' | 'ready' | 'running' | 'paused' | 'stopped' | 'done'
+  available: boolean
+  sent?: number
+  total?: number
+  rate?: number
+  concurrency?: number
+  in_flight?: number
+  seed?: number
+}
+export interface StreamAccuracy {
+  n: number
+  n_fraud: number
+  pr_auc: number | null
+  roc_auc: number | null
+  precision_top1pct_day: number | null
+  recall_top1pct_day: number | null
+  fraud_caught?: number
+  fraud_scan_checked?: number
+  fraud_missed?: number
+  honest_stopped?: number
+  honest_stopped_rate?: number | null
+  stopped_by_type?: Record<string, { n: number; stopped: number }>
+}
+export interface StreamMetricsResponse {
+  status: StreamStatus
+  load?: {
+    scored: number
+    errors: number
+    retries: number
+    in_flight: number
+    elapsed_s: number
+    throughput_total: number
+    throughput_60s: number
+    latency_p50_ms: number | null
+    latency_p95_ms: number | null
+    latency_p99_ms: number | null
+    latency_p95_60s_ms: number | null
+  }
+  timeline?: { s_ago: number; scored: number; latency_p95_ms: number | null }[]
+  actions?: Record<string, number>
+  degraded_share?: number | null
+  accuracy?: StreamAccuracy
+  offline_same_rows?: StreamAccuracy
+  offline_full?: StreamAccuracy | null
+  consistency?: { n_compared: number; max_abs_score_diff: number }
+  explanations?: { llm: number; template: number; llm_cap_per_min: number | null }
+  errors?: { booking_id: string; error: string }[]
+}
+export interface StreamFeedRow {
+  decision_id: string
+  booking_id: string
+  booked_at: string
+  route: string
+  carrier_cost: number
+  action: Action
+  score: number
+}
+export interface StreamFlaggedRow {
+  decision_id: string
+  booking_id: string
+  booked_at: string
+  account_id: string
+  route: string
+  carrier_cost: number
+  action: 'hold' | 'block'
+  score: number | null
+  reasons: string[]
+  reviewed: 'fraud' | 'legit' | null
+}
+export interface StreamFlagged {
+  rows: StreamFlaggedRow[]
+  counts: { hold: number; block: number; unreviewed: number }
 }

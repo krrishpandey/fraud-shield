@@ -1,7 +1,7 @@
 import type {
   AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, DashboardMetrics,
   DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, Health, LearningStatus, RetrainResponse, RollbackResponse,
-  ScoreResponse, SimulateFeedbackResponse,
+  ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
 } from './types'
 
 export const MOCK = import.meta.env.VITE_MOCK === '1' || import.meta.env.VITE_MOCK === 'true'
@@ -79,6 +79,14 @@ export const api = {
     post<SimulateFeedbackResponse>('/learning/simulate_feedback', { n, seed, advance_days: advanceDays }),
   retrain: (min_new_labels = 20) => post<RetrainResponse>('/learning/retrain', { min_new_labels }),
   rollback: (version: string) => post<RollbackResponse>('/learning/rollback', { version }),
+  streamStart: (body: { rate: number; concurrency?: number; seed?: number }) => post<StreamStatus>('/stream/start', body),
+  streamPause: () => post<StreamStatus>('/stream/pause', {}),
+  streamResume: () => post<StreamStatus>('/stream/resume', {}),
+  streamStop: () => post<StreamStatus>('/stream/stop', {}),
+  streamStatus: () => request<StreamStatus>('/stream/status'),
+  streamMetrics: () => request<StreamMetricsResponse>('/stream/metrics'),
+  streamFlagged: (actions = 'hold,block') => request<StreamFlagged>(`/stream/flagged?actions=${actions}`),
+  streamFeed: (limit = 30) => request<StreamFeedRow[]>(`/stream/feed?limit=${limit}`),
   /** GET /demo/bookings. In mock mode the local fixture is served by the mock layer. */
   demoBookings: async (): Promise<DemoBooking[]> => {
     const raw = await request<unknown[]>('/demo/bookings')

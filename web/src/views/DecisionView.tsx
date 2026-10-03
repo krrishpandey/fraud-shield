@@ -302,7 +302,9 @@ function AskPanel({ id }: { id: string }) {
               <div className="absolute inset-y-0 left-0 rounded-l-[2px]" style={{ width: `${latest.probability_yes * 100}%`, background: 'var(--series-1)' }} />
             </div>
             <p className="mt-1.5 text-[0.75rem] text-muted">
-              Answered zero-shot by Laya from the same state text. No retraining. {latest.calibrated ? 'Calibrated.' : 'Not calibrated, so read it as a ranking signal, not an exact rate.'}
+              Answered by {latest.answered_by ?? 'Laya'} from the same input text, with no retraining.{' '}
+              {latest.calibrated ? 'Calibrated.' : 'Not calibrated, so read it as a ranking signal, not an exact rate.'}
+              {latest.answered_by?.includes('not fine-tuned') && ' The base model was not trained on parcel fraud, so treat this as a lead, not evidence.'}
             </p>
           </div>
         )}

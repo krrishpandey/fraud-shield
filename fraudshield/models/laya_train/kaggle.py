@@ -9,6 +9,12 @@ MEM_FRACTION = 0.85     # safe rule: pilot peak reserved VRAM must stay under 85
 EFFECTIVE_BATCH = 32
 
 
+def native_bf16(capability: tuple[int, int]) -> bool:
+    """bf16 runs natively from compute capability 8.0 (Ampere, Ada). torch.cuda.is_bf16_supported() also
+    says True on a T4 (7.5) through emulation, which made Kaggle training about 5x slower than fp16."""
+    return tuple(capability) >= (8, 0)
+
+
 def select_precision(device_type: str, bf16_supported: bool) -> dict:
     """bf16 autocast where the GPU supports it (Ampere+), else fp16 autocast + GradScaler (T4).
     CPU runs (smoke tests only) stay in fp32."""

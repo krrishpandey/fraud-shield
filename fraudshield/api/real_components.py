@@ -87,6 +87,52 @@ def account_story(booking: Booking) -> dict:
         return build(store.history(booking.account_id, booking.booked_at), booking)
 
 
+PROC = ROOT / "data/processed"
+STREAM_WINDOW = ("test",)  # 2018-05-15 .. 2018-08-31
+_stream_cache: dict[int, list] = {}
+
+
+def stream_source(seed: int = 0) -> list:
+    """The live stream's bookings: the seed-0 test window (real Olist bookings plus the injected rows), in
+    booked_at order, with original booking ids so every booking's history is exactly as of its own time.
+
+    Ground truth and the offline score of the same model ride beside each booking (StreamItem), never in it.
+    Only seed 0 can be streamed: the demo feature store holds seed 0's injected rows.
+    """
+    if seed != 0:
+        raise ValueError("only injection seed 0 can be streamed: the demo feature store holds seed 0's fraud rows")
+    with _lock:
+        if 0 in _stream_cache:
+            return _stream_cache[0]
+    import json as _json
+
+    import pandas as pd
+
+    from fraudshield.features.store import FeatureStore
+    from fraudshield.sim.stream import StreamItem
+
+    truth = pd.read_parquet(PROC / "features" / "seed_0.parquet",
+                            columns=["booking_id", "split", "booked_at", "is_fraud", "typology"])
+    truth = truth[truth.split.isin(STREAM_WINDOW)].sort_values(["booked_at", "booking_id"], kind="mergesort")
+    offline = pd.read_parquet(PROC / "gbm_scores_seed0.parquet", columns=["booking_id", "gbm_b2f"])
+    off = dict(zip(offline.booking_id, offline.gbm_b2f))
+    frame = _get_store().frame.set_index("booking_id", drop=False)
+    demo = {x["booking"]["booking_id"]: x["booking"]
+            for x in _json.loads((PROC / "demo_bookings.json").read_text(encoding="utf-8"))}
+    items = []
+    for bid, fraud, typ in zip(truth.booking_id, truth.is_fraud, truth.typology):
+        if bid in frame.index:
+            b = FeatureStore.booking_from_row(frame.loc[bid])
+        else:  # the five demo bookings are kept out of the store so the demo can score them live
+            b = Booking(**{**demo[bid], "meta": None})
+        b = Booking(**{**b.__dict__, "meta": {"scenario": "stream", "source": "replay of seed 0 test window"}})
+        items.append(StreamItem(b, is_fraud=bool(fraud), typology=str(typ) if fraud else "none",
+                                offline_score=float(off[bid]) if bid in off else None))
+    with _lock:
+        _stream_cache[0] = items
+    return items
+
+
 def gbm_version() -> str:
     return _get_gbm().metadata.get("active_version", "gbm")
 

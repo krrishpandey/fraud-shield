@@ -1,3 +1,4 @@
+from pathlib import Path
 import json
 
 import pytest
@@ -229,3 +230,64 @@ def test_explanation_check_runs_the_validator(client):
     bad = client.post(f"/decisions/{did}/explanation/check", json={"text": text + " Loss R$98765."}).json()
     assert bad["ok"] is False and [n["text"] for n in bad["numbers"] if not n["ok"]] == ["98765"]
     assert client.post("/decisions/nope/explanation/check", json={"text": "x"}).status_code == 404
+
+
+
+ASK = {"instructions": "Is the consignee a drop?", "yes": "drop", "no": "ordinary"}
+
+
+def _cached_empty(tmp_path):
+    from fraudshield.models.laya_client import LayaClient
+    return LayaClient.cached(tmp_path / "no_cache.json", mode_reason="test: no fine-tuned model")
+
+
+def test_ask_uses_the_ask_model_while_the_decision_model_is_not_live(cfg, tmp_path):
+    from fraudshield.models.laya_client import LazyLaya
+    stock = LazyLaya(lambda: fakes.laya(), label="stock Laya (not fine-tuned)")
+    c = TestClient(build_app(cfg, components=components(laya=_cached_empty(tmp_path), ask_laya=stock)))
+    did = c.post("/score", json=booking_json()).json()["decision_id"]
+    r = c.post(f"/decisions/{did}/ask", json=ASK)
+    assert r.status_code == 200 and r.json()["answered_by"] == "stock Laya (not fine-tuned)"
+    assert c.get("/health").json()["ask_model"]["label"] == "stock Laya (not fine-tuned)"
+
+
+def test_ask_uses_the_decision_model_once_it_is_live(cfg):
+    from fraudshield.models.laya_client import LazyLaya
+    never = LazyLaya(lambda: (_ for _ in ()).throw(AssertionError("stock model must not load")), label="stock")
+    c = TestClient(build_app(cfg, components=components(ask_laya=never)))  # fake live (local) Laya
+    did = c.post("/score", json=booking_json()).json()["decision_id"]
+    r = c.post(f"/decisions/{did}/ask", json=ASK)
+    assert r.status_code == 200 and "not fine-tuned" not in r.json()["answered_by"]
+    assert never.state() == "not loaded"
+
+
+def test_auto_mode_without_a_fine_tuned_checkpoint_decides_from_the_cache(cfg, monkeypatch, tmp_path):
+    from fraudshield.api import app as A
+
+    def no_local(*a, **k):
+        raise AssertionError("stock Laya must not be loaded for decisions")
+
+    monkeypatch.setattr(A.LayaClient, "local", staticmethod(no_local))
+    monkeypatch.setattr(A.LayaClient, "auto", classmethod(lambda cls, *a, **k: no_local()))
+    cfg = {**cfg, "laya": {"mode": "auto", "model_path": "convaiinnovations/laya", "device": "cuda",
+                           "cache_path": str(tmp_path / "c.json")}}
+    comps = {"featurize": fakes.fake_featurize, "serialize": fakes.fake_serialize, "gbm": fakes.fake_gbm,
+             "llm_client": None}  # no "laya": the app builds it from the config
+    h = TestClient(build_app(cfg, components=comps)).get("/health").json()
+    assert h["laya_mode"] == "cached" and "fine-tuned" in h["laya_reason"]
+
+
+def test_auto_mode_with_a_fine_tuned_checkpoint_loads_it(monkeypatch, tmp_path):
+    from fraudshield.api import app as A
+    ck = tmp_path / "artifacts" / "laya" / "fraudshield-laya"
+    ck.mkdir(parents=True)
+    seen = {}
+
+    def fake_auto(cls, model_path, cache_path, **kw):
+        seen["path"] = model_path
+        return "fine-tuned client"
+
+    monkeypatch.setattr(A, "ROOT", tmp_path)
+    monkeypatch.setattr(A.LayaClient, "auto", classmethod(fake_auto))
+    cfg = {"laya": {"mode": "auto", "model_path": "artifacts/laya/fraudshield-laya", "device": "cuda", "cache_path": None}}
+    assert A._build_laya(cfg, []) == "fine-tuned client" and Path(seen["path"]) == ck
