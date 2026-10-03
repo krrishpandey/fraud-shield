@@ -162,7 +162,7 @@ N2 is chosen because it is the one change aimed directly at the diagnosed mechan
 - `artifacts/models/B2_F.lgb` (v1) was retrained in commit 4220290 ("Better T2/T3/T6 detection");
 - the seed feature tables were rebuilt on 2026-10-03 and now have 71 features.
 
-The replayed stream's feature snapshots were taken with the old v1 and lack 13 of the 71 features (`acct_hv_share`, `acct_far_share`, `acct_mean_dist`, `weight_z`, `dims_z`, `value_z`, `payoff_z`, `cost_vs_median`, `hour_pct`, `svc_exp_pct`, `base_consignees_l10`, `base_origins_l10`, `base_senders_l10`). Those features are therefore missing (NaN) in all 16,047 training feedback rows and all 6,878 eval feedback rows, for both models. The labels themselves are identical: 22,925, of which 363 are analyst and 22,562 are outcome labels. Which bookings got analyst labels and which got outcome labels was still decided by the old v1.
+The replayed stream's feature snapshots were taken with the old v1 and lack 13 of the 71 features (`acct_hv_share`, `acct_far_share`, `acct_mean_dist`, `weight_z`, `dims_z`, `value_z`, `payoff_z`, `cost_vs_median`, `hour_pct`, `svc_exp_pct`, `base_consignees_l10`, `base_origins_l10`, `base_senders_l10`). Those features are therefore missing (NaN) in all 16,047 training feedback rows and all 6,878 eval feedback rows, for both models. The same was true of the inner split used to choose attempt 5 (noticed only after the run). The labels themselves are identical: 22,925, of which 363 are analyst and 22,562 are outcome labels. Which bookings got analyst labels and which got outcome labels was still decided by the old v1.
 
 So attempt 5 is compared against **today's v1** on today's eval set. The cells are not directly comparable with the R0–R3 rows above.
 
