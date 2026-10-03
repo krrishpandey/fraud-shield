@@ -90,10 +90,21 @@ export const QUESTION_META: Record<QuestionId, { title: string; question: string
   },
 }
 
+// Same wording as fraudshield/policy/reasons.py REASON_PLAIN (served at GET /reason-codes).
 const REASONS: Record<string, string> = {
   NEW_SENDERS_UNDER_PAYER: 'The account is paying for senders it never shipped for before',
   COST_FAR_ABOVE_ACCOUNT_NORM: 'Shipping cost is far above what this account usually pays',
   NEW_LOGIN_DEVICE: 'Booked from a login device first seen recently',
+  NEW_ORIGINS: 'Parcels from origins new to this account',
+  SENDER_DIFFERS_FROM_ACCOUNT: 'The sender is not the account holder',
+  PAYER_MANY_SENDERS: 'The account paid for many different senders in 30 days',
+  CONSIGNEE_MANY_SENDERS: 'The receiver gets parcels from many unrelated senders',
+  WEIGHT_UNUSUAL: "Weight far above the account's usual parcels",
+  DIMS_UNUSUAL: "Size far above the account's usual parcels",
+  BURST_LAST_24H: 'A burst of bookings in the last 24 hours',
+  NEW_ACCOUNT: 'The account is less than 30 days old',
+  UNUSUAL_HOUR: 'Booked at an hour this account rarely uses',
+  LINK_TO_CONFIRMED_FRAUD: 'Linked to a confirmed fraud case',
   NEW_DESTINATION_STATE: 'First parcel from this account to the destination state',
   CONSIGNEE_MANY_UNRELATED_PAYERS: 'The consignee receives parcels paid for by many unrelated accounts',
   CONSIGNEE_ADDRESS_RECENT: 'The consignee address is recent',

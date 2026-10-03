@@ -117,3 +117,32 @@ def test_llm_error_or_missing_key_falls_back(monkeypatch):
         raise RuntimeError("network")
     exp, log = explain(RECORD, client=SimpleNamespace(messages=SimpleNamespace(create=boom)), model_id="m1")
     assert exp.source == "template" and "network" in log["error"]
+
+
+GOOD = ("Hold this booking. Carrier cost is 11.6x the account median and 8 of the last 10 bookings used new "
+        "senders. Check the senders with the account owner.")
+
+
+def test_check_text_marks_every_number_and_agrees_with_explain():
+    from fraudshield.explain.llm import check_text
+    r = check_text(RECORD, GOOD)
+    assert r["ok"] is True and r["problems"] == []
+    assert [n["text"] for n in r["numbers"]] == ["11.6", "8", "10"]
+    assert all(n["ok"] for n in r["numbers"])
+    n0 = r["numbers"][0]
+    assert GOOD[n0["start"]:n0["end"]] == "11.6"
+
+
+def test_check_text_flags_the_invented_number_at_its_position():
+    from fraudshield.explain.llm import check_text
+    bad = GOOD.replace("8 of the last", "47 of the last")  # far from every record value (rounding is allowed)
+    r = check_text(RECORD, bad)
+    assert r["ok"] is False and any("47" in p for p in r["problems"])
+    flagged = [n for n in r["numbers"] if not n["ok"]]
+    assert [n["text"] for n in flagged] == ["47"] and bad[flagged[0]["start"]:flagged[0]["end"]] == "47"
+
+
+def test_check_text_applies_the_same_length_rule_as_explain():
+    from fraudshield.explain.llm import check_text
+    r = check_text(RECORD, GOOD + " More words." * 70)
+    assert r["ok"] is False and any("too long" in p for p in r["problems"])

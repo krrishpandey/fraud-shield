@@ -13,7 +13,7 @@ from typing import Any
 
 from fraudshield.contracts import Explanation
 from fraudshield.explain.template import build_facts, render_template
-from fraudshield.explain.validate import validate
+from fraudshield.explain.validate import number_spans, validate
 
 DEFAULT_MODEL_ID = "claude-haiku-4-5-20251001"
 PROMPT_VERSION = "explain-v1"
@@ -30,6 +30,20 @@ def build_prompt(facts: dict[str, Any], template: str) -> tuple[str, str, str]:
     user = "FACTS (JSON):\n" + json.dumps(facts, sort_keys=True) + "\n\nTEMPLATE EXPLANATION:\n" + template
     h = hashlib.sha256((PROMPT_VERSION + "\n" + SYSTEM + "\n" + user).encode("utf-8")).hexdigest()
     return SYSTEM, user, h
+
+
+MAX_WORDS = 140
+
+
+def check_text(record: dict[str, Any], text: str) -> dict[str, Any]:
+    """The validator explain() applies, plus where each number is, so the console can show the check."""
+    facts = build_facts(record)
+    template = render_template(record)
+    ok, problems = validate(text, facts, template=template)
+    words = len(text.split())
+    if words > MAX_WORDS:
+        ok, problems = False, problems + [f"too long: {words} words"]
+    return {"ok": ok, "problems": problems, "numbers": number_spans(text, facts, template=template)}
 
 
 def _default_client():
@@ -64,10 +78,8 @@ def explain(record: dict[str, Any], client: Any = None, model_id: str = DEFAULT_
         log["source"] = "template"
         return Explanation(template, "template", True, model_id, h), log
     log["llm_output"] = text
-    words = len(text.split())
-    ok, problems = validate(text, facts, template=template)
-    if words > 140:
-        ok, problems = False, problems + [f"too long: {words} words"]
+    checked = check_text(record, text)
+    ok, problems = checked["ok"], checked["problems"]
     log["validator"] = {"ok": ok, "problems": problems}
     if ok:
         log["source"] = "llm"

@@ -200,3 +200,32 @@ def test_explanation_failed_status(tmp_path):
     did = p.score(make_booking())["decision_id"]
     p.explain_decision(did)
     assert p.get(did)["explanation_status"] == "failed"
+
+
+def test_account_story_route_uses_story_component(cfg):
+    seen = []
+
+    def story(booking):
+        seen.append(booking.booking_id)
+        return {"account_id": booking.account_id, "bookings": [], "last10": {}, "usual": None, "n_prior": 0}
+
+    c = TestClient(build_app(cfg, components=components(story=story)))
+    did = c.post("/score", json=booking_json()).json()["decision_id"]
+    r = c.get(f"/decisions/{did}/account-story")
+    assert r.status_code == 200 and r.json()["account_id"] == "acc_7c3e" and seen == ["demo-takeover-01"]
+    assert c.get("/decisions/nope/account-story").status_code == 404
+
+
+def test_account_story_without_component_is_503(client):
+    did = client.post("/score", json=booking_json()).json()["decision_id"]
+    assert client.get(f"/decisions/{did}/account-story").status_code == 503
+
+
+def test_explanation_check_runs_the_validator(client):
+    did = client.post("/score", json=booking_json()).json()["decision_id"]
+    text = client.get(f"/decisions/{did}").json()["explanation"]["text"]
+    ok = client.post(f"/decisions/{did}/explanation/check", json={"text": text}).json()
+    assert ok["ok"] is True and ok["numbers"] and all(n["ok"] for n in ok["numbers"])
+    bad = client.post(f"/decisions/{did}/explanation/check", json={"text": text + " Loss R$98765."}).json()
+    assert bad["ok"] is False and [n["text"] for n in bad["numbers"] if not n["ok"]] == ["98765"]
+    assert client.post("/decisions/nope/explanation/check", json={"text": "x"}).status_code == 404

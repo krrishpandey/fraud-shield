@@ -71,10 +71,52 @@ export interface AnalystRecord {
   at: string
 }
 
+export interface PolicyTrace {
+  p_fraud?: number
+  allowed?: Action[]
+  block_downgraded?: boolean
+  allow_guard_passed?: boolean
+  rule_hits?: string[]
+}
+
 export interface DecisionDetail extends ScoreResponse {
   booking: Booking
   explanation: Explanation | null
   analyst: AnalystRecord | null
+  policy_trace?: PolicyTrace | null
+}
+
+/** GET /decisions/{id}/account-story: the account's own bookings as of this booking. */
+export interface StoryBooking {
+  booking_id: string
+  booked_at: string
+  own_goods: boolean
+  new_sender: boolean
+  new_receiver: boolean
+  origin: string
+  dest: string
+  carrier_cost: number
+  current: boolean
+}
+export interface AccountStory {
+  account_id: string
+  n_prior: number
+  bookings: StoryBooking[]
+  last10: { size: number; new_senders: number; new_receivers: number }
+  usual: { new_senders_per10: number; new_receivers_per10: number; based_on: number } | null
+}
+
+/** POST /decisions/{id}/explanation/check: the explanation validator, run on any text. */
+export interface NumberSpan {
+  text: string
+  start: number
+  end: number
+  ok: boolean
+}
+export interface ExplanationCheck {
+  ok: boolean
+  problems: string[]
+  numbers: NumberSpan[]
 }
 
 export interface DecisionSummary {

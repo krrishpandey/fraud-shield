@@ -44,6 +44,13 @@ export async function actionOf(page: Page): Promise<string> {
   return a!
 }
 
+/** Opens the "How this was decided" section of the decision page (model answers, costs, speed, ask). */
+export async function openDetails(page: Page): Promise<void> {
+  const t = page.getByTestId('how-toggle')
+  if ((await t.getAttribute('aria-expanded')) !== 'true') await t.click()
+  await expect(t).toHaveAttribute('aria-expanded', 'true')
+}
+
 /** Integer shown in a KPI tile, e.g. "1,234" -> 1234. */
 export async function kpiInt(page: Page, name: string): Promise<number> {
   const txt = (await page.getByTestId(`dashboard-kpi-${name}`).locator('.tnum').first().innerText()).trim()

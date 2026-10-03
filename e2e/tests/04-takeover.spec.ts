@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { STOP_ACTIONS, actionOf, scoreDemoInUi } from './helpers'
+import { STOP_ACTIONS, actionOf, openDetails, scoreDemoInUi } from './helpers'
 
 test('label-resale takeover is stopped, cost table marks the action, reasons and explanation shown', async ({ page }) => {
   await scoreDemoInUi(page, 'takeover')
@@ -7,6 +7,7 @@ test('label-resale takeover is stopped, cost table marks the action, reasons and
   expect(STOP_ACTIONS).toContain(action)
 
   // exactly one chosen cost row, and it is the action on the badge
+  await openDetails(page)
   await expect(page.getByTestId('cost-table')).toBeVisible()
   await expect(page.getByTestId(`cost-row-${action}`)).toHaveAttribute('data-chosen', 'true')
   await expect(page.locator('[data-testid^="cost-row-"][data-chosen="true"]')).toHaveCount(1)

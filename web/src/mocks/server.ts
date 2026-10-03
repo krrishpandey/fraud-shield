@@ -153,6 +153,9 @@ export async function mockFetch(path: string, init?: RequestInit): Promise<Respo
       }))
     return json(rows)
   }
+  // Account history and the explanation validator live in the Python backend only; the mock never invents them.
+  if (/^\/decisions\/[^/]+\/(account-story|explanation\/check)$/.test(p))
+    return json({ detail: 'not available in mock mode: run the backend to see account history and the live fact check' }, 503)
   const m = p.match(/^\/decisions\/([^/]+)(\/(analyst|ask))?$/)
   if (m) {
     const d = decisions.get(decodeURIComponent(m[1]))

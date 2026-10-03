@@ -34,6 +34,7 @@ components:
   featurizer: fraudshield.api.real_components:featurizer
   serializer: fraudshield.api.real_components:serializer
   gbm: fraudshield.api.real_components:gbm
+  story: fraudshield.api.real_components:account_story
 # Continuous learning (fraudshield/learning, docs/API.md v1.2). Defaults in fraudshield/learning/wiring.py.
 learning:
   enabled: true

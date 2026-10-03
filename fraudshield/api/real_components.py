@@ -78,6 +78,15 @@ def gbm(fv: FeatureVector) -> float:
     return _get_gbm().score_values(fv.values)
 
 
+def account_story(booking: Booking) -> dict:
+    """The account's own bookings as of this booking (read only; the booking is not appended)."""
+    from fraudshield.features.story import account_story as build
+
+    store = _get_store()
+    with _lock:
+        return build(store.history(booking.account_id, booking.booked_at), booking)
+
+
 def gbm_version() -> str:
     return _get_gbm().metadata.get("active_version", "gbm")
 

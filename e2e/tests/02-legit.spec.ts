@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test'
-import { actionOf, scoreDemoInUi } from './helpers'
+import { actionOf, openDetails, scoreDemoInUi } from './helpers'
 
 test('legit tenured booking is allowed, with probabilities and latency shown', async ({ page, request }) => {
   const id = await scoreDemoInUi(page, 'legit-tenured')
   expect(await actionOf(page)).toBe('allow')
 
+  await openDetails(page)
   const misuse = page.getByTestId('prob-misuse')
   await expect(misuse).toBeVisible()
   const p = Number(await misuse.getAttribute('data-calibrated'))

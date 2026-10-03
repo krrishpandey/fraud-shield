@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test'
-import { scoreDemoInUi } from './helpers'
+import { openDetails, scoreDemoInUi } from './helpers'
 
 test('asking a new question shows a probability or a clear error, never a crash', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   const id = await scoreDemoInUi(page, 'takeover') // idempotent: same decision as spec 04
 
+  await openDetails(page)
   const panel = page.getByTestId('ask-panel')
   await page.getByTestId('ask-example').click()
   await expect(page.getByTestId('ask-input')).not.toHaveValue('')

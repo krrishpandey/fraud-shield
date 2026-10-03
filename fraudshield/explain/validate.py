@@ -52,13 +52,25 @@ def _number_ok(tok: str, nums: list[float]) -> bool:
     return any(abs(x - v) <= tol or abs(x - 100 * v) <= tol for v in nums)
 
 
-def validate(text: str, facts: dict[str, Any], template: str | None = None) -> tuple[bool, list[str]]:
-    problems: list[str] = []
+def _record_values(facts: dict[str, Any], template: str | None) -> tuple[list[float], list[str]]:
     nums: list[float] = []
     strs: list[str] = []
     _walk(facts, nums, strs)
     if template:
         _walk(template, nums, strs)
+    return nums, strs
+
+
+def number_spans(text: str, facts: dict[str, Any], template: str | None = None) -> list[dict[str, Any]]:
+    """Every number in the text, where it is, and whether the decision record contains it."""
+    nums, _ = _record_values(facts, template)
+    return [{"text": m.group(), "start": m.start(), "end": m.end(), "ok": _number_ok(m.group(), nums)}
+            for m in NUM_RE.finditer(text)]
+
+
+def validate(text: str, facts: dict[str, Any], template: str | None = None) -> tuple[bool, list[str]]:
+    problems: list[str] = []
+    nums, strs = _record_values(facts, template)
     blob = " ".join(strs)
     low = text.lower()
 

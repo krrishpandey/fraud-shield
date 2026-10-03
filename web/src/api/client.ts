@@ -1,6 +1,6 @@
 import type {
-  AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, DashboardMetrics,
-  DecisionDetail, DecisionSummary, DemoBooking, Health, LearningStatus, RetrainResponse, RollbackResponse,
+  AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, DashboardMetrics,
+  DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse,
 } from './types'
 
@@ -68,6 +68,9 @@ export const api = {
   decision: (id: string) => request<DecisionDetail>(`/decisions/${encodeURIComponent(id)}`),
   analyst: (id: string, body: AnalystRequest) => post<AnalystResponse>(`/decisions/${encodeURIComponent(id)}/analyst`, body),
   ask: (id: string, body: AskRequest) => post<AskResponse>(`/decisions/${encodeURIComponent(id)}/ask`, body),
+  accountStory: (id: string) => request<AccountStory>(`/decisions/${encodeURIComponent(id)}/account-story`),
+  checkExplanation: (id: string, text: string) =>
+    post<ExplanationCheck>(`/decisions/${encodeURIComponent(id)}/explanation/check`, { text }),
   dashboard: () => request<DashboardMetrics>('/dashboard/metrics'),
   auditVerify: () => request<AuditVerify>('/audit/verify'),
   learningStatus: () => request<LearningStatus>('/learning/status'),

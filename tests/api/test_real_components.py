@@ -67,3 +67,13 @@ def test_warm_loads_store_and_gbm(rc):
     rc.reset()
     rc.warm()
     assert rc._store is not None and rc._gbm_model is not None
+
+
+def test_account_story_for_takeover_shows_new_senders(rc):
+    b = _demo("takeover")
+    rc.featurizer(b)
+    s = rc.account_story(b)
+    assert s["account_id"] == b.account_id and s["bookings"][-1]["booking_id"] == b.booking_id
+    assert s["last10"]["new_senders"] >= 5
+    legit = _demo("legit-tenured")
+    assert rc.account_story(legit)["last10"]["new_senders"] == 0

@@ -27,7 +27,7 @@ from fraudshield.api.metrics import dashboard_metrics
 from fraudshield.api.pipeline import Pipeline, public_view
 from fraudshield.audit.log import AuditLog, verify_file
 from fraudshield.contracts import Booking, FeatureVector
-from fraudshield.explain.llm import DEFAULT_MODEL_ID
+from fraudshield.explain.llm import DEFAULT_MODEL_ID, check_text
 from fraudshield.learning.service import LearningUnavailable, NotEnoughLabels, RetrainBusy
 from fraudshield.learning.wiring import build_learning
 from fraudshield.models.calibration import load_calibration
@@ -91,6 +91,10 @@ class AskIn(BaseModel):
     instructions: str
     yes: str = "yes"
     no: str = "no"
+
+
+class CheckIn(BaseModel):
+    text: str
 
 
 class SimulateIn(BaseModel):
@@ -232,6 +236,15 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         laya = _build_laya(cfg, warnings)
         report["laya"] = laya.mode
 
+    story = comps.get("story")
+    story_spec = (cfg.get("components") or {}).get("story")
+    if story is None and story_spec:
+        try:
+            story = _import(story_spec)
+        except Exception as e:
+            warnings.append(f"story: could not import {story_spec} ({e}); account story unavailable")
+    report["story"] = "injected" if "story" in comps else (f"real ({story_spec})" if story else "none")
+
     calibration = load_calibration(_path(cfg["calibration_path"]))
     if calibration is None:
         warnings.append("no calibration file: Laya probabilities are uncalibrated (identity)")
@@ -352,6 +365,17 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
             return pipe.ask(decision_id, body.instructions, body.yes, body.no)
         except LayaUnavailable as e:
             raise HTTPException(503, f"Laya unavailable: {e}")
+
+    @r.get("/decisions/{decision_id}/account-story")
+    def account_story(decision_id: str):
+        rec = _get(decision_id)
+        if story is None:
+            raise HTTPException(503, "account history is not available in this configuration")
+        return story(Booking(**rec["booking"]))
+
+    @r.post("/decisions/{decision_id}/explanation/check")
+    def check_explanation(decision_id: str, body: CheckIn):
+        return check_text(_get(decision_id), body.text)
 
     def _learning():
         if learning is None:
