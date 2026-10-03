@@ -443,7 +443,7 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         rec = _get(decision_id)
         return {**public_view(rec), "booking": rec.get("booking"), "explanation": rec.get("explanation"),
                 "analyst": rec.get("analyst"), "policy_trace": rec.get("policy_trace"),
-                "first_scan": rec.get("first_scan")}
+                "first_scan": rec.get("first_scan"), "owner_confirmation": rec.get("owner_confirmation")}
 
     @r.post("/decisions/{decision_id}/analyst")
     def analyst(decision_id: str, body: AnalystIn):
@@ -739,6 +739,13 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
 
     app.include_router(r)
     app.include_router(r, prefix="/api")
+    # owner passkey "was this you?" (fraudshield/api/passkey.py, docs/PASSKEY.md); credentials in artifacts/passkeys/
+    from fraudshield.api.passkey import build_passkey_router  # noqa: PLC0415
+    pk = build_passkey_router(cfg.get("passkey"), lambda did: (_get(did), _owner(did).audit), audit,
+                              (audit_path.parent.parent if audit_path.parent.name == "audit" else audit_path.parent)
+                              / "passkeys")
+    app.include_router(pk)
+    app.include_router(pk, prefix="/api")
 
     dist = _path(cfg.get("web_dist"))
     if dist and (dist / "index.html").exists():

@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 EVENT_TYPES = ("decision", "first_scan", "explanation", "analyst_feedback", "outcome", "ask", "retrain", "rollback",
-               "config_change")
+               "config_change", "passkey_enrolled", "owner_confirmed", "owner_confirm_failed")
 GENESIS = "0" * 64
 
 

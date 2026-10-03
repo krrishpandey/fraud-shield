@@ -159,6 +159,9 @@ export async function mockFetch(path: string, init?: RequestInit): Promise<Respo
   // Account history and the explanation validator live in the Python backend only; the mock never invents them.
   if (/^\/decisions\/[^/]+\/(account-story|explanation\/check)$/.test(p))
     return json({ detail: 'not available in mock mode: run the backend to see account history and the live fact check' }, 503)
+  // Owner passkeys are verified with real signatures in the Python backend; the mock never fakes a verification.
+  if (p.startsWith('/passkey/') || /^\/decisions\/[^/]+\/owner_confirm\//.test(p))
+    return json({ detail: 'not available in mock mode: run the backend to enroll and verify the owner passkey' }, 503)
   const m = p.match(/^\/decisions\/([^/]+)(\/(analyst|ask))?$/)
   if (m) {
     const d = decisions.get(decodeURIComponent(m[1]))

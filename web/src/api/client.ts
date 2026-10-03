@@ -3,6 +3,10 @@ import type {
   DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, FirstScanDial, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
 } from './types'
+import type {
+  CredentialJSON, OwnerConfirmation, OwnerConfirmOptions, PasskeyEnrollOptions, PasskeyEnrollResult, PasskeyStatus,
+  TamperTestResult,
+} from './types'
 
 export const MOCK = import.meta.env.VITE_MOCK === '1' || import.meta.env.VITE_MOCK === 'true'
 // Empty VITE_API_URL means same origin (the desktop app serves web/dist and the API together).
@@ -96,6 +100,16 @@ export const api = {
     const raw = await request<unknown[]>('/demo/bookings')
     return normalizeDemo(raw)
   },
+  // Owner passkey "was this you?" (docs/PASSKEY.md)
+  passkeyStatus: (accountId: string) => request<PasskeyStatus>(`/passkey/accounts/${encodeURIComponent(accountId)}`),
+  passkeyEnrollOptions: (account_id: string) => post<PasskeyEnrollOptions>('/passkey/enroll/options', { account_id }),
+  passkeyEnrollVerify: (body: { nonce_id: string; account_id: string; credential: CredentialJSON }) =>
+    post<PasskeyEnrollResult>('/passkey/enroll/verify', body),
+  ownerConfirmOptions: (id: string) => post<OwnerConfirmOptions>(`/decisions/${encodeURIComponent(id)}/owner_confirm/options`, {}),
+  ownerConfirmVerify: (id: string, body: { nonce_id: string; credential: CredentialJSON }) =>
+    post<OwnerConfirmation>(`/decisions/${encodeURIComponent(id)}/owner_confirm/verify`, body),
+  ownerConfirmTamper: (id: string, body: { nonce_id: string; credential: CredentialJSON; field: string; delta?: number; value?: string }) =>
+    post<TamperTestResult>(`/decisions/${encodeURIComponent(id)}/owner_confirm/tamper_test`, body),
 }
 
 /** Accepts either DemoBooking items or bare Booking objects (scenario taken from meta.scenario). */
