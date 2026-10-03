@@ -157,7 +157,7 @@ export async function mockFetch(path: string, init?: RequestInit): Promise<Respo
   if (p.startsWith('/stream/'))
     return json({ detail: 'not available in mock mode: run the backend to replay the dataset as a live stream' }, 503)
   // Account history and the explanation validator live in the Python backend only; the mock never invents them.
-  if (/^\/decisions\/[^/]+\/(account-story|explanation\/check)$/.test(p))
+  if (/^\/decisions\/[^/]+\/(account-story|explanation\/check|claims)$/.test(p))
     return json({ detail: 'not available in mock mode: run the backend to see account history and the live fact check' }, 503)
   const m = p.match(/^\/decisions\/([^/]+)(\/(analyst|ask))?$/)
   if (m) {

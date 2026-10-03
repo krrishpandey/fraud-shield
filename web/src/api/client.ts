@@ -2,6 +2,7 @@ import type {
   AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, DashboardMetrics,
   DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, FirstScanDial, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
+  ExplanationClaims,
 } from './types'
 
 export const MOCK = import.meta.env.VITE_MOCK === '1' || import.meta.env.VITE_MOCK === 'true'
@@ -75,6 +76,7 @@ export const api = {
   accountStory: (id: string) => request<AccountStory>(`/decisions/${encodeURIComponent(id)}/account-story`),
   checkExplanation: (id: string, text: string) =>
     post<ExplanationCheck>(`/decisions/${encodeURIComponent(id)}/explanation/check`, { text }),
+  claims: (id: string) => request<ExplanationClaims>(`/decisions/${encodeURIComponent(id)}/claims`),
   dashboard: (source: 'app' | 'stream' | 'all' = 'app') => request<DashboardMetrics>(`/dashboard/metrics?source=${source}`),
   auditVerify: () => request<AuditVerify>('/audit/verify'),
   learningStatus: () => request<LearningStatus>('/learning/status'),

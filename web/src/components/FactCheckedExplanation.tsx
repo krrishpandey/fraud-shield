@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { DecisionDetail, ExplanationCheck, NumberSpan } from '../api/types'
+import { ClaimsChecked } from './ClaimsChecked'
 
 /*
   The language model's explanation, with every number marked as checked against the decision record.
@@ -155,6 +156,7 @@ export function FactCheckedExplanation({ d, polling }: { d: DecisionDetail; poll
         </button>
       )}
       {trying && <TryIt d={d} original={e.text} />}
+      <ClaimsChecked decisionId={d.decision_id} text={e.text} />
     </div>
   )
 }

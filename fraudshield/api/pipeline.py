@@ -15,7 +15,8 @@ from datetime import datetime, timedelta
 from typing import Any, Callable
 
 from fraudshield.contracts import SERVED_QUESTIONS, Booking
-from fraudshield.explain.llm import DEFAULT_MODEL_ID, explain
+from fraudshield.explain.claims import explain_claims
+from fraudshield.explain.llm import DEFAULT_MODEL_ID
 from fraudshield.models.calibration import apply_calibration, p_yes
 from fraudshield.models.laya_client import LayaUnavailable
 from fraudshield.policy.costs import CostConfig
@@ -314,12 +315,13 @@ class Pipeline:
         if rec is None:
             return
         try:
+            claims = None
             if self.explainer is not None:
                 exp, log = self.explainer(rec)
             else:
                 client = self.llm_client if use_llm and (rec["action"] != "allow" or self.llm_for_allow) else None
-                exp, log = explain(rec, client=client, model_id=self.llm_model_id, use_default_client=False,
-                                   retry_invalid=1)
+                # claim-by-claim JSON when the client supports structured outputs, else prose (explain/claims.py)
+                exp, log, claims = explain_claims(rec, client=client, model_id=self.llm_model_id, retry_invalid=1)
         except Exception as e:  # never lose the decision because of the explainer
             try:
                 self.audit.append("explanation", {"decision_id": decision_id, "error": f"{type(e).__name__}: {e}",
@@ -336,6 +338,8 @@ class Pipeline:
             pass
         with self._lock:
             rec["explanation"] = {"text": exp.text, "source": exp.source, "valid": exp.valid, "model_id": exp.model_id}
+            if claims is not None:
+                rec["explanation"].update(mode=claims["mode"], claims=claims)
             rec["explanation_status"] = "ready"
 
     # ---------- analyst / ask ----------
