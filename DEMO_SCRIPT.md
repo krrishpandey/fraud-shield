@@ -141,6 +141,15 @@ Show the probability that comes back.
 
 Each beat below replaces or extends a segment above, so the talk stays about 5 minutes. If time is short, keep 5a, 5b and 6, and say the red-team and monitor numbers in segment 9.
 
+### 4b. (extends segment 4, point 4) Every sentence checked (0:15)
+
+**Screen:** the takeover decision, "Why, in plain words": the claims list, a tick per claim with its reason, and the line "Agrees with the model's top reasons: X of Y". Optional: "Try slipping in a wrong number" shows a cross.
+
+**Say:**
+> "The explanation comes back as separate claims, and we check each one against the decision record. Moving a true number into the wrong sentence is the subtle lie: our old whole-text check missed all 33 we planted, the claim check caught all 33. And we show how far the explanation agrees with what the model actually leaned on. Here it's only one of three, and we show that instead of hiding it."
+
+**Before you go on stage:** the Groq free tier allows 200,000 tokens a day for this model, and the measurement run used most of the day's budget on 2026-10-04. If explanations show "template", that's why; the claims and ticks still work.
+
 ### 5a. What would change this decision (replaces segment 5 if Laya is not shown; 0:20)
 
 **Screen:** Live tab, stream running. Open a held or blocked row. In the Decision view click **"Show what would change it"**. About 1 in 4 stopped decisions has no answer within the budget (the takeover demo is one: "no change within 50 evaluations"); if so, open another held row. Seen in rehearsal: `blk-06` (`docs/demo_block_bookings.json`) shows "allow if declared weight were 0.85 kg (not 20.00 kg) and declared value were R$30.10".
@@ -342,6 +351,17 @@ The action is chosen by comparing the expected cost of every option, using the c
 - Attempt 5 (pre-registered in `docs/LEARNING_GATE.md` before it ran, chosen on training data only, run once): R3 regularisation plus "device age may only interact with channel". **Rejected**, on cost only: cost improvement CI [-9.61, +21.41] BRL per 1k, needs >= -5.98. It passed the other checks: hard-negative FPR 0.32% -> 0.64% (inside +0.5 points), PR-AUC 0.807 -> 0.830, new-pattern recall 0.535 -> 0.577 (CI [+0.016, +0.071]). Caveat: v1 was retrained after the R0-R3 runs, so attempt 5 compares with today's v1, not with the R3 row. No 6th configuration will be tried on this eval set.
 - There is no reinforcement learning here: it is gated retraining plus 5% logged exploration. Don't call it RL.
 
+### 2.16 Every sentence checked (claim-by-claim explanations)
+
+- The LLM explainer (Groq `openai/gpt-oss-120b`) is asked for strict JSON (`json_schema`, constrained decoding): `{action, claims: [{text, reason_code, cited_fields, numbers}]}`. If Groq rejects it: `json_object`, then the old prose path. The template produces the same claim structure, so the page works with no LLM. Code: `fraudshield/explain/claims.py`; endpoint `GET /decisions/{id}/claims`.
+- `validate_claims()` checks each claim: its reason code must be one of this decision's reasons, every number must be in the record and come from the claim's own cited fields, cited fields must exist, no unknown ids. Any failing claim means the template is shown; rejected claims are kept and shown crossed out.
+- Agreement with the model: LightGBM `pred_contrib` (TreeSHAP) summed per reason code (`fraudshield/explain/attribution.py`); hit@3 = share of the model's top reason codes the explanation cites first.
+- Measured (`artifacts/results_explanations.md`; seed-0 test window, 60 of 263 stopped decisions, one sample):
+  - Planted lies: a true number moved to the wrong claim is rejected 33/33 by the claim check, 0/33 by the old prose validator. Fabricated numbers, invented reasons and invented fields: 57/57 each (by construction).
+  - LLM, first try, the 31 decisions where Groq ran (29 not run: daily token limit): rejected 1/31 on both paths; claims grounded 62/62; strict `json_schema` used for all 31.
+  - hit@3 against the model's top reasons: template 0.244, prose 0.215, claims 0.204. The ceiling is 0.289, because on average only 0.867 of the model's top 3 codes fired as rules, and reason codes describe only 57.7% of the model's positive push.
+- Sources: Groq Structured Outputs docs; arXiv 2512.00163 (LLM self-explanations disagree with SHAP); arXiv 2605.26770 (LLM-written XAI narratives raised confidence without improving accuracy), which is why the checker is fixed code, not an LLM judge.
+
 ---
 
 ## Part 3: Q&A backup
@@ -365,3 +385,5 @@ The action is chosen by comparing the expected cost of every option, using the c
 | "How do you know your model still works before the fraud labels arrive?" | "We estimate precision and missed fraud from calibrated scores, and we measured where that breaks: it under-counts missed fraud from types the model never learned by 1.45 per week, and the drift alarm doesn't see them. That's why the dashboard says so, and why new types come in through analyst feedback and the gate." |
 | "Did the retrained model go live?" | "None of our recorded real-data runs has passed the gate (`docs/LEARNING_GATE.md`), and the Learning tab says which model is in use, in one sentence, after every retrain, including the one we just did on stage. Our latest attempt fixed the false-positive problem and improved every point estimate, but the cost check's confidence interval was still too wide, so v1 keeps scoring new bookings." |
 | "Is that 0.28 to 0.69 number from your current model?" | "It's from the run against the earlier version of v1. v1 has been retrained since; on today's v1 the latest attempt raised new-pattern recall from 0.535 to 0.577. The pattern held: learning the new fraud, blocked for safety." |
+| "Your explanations agree with the model only about 20% of the time. Aren't they misleading?" | "They're honest about what they are. An explanation may only cite reasons whose rule actually fired for this booking, and those rules describe about 58% of what pushes the model's score. So the ceiling is 0.29 and we're at 0.20 to 0.24. We show the agreement line on every decision instead of letting a fluent paragraph imply more." |
+| "Why not have another LLM judge the explanation?" | "Research this year found LLM-written explanations raise confidence without improving accuracy, and make LLM judges worse at spotting bad predictions. Our checker is plain code: every number must come from the record and from the claim's own fields. That's how it catches a true number moved into the wrong sentence, 33 of 33, which the whole-text check missed every time." |

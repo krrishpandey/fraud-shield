@@ -25,11 +25,13 @@ We drafted 8 candidates and ran each through three tests:
 | 11 | The owner approves this parcel, not any parcel (booking-bound passkey) | Pass | Live: tamper test fails on stage | Pass | **Keep** (USP 6) |
 | 12 | "What would change this decision" for analysts | Fail | | | Killed (demo only) |
 | 13 | One-sentence model handover after every retrain | Fail | | | Killed (supports USP 3) |
+| 14 | Every sentence of the explanation checked, claim by claim | Pass | Moved-number lie caught 33/33 vs 0/33 | Weak | Parked (Q&A) |
 
 Rows 9-13 were added for round 3 (2026-10-04) and scored with the same three tests.
 
 - **#12 killed:** any XGBoost team can add a counterfactual library. It stays in the demo (segment 5a), because it is useful and shows the price-aware cost rule.
 - **#13 killed:** any team can show which model version is live. It makes USP 3 easier to see on screen.
+- **#14 parked:** the claim check is ours and measured, but the obvious judge follow-up, "do the explanations match what the model used?", has a weak answer: hit@3 0.20 to 0.24 against a ceiling of 0.29 (`artifacts/results_explanations.md`). Use it in Q&A, not as a headline.
 - **#4 update:** the Laya results are in, and Laya lost at deciding (PR-AUC 0.356 vs 0.777), so #4 stays parked: the hardest judge question now has a clear "no".
 
 ### Why the others were cut

@@ -1,7 +1,9 @@
 # FraudShield: project history
 
 NextGenAI hackathon, Theme 3 (FraudShield): score parcel-carrier bookings for fraud at the moment of booking, before the package enters the network.
-This file records what we did, in what order, what we decided and why, and what the numbers were. Status as of 2026-10-03 (early morning IST).
+This file records what we did, in what order, what we decided and why, and what the numbers were. Status as of 2026-10-03 (early morning IST); round 3 additions of 2026-10-04 are in section 4b, the timeline and sections 6 and 8.
+
+> **Update 2026-10-04 (round 3):** Laya fine-tuning is done and lost to LightGBM at deciding (PR-AUC 0.356 vs 0.777, `artifacts/results_laya_v2.md`), so LightGBM decides and Laya answers analyst questions. Five features were added for round 3 (section 4b). Some "not done yet" notes in section 0 below are from 2026-10-03 and are kept for the record; section 8 has the current to-do list.
 
 ---
 
@@ -57,7 +59,14 @@ python scripts/make_team_zip.py         # rebuild the team zip (includes .env)
 | Night | Laya fine-tune | Started on the RTX 4050 (9.5 items/s, ~5.5 of 6 GB in use with the desktop). Stopped at step 600 at the team's request: heavy GPU load had damaged a laptop screen before. |
 | Night | Change | Fine-tuning moved to Kaggle free GPUs (2x T4): bundle + notebook + import script prepared locally on CPU. Live demo may use the laptop GPU lightly (one Laya call per booking). |
 
+| 2026-10-03 | Build | Decision page redesign and live fact-check; live booking stream with a held-and-blocked worklist; gpt-oss reasons for every held or blocked booking; fine-tuned Laya results (LightGBM keeps deciding); better T2/T3/T6 detection, depot scan follow-up, rename to tracd. |
+| 2026-10-04 early | Build | Depot weighing dial for T6 (USP 4); Laya v2 "Laya decides" run: pre-registered win condition not met (PR-AUC 0.356 vs 0.777). |
+| 2026-10-04 | Round 3 research | Three parallel research agents (fraud-detection tech; carrier and identity tech; AI tech) returned 12 sourced candidates. Scored with the USP tests; 5 picked by the team, plus the team's request for a clear "which model is in use" handover after retraining. |
+| 2026-10-04 | Round 3 build | Five agents in isolated git worktrees, each with Python tests and a Playwright spec: label-free monitor, counterfactuals + red team, owner passkey, model handover + learning attempt 5, claim-checked explanations. Merged one at a time into main; full suites rerun after each merge. |
+
 Two pauses happened when the AI session hit its usage limit; agents were resumed afterwards with their work intact.
+
+Round 3 build notes: git worktrees on Windows need the LF copies of `artifacts/models/*.lgb` (with `core.autocrlf=true`, git checks them out with CRLF and LightGBM aborts on load), links to the ignored data, and `uv run --no-sync` because the shared venv is an editable install of the main checkout. The passkey feature added one dependency, `cryptography>=50`.
 
 ---
 
@@ -146,6 +155,25 @@ The loop works end to end: analyst labels (and clearly flagged simulated feedbac
 
 ---
 
+## 4b. Round 3 additions (2026-10-04, all from real runs)
+
+Demo beats and judge answers: `DEMO_SCRIPT.md` Part 1b, 2.11-2.16 and Part 3. USP scoring: `USP.md` rows 9-14 (USP 5 and USP 6 added).
+
+| Feature | Where | Measured |
+|---|---|---|
+| Label-free monitor (CBPE) | Live view card, `GET /monitor/estimate`, `artifacts/results_monitor.md` | Test window, 10 seeds: with held-out T3/T5 present it under-counts missed fraud by 1.45 ± 0.43 per week (52.8 estimated vs 67.4 real); score-drift PSI unchanged by T3/T5 (difference at most 0.002). Calibration window sanity: precision 0.764 est vs 0.745 real. |
+| What would change this decision (analyst-only) | Decision view panel, `GET /decisions/{id}/counterfactual` | Test window, seed 0, 60 of 265 stopped: 73.3% have a softer action within 2 changes, 21.7% reach allow; median 1118 ms. |
+| Red team against our own model | `scripts/redteam.py`, `artifacts/results_redteam.md` | Test window, seeds 0-7, n = 320 stopped trained-type fraud (injected): 18.1 ± 7.6% flip to allow, 63.1 ± 7.3% to a softer action (2 fields, 50 queries). Hardening on train-window evasions rejected by the unchanged gate (HN FPR 0.27% to 1.68%). |
+| Owner passkey bound to the booking | Decision view, `docs/PASSKEY.md`, `artifacts/results_passkey.md` | Real WebAuthn, ES256; tamper test (price + R$100) fails. Signature check 0.176 ms p50 (n = 1000), verify endpoint 2.61 ms p50 (n = 300). Owner device simulated by the laptop. |
+| Model handover + learning attempt 5 | Learning banner, model version on Decision and Live views, `docs/LEARNING_GATE.md` | Attempt 5 (pre-registered, run once): rejected on cost only (improvement CI [-9.61, +21.41] vs >= -5.98); HN FPR 0.32% to 0.64% (passes), PR-AUC 0.807 to 0.830, new-pattern recall 0.535 to 0.577. Compared with today's v1, not with R0-R3 (v1 was retrained in between). Two version-logging bugs fixed. |
+| Claim-checked explanations | Decision view claims list, `GET /decisions/{id}/claims`, `artifacts/results_explanations.md` | Moved-number lie caught 33/33 (old prose validator 0/33). Groq strict `json_schema` used for 31/31 calls; 29 of 60 sampled decisions not run (daily token limit). hit@3 vs model attributions 0.20-0.24, ceiling 0.289. |
+
+New sources cited: LabelsBank.com indictment (S.D. Florida, announced 24 Sep 2026; alleged 5.1M labels at a flat $2, $126M loss) and the USPS OIG audit "Efforts to Mitigate Counterfeit Postage" (Sep 2026; source of the "about 2 million legitimate packages intercepted" figure). Links in `USP.md`.
+
+Tests after the last merge (2026-10-04): Python 506 passed (1 GPU test deselected); web lint, type check and build pass; Playwright 26 passed.
+
+---
+
 ## 5. What was built (repo map)
 
 ```
@@ -178,6 +206,7 @@ Skills used: GSD (isolated agent loops with compact summaries), Superpowers (tes
 - One generator-artifact check narrowly fails (0.617 vs 0.6).
 - Continuous learning has not yet produced a model that passes the gate.
 - Laptop GPU must not be used for long, heavy jobs (training, bulk inference); those run on Kaggle.
+- Round 3: the counterfactual endpoint has no role check (analyst-only by docs and audit record); the passkey demo enrolls on stage and the laptop plays the owner's phone; red-team evasions are against our model on injected fraud; the explanation eval ran on 31 of 60 sampled decisions; USP 3's 0.28 to 0.69 run used the earlier v1.
 
 ---
 
@@ -188,6 +217,14 @@ Skills used: GSD (isolated agent loops with compact summaries), Superpowers (tes
 - Note: on CPU, fine-tuned Laya takes ~4.3 s per booking, so PCs without an NVIDIA GPU use the cached answers.
 
 ## 8. Still to do
+
+**Before round 3 (2026-10-05):**
+1. Set up Windows Hello (PIN) on the demo laptop and rehearse the passkey beat once; if the prompt doesn't appear in the app window, use the printed `http://localhost:<port>` URL in Edge.
+2. Check the Groq daily token budget the morning of the demo (the 2026-10-04 measurement run used most of it); without it, explanations come from the template.
+3. Rehearse Part 1b of `DEMO_SCRIPT.md` within the 5 minutes.
+4. Optional: add `.gitattributes` with `*.lgb -text`, so Windows clones with `core.autocrlf=true` don't get CRLF model files (LightGBM aborts on them).
+
+**Earlier list (2026-10-03):**
 1. Run Laya fine-tuning on Kaggle (see `kaggle/KAGGLE_STEPS.md`), import its output; calibration; compare stock vs fine-tuned Laya vs LightGBM on held-out T3/T5 and the zero-shot drop question.
 2. Record Laya answers for demo bookings (cache) so PCs without a GPU can run the full demo.
 3. Replay a test-window sample so the dashboard shows real numbers.

@@ -143,6 +143,12 @@ All of this takes well under a second.
 - **Latest try:** we made one more, honestly pre-announced attempt to fix the new model. It fixed the "bothers honest customers" problem and was better on every average, but the gate's money check was still too uncertain, so the old model stays in charge.
 - **Note:** this is not "reinforcement learning". It is retraining with a safety gate.
 
+### Feature 15: Every sentence of the explanation is checked
+
+- **What it is:** the AI writer (Feature 5) now hands back its explanation as separate **claims**, each one tied to one reason, like "the account paid for 9 new senders". We check every claim on its own: the reason must really apply to this booking, and every number must come from the decision record **and belong to that claim**.
+- **Why that matters:** a sneaky mistake is a true number in the wrong sentence. The old check looked at the whole paragraph and missed all 33 we planted; the new check caught all 33.
+- **Honest part:** we also measure whether the explanation mentions the same things the model actually relied on most. It's low (about 1 in 5), because our fixed reason rules only describe about 58% of what the model leans on. The page shows that number instead of hiding it.
+
 ---
 
 ## 5. Where the data comes from (and what is fake)
@@ -161,7 +167,7 @@ All of this takes well under a second.
 - **Weight fraud (T6):** nobody can weigh a booking form, so the model alone catches only 6%. Parcels declared far smaller than the account's usual ones are weighed at the first depot scan; one failed scan means the account's next parcels are weighed too. That catches 40%, while weighing 1.8% of honest parcels. The carrier can turn this up with the **depot weighing dial** on the dashboard: weighing more parcels catches more weight fraud, and each level shows its measured result (weighing 4% of honest parcels catches 54%, 6% catches 73%, 11% catches 94%). Every change of level is written to the audit log.
 - **New account fraud (T2):** three new features (what a fresh account ships, how far, how valuable) raised its PR-AUC from 0.38 to 0.46.
 - **Live load:** replaying all 22,925 test bookings through the app gives exactly the offline numbers (live PR-AUC 0.807 = offline 0.807).
-- **Software tests:** 410 automated code tests and 19 full app click-through tests, all passing.
+- **Software tests:** 506 automated code tests and 26 full app click-through tests, all passing (2026-10-04).
 
 ---
 
