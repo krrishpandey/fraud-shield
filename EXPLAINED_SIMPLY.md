@@ -111,6 +111,17 @@ All of this takes well under a second.
 - **What it is:** a normal Windows app. Double-click `FraudShield.bat` and a window opens. No website or server setup.
 - **Tabs:** Score (try a booking), Decision (see details), Queue (bookings waiting for review), Dashboard, Learning (retraining), Audit (check the log).
 
+### The six round-3 additions in one line each
+
+| What you see in the app | What it means in plain words |
+|---|---|
+| **"Show what would change it"** on a stopped booking | The app tells the analyst the smallest change that would have let the parcel through, e.g. "allowed if the declared weight were 0.85 kg instead of 20 kg". Only analysts see it. |
+| **Red team** (results file, one sentence on stage) | We played the fraudster against our own model and counted how often we lost: 18% of the stopped fraud got a plain "allow" with two small changes. |
+| **"Was this you?" with a passkey** | The real owner approves the parcel with Windows Hello or a phone unlock, and the approval only fits *this* parcel: change the price and it no longer counts. |
+| **Label-free monitor** on the Live tab | A daily guess of how well we're doing before the real fraud reports arrive, plus a warning about the kind of fraud the guess can't see. |
+| **"From now on…" banner** on the Learning tab | After retraining, one sentence says which model is now making the decisions, and if the old one stayed, why. |
+| **Ticks next to each sentence** of the explanation | Every sentence the AI writer produces is checked on its own against the facts; a true number in the wrong sentence is caught. |
+
 ### Feature 10: "What would change this decision?" (for analysts only)
 
 - **What it is:** for a stopped booking, the app tries small changes the person booking could make (a lower declared value, a lighter declared weight, a different service, a sender the account has used before) and tells the analyst the smallest change that would have made the decision softer. Example: "allowed if the declared weight were 0.85 kg instead of 20 kg".
