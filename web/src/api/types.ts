@@ -636,7 +636,27 @@ export interface RedTeamAttack {
   evasion: { n: number; action: string; changes: CounterfactualChange[] } | null
   message: string
   latency_ms: number
+  /** Evasions kept for the learning loop (null when continuous learning is off). */
+  harvest: RedTeamHarvest | null
   audit_hash: string
+}
+export interface RedTeamHarvest {
+  evasions: number
+  labelled: number
+  needs_confirmation: boolean
+  truth: { label: string; source: string; simulated: boolean } | null
+  simulated: boolean
+  note: string
+}
+export interface RedTeamHardening {
+  attacks: number
+  evasions: number
+  labelled: number
+  labelled_since_last_retrain: number
+  simulated_labels: number
+  pending_decisions: string[]
+  last_retrain: { run_id: string; gate_passed: boolean; redteam_labels: number; handover?: Handover } | null
+  model_in_use: ModelInUse
 }
 export interface RedTeamRate {
   n: number

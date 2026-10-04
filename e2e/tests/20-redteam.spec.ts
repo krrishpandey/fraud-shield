@@ -30,6 +30,30 @@ test('red team tab: measured results, the gate rejecting the hardened model, and
   expect(n).toBeLessThanOrEqual(50)
   await expect(page.locator('[data-testid="redteam-attempt"][data-result="allow"]').first()).toBeVisible()
 
+  // the attack's evasions are kept for retraining, waiting for the original's truth (blk-06 has no injected label)
+  await expect(page.getByTestId('redteam-harvest')).toHaveAttribute('data-labelled', '0')
+  await expect(page.getByTestId('redteam-attacks')).toHaveText('1')
+  const kept = Number(await page.getByTestId('redteam-evasions').innerText())
+  expect(kept).toBeGreaterThan(0)
+  await expect(page.getByTestId('redteam-labels')).toHaveText('0')
+  await expect(page.getByTestId('redteam-retrain')).toBeDisabled()
+
+  // an analyst confirms the original as fraud: the kept evasions become fraud labels
+  await page.getByTestId('redteam-confirm').first().click()
+  await expect(page.getByTestId('redteam-labels')).toHaveText(String(kept))
+  await expect(page.getByTestId('redteam-retrain')).toBeEnabled()
+
+  // retrain with them through the unchanged gate; the banner says which model scores new bookings from now on
+  const resp = page.waitForResponse((r) => r.url().endsWith('/redteam/retrain'), { timeout: 90_000 })
+  await page.getByTestId('redteam-retrain').click()
+  const run = await (await resp).json()
+  expect(run.redteam_labels).toBe(kept)
+  const banner = page.getByTestId('redteam-handover')
+  await expect(banner).toBeVisible()
+  await expect(banner).toHaveAttribute('data-verdict', run.handover.verdict)
+  await expect(page.getByTestId('redteam-model-in-use')).toHaveAttribute('data-version', run.deployed_version)
+  await expect(page.getByTestId('redteam-retrain')).toBeDisabled() // no new evasion labels since this retrain
+
   // the attack is in the audit trail and the chain still verifies
   const audit = await (await request.get('/audit/verify')).json()
   expect(audit.ok).toBe(true)

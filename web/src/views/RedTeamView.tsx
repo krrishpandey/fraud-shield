@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Booking, RedTeamAttack, RedTeamRate, RedTeamResults } from '../api/types'
+import type { Booking, RedTeamAttack, RedTeamHardening, RedTeamRate, RedTeamResults, RetrainResponse } from '../api/types'
 import { ActionPill } from '../components/ActionBadge'
 import { ErrorBox, Loading, PageTitle, Section } from '../components/common'
+import { HandoverBanner, ModelInUseLine } from '../components/ModelHandover'
 import { actionLabel } from '../lib/domain'
 import { fmtMs, fmtPct, shortHash } from '../lib/format'
 import { useAsync } from '../lib/useAsync'
@@ -46,11 +47,20 @@ function Verdict({ a }: { a: RedTeamAttack }) {
         </Link>{' '}
         · logged to the audit trail {shortHash(a.audit_hash)}
       </p>
+      {a.harvest && a.harvest.evasions > 0 && (
+        <p className="mt-1.5 text-[0.82rem]" data-testid="redteam-harvest" data-labelled={a.harvest.labelled}>
+          Kept {a.harvest.evasions} evading {a.harvest.evasions === 1 ? 'booking' : 'bookings'} for retraining
+          {a.harvest.labelled > 0
+            ? `: ${a.harvest.labelled} added as fraud labels${a.harvest.simulated ? ' (simulated: from injected ground truth)' : ''}.`
+            : '.'}{' '}
+          {a.harvest.labelled === 0 && a.harvest.note}
+        </p>
+      )}
     </div>
   )
 }
 
-function LiveAttack() {
+function LiveAttack({ onAttacked }: { onAttacked: () => void }) {
   const [params] = useSearchParams()
   const fromDecision = params.get('decision')
   const demos = useAsync(() => api.demoBookings(), [])
@@ -94,6 +104,7 @@ function LiveAttack() {
       const a = await api.redteamAttack(id)
       setAttack(a)
       setShown(reducedMotion() ? a.attempts.length : 0)
+      onAttacked()
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e))
     } finally {
@@ -191,32 +202,110 @@ function Measured({ r }: { r: RedTeamResults }) {
   )
 }
 
-function Hardening({ r }: { r: RedTeamResults }) {
-  const h = r.hardening
+function Hardening({ r, h, reload }: { r: RedTeamResults | null; h: RedTeamHardening | null; reload: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const [run, setRun] = useState<(RetrainResponse & { redteam_labels: number }) | null>(null)
+  const act = async (key: string, fn: () => Promise<unknown>) => {
+    setBusy(key)
+    setErr(null)
+    try {
+      await fn()
+      reload()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+  const confirm = (id: string) =>
+    act(`confirm-${id}`, () => api.analyst(id, { label: 'fraud', note: 'Red team: analyst confirmed the attacked booking is fraud' }))
+  const retrain = () => act('retrain', async () => setRun(await api.redteamRetrain()))
+  const fresh = h?.labelled_since_last_retrain ?? 0
+  const handover = run?.handover ?? h?.last_retrain?.handover
+  const off = r?.hardening
+  const tiles: [string, number, string][] = h
+    ? [
+        ['Attacks run', h.attacks, 'redteam-attacks'],
+        ['Evading bookings kept', h.evasions, 'redteam-evasions'],
+        ['Fraud labels for retraining', h.labelled, 'redteam-labels'],
+      ]
+    : []
   return (
-    <Section title="Then we tried to fix it, and our own gate said no" testId="redteam-hardening">
-      <div className="rt-gate" data-testid="redteam-gate" data-passed={String(h.passed)}>
-        <p className="text-[0.88rem]">
-          We retrained on {h.n_labels} evasions made from training-window fraud only ({h.n_evaded} of {h.n_attacked} attacked bookings got
-          softer). The pre-registered deployment gate, unchanged:{' '}
-          <strong>{h.passed ? 'passed' : 'REJECTED the hardened model'}</strong>.
-        </p>
-        <ul className="mt-1.5 list-disc pl-5 text-[0.85rem]">
-          {h.failed_checks.map((c) => (
-            <li key={c.name}>{c.detail}</li>
-          ))}
-        </ul>
-      </div>
-      <p className="mt-2 text-[0.78rem] text-muted">
-        Catching the evasions would have stopped more honest shippers, so the current model keeps scoring. See the Learning tab for the
-        gate and docs/LEARNING_GATE.md for its rules.
-      </p>
+    <Section title="Harden the model with these attacks" testId="redteam-hardening">
+      {h ? (
+        <>
+          <dl className="grid grid-cols-3 gap-2 text-center" data-testid="redteam-session" data-attacks={h.attacks}>
+            {tiles.map(([label, v, id]) => (
+              <div key={id} className="rounded-sm bg-surface-2 p-2">
+                <dd className="tnum text-[1.3rem] font-extrabold" data-testid={id}>
+                  {v}
+                </dd>
+                <dt className="text-[0.72rem] text-muted">{label}</dt>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-2 text-[0.8rem] text-muted">
+            This session, live. An evading booking becomes a fraud label only once the original booking is known to be fraud: an
+            analyst confirms it, or it carries injected ground truth (labelled simulated; {h.simulated_labels} so far).
+          </p>
+          {h.pending_decisions.length > 0 && (
+            <div className="mt-2" data-testid="redteam-pending">
+              <p className="text-[0.82rem] font-semibold">Waiting for an analyst to confirm the original booking:</p>
+              <ul className="mt-1 flex flex-col gap-1">
+                {h.pending_decisions.map((id) => (
+                  <li key={id} className="flex flex-wrap items-center gap-2 text-[0.82rem]">
+                    <Link className="font-mono underline underline-offset-2" to={`/decisions/${encodeURIComponent(id)}`}>
+                      {id}
+                    </Link>
+                    <button type="button" className="btn" data-testid="redteam-confirm" disabled={busy != null} onClick={() => confirm(id)}>
+                      {busy === `confirm-${id}` ? 'Saving…' : 'Confirm original as fraud (analyst)'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button type="button" className="btn btn-primary" data-testid="redteam-retrain" disabled={busy != null || fresh === 0} onClick={retrain}>
+              {busy === 'retrain' ? 'Retraining… (about 10-20 s)' : `Retrain with ${fresh} new evasion ${fresh === 1 ? 'label' : 'labels'}`}
+            </button>
+            <span className="text-[0.78rem] text-muted">same retrain and pre-registered gate as the Learning tab, unchanged</span>
+          </div>
+          {err && <ErrorBox message={err} testId="redteam-hardening-error" />}
+          {handover && (
+            <div className="mt-3" data-testid="redteam-retrain-result">
+              <HandoverBanner h={handover} testId="redteam-handover" />
+            </div>
+          )}
+          <div className="mt-2">
+            <ModelInUseLine m={h.model_in_use} testId="redteam-model-in-use" />
+          </div>
+        </>
+      ) : (
+        <p className="text-[0.85rem] text-muted">Continuous learning is off in this configuration, so live attacks are not kept for retraining.</p>
+      )}
+      {off && (
+        <div className="rt-gate mt-3" data-testid="redteam-gate" data-passed={String(off.passed)}>
+          <p className="text-[0.82rem] font-semibold">Measured offline, for reference (test window, run once, {r?.run_at})</p>
+          <p className="mt-0.5 text-[0.82rem]">
+            {off.n_labels} evasions from training-window fraud ({off.n_evaded} of {off.n_attacked} attacked bookings got softer): the gate{' '}
+            <strong>{off.passed ? 'passed' : 'REJECTED the hardened model'}</strong>.
+          </p>
+          <ul className="mt-1 list-disc pl-5 text-[0.8rem]">
+            {off.failed_checks.map((c) => (
+              <li key={c.name}>{c.detail}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </Section>
   )
 }
 
 export default function RedTeamView() {
   const res = useAsync(() => api.redteamResults(), [])
+  const hard = useAsync(() => api.redteamHardening().catch(() => null), [])
   return (
     <div data-testid="redteam-view">
       <PageTitle
@@ -224,12 +313,12 @@ export default function RedTeamView() {
         sub="We play the fraudster against our own system and publish how often we lose, instead of only how often we are right."
       />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <LiveAttack />
+        <LiveAttack onAttacked={hard.reload} />
         <div className="flex flex-col gap-4">
           {res.loading && <Loading what="red-team results" />}
           {res.error && <ErrorBox message={res.error} onRetry={res.reload} />}
           {res.data && <Measured r={res.data} />}
-          {res.data && <Hardening r={res.data} />}
+          {!hard.loading && <Hardening r={res.data ?? null} h={hard.data ?? null} reload={hard.reload} />}
         </div>
       </div>
     </div>

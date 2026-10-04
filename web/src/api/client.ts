@@ -5,7 +5,7 @@ import type {
   ExplanationClaims,
 } from './types'
 import type { MonitorEstimate } from './types'
-import type { RedTeamAttack, RedTeamResults, RedTeamTarget } from './types'
+import type { RedTeamAttack, RedTeamHardening, RedTeamResults, RedTeamTarget } from './types'
 import type {
   CredentialJSON, OwnerConfirmation, OwnerConfirmOptions, PasskeyEnrollOptions, PasskeyEnrollResult, PasskeyStatus,
   TamperTestResult,
@@ -86,6 +86,8 @@ export const api = {
   redteamAttack: (id: string) => post<RedTeamAttack>(`/decisions/${encodeURIComponent(id)}/redteam`, {}),
   redteamResults: () => request<RedTeamResults>('/redteam/results'),
   redteamTargets: () => request<RedTeamTarget[]>('/redteam/targets'),
+  redteamHardening: () => request<RedTeamHardening>('/redteam/hardening'),
+  redteamRetrain: () => post<RetrainResponse & { redteam_labels: number }>('/redteam/retrain', {}),
   checkExplanation: (id: string, text: string) =>
     post<ExplanationCheck>(`/decisions/${encodeURIComponent(id)}/explanation/check`, { text }),
   claims: (id: string) => request<ExplanationClaims>(`/decisions/${encodeURIComponent(id)}/claims`),

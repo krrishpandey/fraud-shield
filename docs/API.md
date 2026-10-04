@@ -268,3 +268,16 @@ record without a booking.
 type and for never-trained T3/T5 (mean and sd over seeds), fields used, and the hardening gate verdict with its failed
 checks. 404 if the file is missing. `GET /redteam/targets` lists ready-made stopped bookings to attack
 (`docs/demo_block_bookings.json`). Config: `redteam.results_path`, `redteam.targets_path`.
+
+**Hardening from live attacks** (`fraudshield/redteam/harden.py`, needs continuous learning). Each attack keeps its
+minimal evading variants (at most 3, with their own feature snapshots) in `<feedback dir>/redteam_evasions.jsonl`
+and returns `harvest: {evasions, labelled, needs_confirmation, truth, simulated, note}`. A variant becomes a fraud
+label (source `redteam`) only once the original booking is known to be fraud: the latest analyst label on that
+decision, else injected ground truth in `booking.meta` (flagged `simulated`). A legit original adds nothing.
+
+- `GET /redteam/hardening` -> `{attacks, evasions, labelled, labelled_since_last_retrain, simulated_labels,
+  pending_decisions, last_retrain, model_in_use}`. `pending_decisions` are attacked decisions whose truth is still
+  unknown (confirm with `POST /decisions/{id}/analyst {"label":"fraud"}`).
+- `POST /redteam/retrain` runs the learning service's retrain (same training set rules, same pre-registered gate)
+  with `min_new_labels: 1`, and returns the `/learning/retrain` body plus `redteam_labels`. 409 when no red-team label
+  arrived since the last retrain, or a retrain is already running.

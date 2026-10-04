@@ -509,16 +509,59 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         probs = rec.get("probabilities") or {}
         current = Outcome(rec["action"], float(probs.get("misuse", rec.get("gbm_score") or 0.0)),
                           float(rec.get("gbm_score") or 0.0), rec.get("greedy_action") or rec["action"])
-        out = attack_payload(search(WhatIf.for_pipeline(owner), Booking(**rec["booking"]), current,
-                                    feedback="action", seed=0))
+        whatif = WhatIf.for_pipeline(owner)
+        res = search(whatif, Booking(**rec["booking"]), current, feedback="action", seed=0)
+        out = attack_payload(res)
+        # evasions feed the learning loop (labels only once the original's truth is known; redteam/harden.py)
+        harvest = _rt_store().harvest(rec, res, whatif, learning.label_store) if learning is not None else None
         try:
             _, h = owner.audit.append("redteam_attack", {
                 "decision_id": decision_id, "booking_id": rec["booking_id"], "queries": out["queries"],
                 "evaded": out["evaded"], "first_allow_at": out["first_allow_at"],
-                "first_softer_at": out["first_softer_at"], "latency_ms": out["latency_ms"]})
+                "first_softer_at": out["first_softer_at"], "latency_ms": out["latency_ms"],
+                "evasions_kept": harvest and harvest["evasions"], "labels_added": harvest and harvest["labelled"]})
         except OSError as e:
             raise HTTPException(503, f"audit write failed, attack not shown: {e}")
-        return _json_safe({"decision_id": decision_id, **out, "audit_hash": h})
+        return _json_safe({"decision_id": decision_id, **out, "harvest": harvest, "audit_hash": h})
+
+    rt_state: dict[str, Any] = {"store": None, "last_retrain": None}
+
+    def _rt_store():
+        from fraudshield.redteam.harden import EvasionStore  # noqa: PLC0415
+        if rt_state["store"] is None:
+            rt_state["store"] = EvasionStore(learning.label_store.path.parent / "redteam_evasions.jsonl")
+        return rt_state["store"]
+
+    def _rt_summary() -> dict[str, Any]:
+        lr = _learning()
+        st = _rt_store()
+        st.promote(lr.label_store)
+        since = int(lr.registry.data.get("last_retrain_label_count", 0))
+        return {**st.summary(lr.label_store, since_seq=since), "last_retrain": rt_state["last_retrain"],
+                "model_in_use": lr.model_in_use()}
+
+    @r.get("/redteam/hardening")
+    def redteam_hardening():
+        """This session's live attacks: evasions kept, labels added, decisions waiting for a truth label."""
+        return _json_safe(_rt_summary())
+
+    @r.post("/redteam/retrain")
+    def redteam_retrain():
+        """Retrain with the red-team evasion labels through the learning service and its unchanged gate."""
+        s = _rt_summary()
+        if s["labelled_since_last_retrain"] == 0:
+            raise HTTPException(409, "no red-team evasion labels since the last retrain: attack a stopped booking "
+                                     "and confirm the original as fraud first")
+        try:
+            out = _learning().retrain(min_new_labels=1)
+        except (NotEnoughLabels, RetrainBusy) as e:
+            raise HTTPException(409, str(e))
+        except LearningUnavailable as e:
+            raise HTTPException(503, str(e))
+        rt_state["last_retrain"] = {"run_id": out.get("run_id"), "gate_passed": (out.get("gate") or {}).get("passed"),
+                                    "redteam_labels": s["labelled_since_last_retrain"],
+                                    "handover": out.get("handover")}
+        return _json_safe({**out, "redteam_labels": s["labelled_since_last_retrain"]})
 
     @r.get("/redteam/results")
     def redteam_results():
