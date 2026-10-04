@@ -182,12 +182,24 @@ export default function LearningView() {
   const [rollbackBusy, setRollbackBusy] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
+  // A retrain keeps running on the server when this page is left; on return the status says so.
+  const serverRun = s?.retrain_running ?? null
+  const running = retrainBusy || serverRun != null
+  const shown = result ?? s?.last_result ?? null
+  const reloadStatus = status.reload
   useEffect(() => {
-    if (!retrainBusy) return
-    const start = Date.now()
-    const t = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 500)
+    if (!serverRun || retrainBusy) return // our own request is still open: its response brings the result
+    const t = setInterval(reloadStatus, 2000)
     return () => clearInterval(t)
-  }, [retrainBusy])
+  }, [serverRun, retrainBusy, reloadStatus])
+  useEffect(() => {
+    if (!running) return
+    const start = serverRun?.started_at ? Date.parse(serverRun.started_at) : Date.now()
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000)))
+    tick()
+    const t = setInterval(tick, 500)
+    return () => clearInterval(t)
+  }, [running, serverRun?.started_at])
 
   const run = async (fn: () => Promise<void>) => {
     setErr(null)
@@ -217,6 +229,10 @@ export default function LearningView() {
         setResult(await api.retrain(20))
         status.reload()
         refresh()
+      } catch (e) {
+        // already running (started before this page was opened): follow that run instead of failing
+        if (e instanceof Error && /already running/i.test(e.message)) status.reload()
+        else throw e
       } finally {
         setRetrainBusy(false)
       }
@@ -267,7 +283,7 @@ export default function LearningView() {
                           className="vcard-btn"
                           data-testid="learning-rollback-button"
                           data-version={v.version}
-                          disabled={rollbackBusy !== null || retrainBusy}
+                          disabled={rollbackBusy !== null || running}
                           onClick={() => rollback(v.version)}
                           title={`Make ${v.version} the active model again`}
                         >
@@ -368,7 +384,7 @@ export default function LearningView() {
                     onChange={(e) => setN(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
                   />
                 </div>
-                <button type="button" className="btn" data-testid="learning-simulate-button" disabled={simBusy || retrainBusy} onClick={simulate}>
+                <button type="button" className="btn" data-testid="learning-simulate-button" disabled={simBusy || running} onClick={simulate}>
                   <Icon name="plus" size={16} />
                   {simBusy ? 'Adding labels...' : 'Simulate analyst feedback (demo)'}
                 </button>
@@ -380,7 +396,7 @@ export default function LearningView() {
               )}
             </Section>
 
-            {retrainBusy && (
+            {running && (
               <section className="panel p-6" data-testid="learning-retrain-progress" role="status" aria-live="polite">
                 <div className="flex items-center gap-3">
                   <div>
@@ -395,8 +411,8 @@ export default function LearningView() {
                 </div>
               </section>
             )}
-            {result && !retrainBusy && <RetrainResult r={result} />}
-            {!result && !retrainBusy && (
+            {shown && !running && <RetrainResult r={shown} />}
+            {!shown && !running && (
               <div className="panel learn-empty">
                 <Icon name="shieldCheck" size={22} />
                 <p>
@@ -410,9 +426,9 @@ export default function LearningView() {
                 <Icon name="lock" size={15} style={{ display: 'inline', verticalAlign: '-2px' }} /> Active: <span className="mono">{s.active_version}</span>
               </span>
               <span className="text-[13px] text-faint">Needs at least 20 new labels</span>
-              <button type="button" className="btn btn-primary ml-auto" data-testid="learning-retrain-button" disabled={retrainBusy || simBusy} onClick={retrain}>
+              <button type="button" className="btn btn-primary ml-auto" data-testid="learning-retrain-button" disabled={running || simBusy} onClick={retrain}>
                 <Icon name="refresh" size={16} />
-                {retrainBusy ? 'Retraining...' : 'Retrain with new labels'}
+                {running ? 'Retraining...' : 'Retrain with new labels'}
               </button>
             </div>
           </div>

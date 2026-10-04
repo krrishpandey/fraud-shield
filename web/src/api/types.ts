@@ -297,6 +297,11 @@ export interface LearningStatus {
   laya_export: { path: string; rows: number } | null
   model_in_use?: ModelInUse
   last_handover?: Handover | null
+  /** A retrain in progress on the server (started by any page), or null. */
+  retrain_running?: { started_at: string } | null
+  /** The last finished retrain of this server session (shown when the page that started it was left). */
+  last_result?: RetrainResponse | null
+  last_retrain_error?: string | null
 }
 
 export interface SimulateFeedbackResponse {

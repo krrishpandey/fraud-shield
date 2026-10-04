@@ -69,6 +69,37 @@ def test_wire_active_labels_v1_exactly_even_without_a_registry_file(data, tmp_pa
     assert rec["model_versions"]["gbm"] == V1 and ev["payload"]["model_versions"]["gbm"] == V1
 
 
+def test_status_reports_a_running_retrain_and_keeps_the_last_result(data, tmp_path):
+    """A console page left mid-retrain must find the run on return and then its result (the response went elsewhere)."""
+    import threading
+
+    from fraudshield.learning.service import RetrainBusy
+
+    _, svc = _svc(data, tmp_path)
+    svc.simulate(n=300, seed=1, error_rate=0.0, mode="uniform_noisy")
+    st = svc.status()
+    assert st["retrain_running"] is None and st["last_result"] is None and st["last_retrain_error"] is None
+
+    gate, seen = threading.Event(), {}
+    orig = svc._retrain
+
+    def slow(*a, **kw):
+        seen["running"] = svc.status()["retrain_running"]
+        try:
+            svc.retrain(min_new_labels=20)
+        except RetrainBusy as e:  # a second click while the first run is going
+            seen["busy"] = str(e)
+        gate.set()
+        return orig(*a, **kw)
+
+    svc._retrain = slow
+    out = svc.retrain(min_new_labels=20)
+    assert gate.is_set() and seen["running"]["started_at"] and "already running" in seen["busy"]
+    st = svc.status()
+    assert st["retrain_running"] is None and st["last_result"]["run_id"] == out["run_id"]
+    assert st["last_result"]["handover"]["verdict"] == out["handover"]["verdict"]
+
+
 def test_passing_gate_new_model_in_use_from_now_on_then_rollback(data, tmp_path):
     pipe, svc = _svc(data, tmp_path, wire_active=True)
     seen = []

@@ -92,6 +92,32 @@ test('retrain: the banner says which model scores new bookings from now on; deci
   expect(errors).toEqual([])
 })
 
+test('leaving the Learning tab during a retrain: coming back shows the run, then its result', async ({ page, request }) => {
+  test.setTimeout(180_000)
+  await seedAnalystLabels(request, 24, 'leave')
+  await page.goto('/#/learning')
+  const resp = page.waitForResponse((r) => r.url().endsWith('/learning/retrain'), { timeout: 120_000 })
+  await page.getByTestId('learning-retrain-button').click()
+  await expect(page.getByTestId('learning-retrain-progress')).toBeVisible()
+  await page.getByTestId('nav-score').click() // leave while the server is still training
+  await expect(page.getByTestId('learning-retrain-progress')).toHaveCount(0)
+  await page.getByTestId('nav-learning').click()
+  const run = await (await resp).json() // the original request finishes on the server regardless
+  // the reopened page finds the run (progress) or its outcome, and ends on the result of that very run
+  await expect(page.getByTestId('learning-result')).toHaveAttribute('data-run-id', run.run_id, { timeout: 60_000 })
+  await expect(page.getByTestId('learning-retrain-button')).toBeEnabled()
+})
+
+test('clicking Retrain while one is already running follows that run instead of erroring', async ({ page, request }) => {
+  test.setTimeout(180_000)
+  await seedAnalystLabels(request, 24, 'twice')
+  const first = request.post('/learning/retrain', { data: { min_new_labels: 20 } }) // e.g. started from another page
+  await page.goto('/#/learning')
+  await expect(page.getByTestId('learning-retrain-progress')).toBeVisible({ timeout: 15_000 })
+  const run = await (await first).json()
+  await expect(page.getByTestId('learning-result')).toHaveAttribute('data-run-id', run.run_id, { timeout: 60_000 })
+})
+
 test('live view names the model in use', async ({ page, request }) => {
   const st = await (await request.get('/learning/status')).json()
   await page.goto('/#/live')

@@ -81,6 +81,11 @@ class LearningService:
         self.fit_fn, self.max_train_rows, self.B = fit_fn, max_train_rows, B
         self.calibration_dir = Path(calibration_dir) if calibration_dir else None
         self._run_lock = threading.Lock()
+        # the run in progress ({started_at, failed}) and the last finished result, so a console page that was left
+        # and reopened can show the progress and then the outcome (the HTTP response went to the page that left)
+        self._running: dict[str, Any] | None = None
+        self._last_result: dict[str, Any] | None = None
+        self._last_error: str | None = None
         self.started_at = _now()
         # called with (scorer, version) after every swap, e.g. so the live stream's pipeline follows the deploy
         self.swap_listeners: list[Callable[[Callable, str], None]] = []
@@ -158,6 +163,9 @@ class LearningService:
             "laya_weights": {"updated_live": False, "note": LIVE_UPDATE_NOTE},
             "retrain_mode": "synchronous (one run at a time)",
             "last_run": runs[-1] if runs else None,
+            "retrain_running": self._running,
+            "last_result": self._last_result,
+            "last_retrain_error": self._last_error,
             "min_new_labels_default": self.gate_cfg.min_new_labels,
             "gate_mode_default": self.gate_cfg.mode,
             "simulation": None if self._sim is None else {
@@ -188,9 +196,16 @@ class LearningService:
             raise LearningUnavailable("no active GBM version (artifacts/models/<system>_<tier>.lgb missing)")
         if not self._run_lock.acquire(blocking=False):
             raise RetrainBusy("a retrain is already running")
+        self._running = {"started_at": _now()}
         try:
-            return self._retrain(min_new_labels, gate)
+            out = self._retrain(min_new_labels, gate)
+            self._last_result, self._last_error = out, None
+            return out
+        except Exception as e:  # noqa: BLE001 - recorded for the status, then re-raised unchanged
+            self._last_error = f"{type(e).__name__}: {e}"
+            raise
         finally:
+            self._running = None
             self._run_lock.release()
 
     def _retrain(self, min_new_labels: int | None, gate_mode: str | None = None) -> dict[str, Any]:
