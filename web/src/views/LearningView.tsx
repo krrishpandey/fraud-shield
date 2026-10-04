@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { api } from '../api/client'
-import type { LearningMetrics, RetrainResponse, SimulateFeedbackResponse } from '../api/types'
+import type { LearningMetrics, ModelVersion, RetrainResponse, SimulateFeedbackResponse } from '../api/types'
 import { ErrorBox, Loading, PageTitle, Section } from '../components/common'
+import { Icon } from '../components/Icon'
 import { HandoverBanner, ModelInUseLine } from '../components/ModelHandover'
 import { fmtBRL, fmtInt, fmtPct, shortHash } from '../lib/format'
+import { useStatus } from '../lib/status'
 import { useAsync } from '../lib/useAsync'
 
 type MetricKey = keyof LearningMetrics
@@ -11,19 +13,19 @@ const METRICS: { key: MetricKey; label: string; higherBetter: boolean; fmt: (v: 
   { key: 'pr_auc', label: 'PR-AUC', higherBetter: true, fmt: (v) => v.toFixed(3), eps: 0.0005 },
   { key: 'ece', label: 'Calibration error (ECE)', higherBetter: false, fmt: (v) => v.toFixed(3), eps: 0.0005 },
   { key: 'cost_per_1k_brl', label: 'Cost per 1,000 bookings (R$)', higherBetter: false, fmt: (v) => fmtBRL(v, true), eps: 0.05 },
-  { key: 'fpr_hard_negative', label: 'False positives on hard negatives', higherBetter: false, fmt: (v) => fmtPct(v, 1), eps: 0.0005 },
-  { key: 'recall_new_pattern', label: 'Recall on the new pattern', higherBetter: true, fmt: (v) => fmtPct(v, 0), eps: 0.0005 },
+  { key: 'fpr_hard_negative', label: 'Honest-but-unusual bookings stopped', higherBetter: false, fmt: (v) => fmtPct(v, 2), eps: 0.0005 },
+  { key: 'recall_new_pattern', label: 'Unseen fraud caught', higherBetter: true, fmt: (v) => fmtPct(v, 0), eps: 0.0005 },
 ]
 
 function SimulatedChip() {
-  return <span className="rounded-sm bg-tape px-1.5 py-0.5 text-[0.7rem] font-bold text-[#14212e]">Simulated</span>
+  return <span className="sim-chip">Simulated</span>
 }
 
 function sourceLabel(src: string): ReactNode {
   if (src === 'analyst') return 'Analyst confirmations'
   if (src === 'simulated_analyst')
     return (
-      <span className="flex items-center gap-1.5">
+      <span className="flex items-center gap-2">
         Simulated analyst labels <SimulatedChip />
       </span>
     )
@@ -46,89 +48,130 @@ function Delta({ cur, cand, higherBetter, eps }: { cur: number; cand: number; hi
   )
 }
 
+/** One before → after box, coloured by whether the change helps. */
+function Shift({ label, from, to, better, note }: { label: string; from: string; to: string; better: boolean; note: string }) {
+  return (
+    <div className="shift">
+      <div className="shift-l">{label}</div>
+      <div className="shift-row">
+        <span className="shift-from tnum">{from}</span>
+        <span className="text-muted">→</span>
+        <span className="shift-to tnum" style={{ color: better ? 'var(--green)' : 'var(--act-block)' }}>
+          {to}
+        </span>
+        <span className="shift-note" style={{ color: better ? 'var(--green)' : 'var(--act-block)' }}>
+          {note}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function RetrainResult({ r }: { r: RetrainResponse }) {
   const deployed = !!r.deployed_version && r.deployed_version === r.candidate.version
+  const passed = r.gate.checks.filter((c) => c.passed).length
+  const t3Better = r.candidate.recall_new_pattern >= r.current.recall_new_pattern
+  const fprBetter = r.candidate.fpr_hard_negative <= r.current.fpr_hard_negative
   return (
-    <div className="mt-3 flex flex-col gap-3" data-testid="learning-result" data-run-id={r.run_id}>
-      <div
-        data-testid="learning-deployed-status"
-        data-deployed={deployed}
-        role="status"
-        className="rounded-sm border p-2.5"
-        style={{ borderColor: deployed ? 'var(--ok)' : 'var(--danger)' }}
-      >
-        <p className="font-bold" style={{ color: deployed ? 'var(--ok)' : 'var(--danger)' }}>
-          <span aria-hidden="true">{deployed ? '✓ ' : '✕ '}</span>
-          {deployed
-            ? `Deployed: ${r.candidate.version} is now the active model`
-            : `Rejected: the gate failed, ${r.current.version} stays active`}
-        </p>
-        <p className="mt-0.5 text-[0.78rem] text-ink-2">
-          Run {r.run_id}, trained with {fmtInt(r.n_new_labels)} new labels ({fmtInt(r.n_fraud)} fraud, {fmtInt(r.n_legit)} legitimate).
-          Audit hash <code className="font-mono">{shortHash(r.audit_hash, 16)}</code>
-        </p>
-      </div>
+    <div className="flex flex-col gap-[18px]" data-testid="learning-result" data-run-id={r.run_id}>
+      <section className="panel run-card">
+        <div className="run-top">
+          <div className="min-w-0 flex-1">
+            <h2 className="mono run-v">{r.candidate.version}</h2>
+            <p className="text-muted">
+              Run {r.run_id} · trained with {fmtInt(r.n_new_labels)} new labels ({fmtInt(r.n_fraud)} fraud, {fmtInt(r.n_legit)} legitimate)
+            </p>
+          </div>
+          <span
+            className={`run-status ${deployed ? 'is-ok' : 'is-bad'}`}
+            data-testid="learning-deployed-status"
+            data-deployed={deployed}
+            role="status"
+          >
+            <Icon name={deployed ? 'check' : 'x'} size={16} />
+            {deployed ? `Deployed: ${r.candidate.version} is now the active model` : `Refused by the safety gate: ${r.current.version} stays active`}
+          </span>
+        </div>
+        <div className="run-shifts">
+          <Shift
+            label="Unseen fraud caught"
+            from={fmtPct(r.current.recall_new_pattern, 0)}
+            to={fmtPct(r.candidate.recall_new_pattern, 0)}
+            better={t3Better}
+            note={t3Better ? 'Better' : 'Worse'}
+          />
+          <Shift
+            label="Honest-but-unusual bookings stopped"
+            from={fmtPct(r.current.fpr_hard_negative, 2)}
+            to={fmtPct(r.candidate.fpr_hard_negative, 2)}
+            better={fprBetter}
+            note={fprBetter ? 'Better' : 'Worse'}
+          />
+        </div>
+      </section>
 
-      <div>
-        <table className="w-full text-[0.85rem]" data-testid="learning-result-table">
-          <caption className="mb-1 text-left text-[0.75rem] text-muted">
-            Both models scored on the same {fmtInt(r.eval_set.n)} bookings: {r.eval_set.description}.
-          </caption>
+      <Section title="Gate checks" icon="shield" aside={`${passed} of ${r.gate.checks.length} passed · one failure is enough to refuse`}>
+        <ul className="gate-list">
+          {r.gate.checks.map((c) => (
+            <li key={c.name} data-testid="learning-gate-check" data-name={c.name} data-passed={c.passed}>
+              <Icon name={c.passed ? 'check' : 'x'} size={17} style={{ color: c.passed ? 'var(--green)' : 'var(--danger)' }} />
+              <span className="min-w-0 flex-1">
+                <span className="font-semibold">{c.name.replace(/_/g, ' ')}</span>
+              </span>
+              <span className={`mono text-[13px] ${c.passed ? 'text-muted' : 'text-danger'}`}>{c.detail}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Active vs candidate" icon="chart" aside={`same ${fmtInt(r.eval_set.n)} bookings`}>
+        <table className="tbl" data-testid="learning-result-table">
+          <caption className="mb-2 text-left text-[13px] text-muted">Both models scored on the same bookings: {r.eval_set.description}.</caption>
           <thead>
-            <tr className="border-b border-rule text-left text-[0.75rem] text-muted">
-              <th scope="col" className="py-1 font-semibold">Metric</th>
-              <th scope="col" className="py-1 text-right font-semibold">
-                Current <span className="block font-mono font-normal whitespace-nowrap">{r.current.version}</span>
+            <tr>
+              <th scope="col">Metric</th>
+              <th scope="col" className="r">
+                Active <span className="mono block text-[12px] font-normal">{r.current.version}</span>
               </th>
-              <th scope="col" className="py-1 text-right font-semibold">
-                Candidate <span className="block font-mono font-normal whitespace-nowrap">{r.candidate.version}</span>
+              <th scope="col" className="r">
+                Candidate <span className="mono block text-[12px] font-normal">{r.candidate.version}</span>
               </th>
-              <th scope="col" className="py-1 pl-3 font-semibold">Change</th>
+              <th scope="col">Change</th>
             </tr>
           </thead>
           <tbody>
             {METRICS.map((m) => (
-              <tr key={m.key} className="border-b border-rule last:border-0" data-metric={m.key}>
-                <th scope="row" className="py-1.5 text-left font-normal">
+              <tr key={m.key} data-metric={m.key}>
+                <th scope="row" className="text-left font-normal">
                   {m.label}
-                  <span className="ml-1 text-[0.72rem] text-muted">({m.higherBetter ? 'higher is better' : 'lower is better'})</span>
+                  <span className="ml-1 text-[12px] text-muted">({m.higherBetter ? 'higher is better' : 'lower is better'})</span>
                 </th>
-                <td className="tnum py-1.5 text-right">{m.fmt(r.current[m.key])}</td>
-                <td className="tnum py-1.5 text-right font-semibold">{m.fmt(r.candidate[m.key])}</td>
-                <td className="py-1.5 pl-3 text-[0.8rem] whitespace-nowrap">
+                <td className="tnum r">{m.fmt(r.current[m.key])}</td>
+                <td className="tnum r font-semibold">{m.fmt(r.candidate[m.key])}</td>
+                <td className="whitespace-nowrap text-[13.5px]">
                   <Delta cur={r.current[m.key]} cand={r.candidate[m.key]} higherBetter={m.higherBetter} eps={m.eps} />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="mt-1 text-[0.72rem] text-muted">Money figures depend on the cost assumptions.</p>
-      </div>
-
-      <div>
-        <h3 className="text-[0.8rem] font-semibold text-ink-2">Deployment gate</h3>
-        <ul className="mt-1 flex flex-col gap-1">
-          {r.gate.checks.map((c) => (
-            <li key={c.name} data-testid="learning-gate-check" data-name={c.name} data-passed={c.passed} className="flex gap-2 text-[0.82rem]">
-              <span
-                className="w-12 shrink-0 rounded-sm border px-1 text-center text-[0.72rem] font-bold"
-                style={{ borderColor: c.passed ? 'var(--ok)' : 'var(--danger)', color: c.passed ? 'var(--ok)' : 'var(--danger)' }}
-              >
-                {c.passed ? 'Pass' : 'Fail'}
-              </span>
-              <span>
-                <code className="font-mono text-[0.75rem]">{c.name}</code> <span className="text-ink-2">{c.detail}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
+        <p className="mt-2 text-[12.5px] text-muted">
+          Money figures depend on the cost assumptions. Audit hash <code>{shortHash(r.audit_hash, 16)}</code>
+        </p>
+      </Section>
     </div>
   )
 }
 
+function versionState(v: ModelVersion, active: string): { word: string; tone: string } {
+  if (v.version === active) return { word: 'Active', tone: 'var(--green)' }
+  if (v.ever_deployed === false || v.gate_passed === false) return { word: 'Refused by gate', tone: 'var(--danger)' }
+  return { word: 'Retired', tone: 'var(--muted)' }
+}
+
 export default function LearningView() {
   const status = useAsync(() => api.learningStatus(), [])
+  const { refresh } = useStatus()
   const s = status.data
   const [n, setN] = useState(200)
   const [simBusy, setSimBusy] = useState(false)
@@ -173,6 +216,7 @@ export default function LearningView() {
       try {
         setResult(await api.retrain(20))
         status.reload()
+        refresh()
       } finally {
         setRetrainBusy(false)
       }
@@ -194,187 +238,184 @@ export default function LearningView() {
 
   return (
     <div>
-      <PageTitle
-        title="Learning"
-        sub="Analyst labels become training data. A retrain builds a candidate model, compares it with the active one on bookings neither has seen, and deploys it only if the gate passes."
-      />
-      {status.error && <ErrorBox message={status.error} onRetry={status.reload} />}
-      {status.loading && !s && <Loading what="learning status" />}
-      {err && (
-        <div className="mb-3">
-          <ErrorBox message={err} testId="learning-error" />
+      <PageTitle title="Learning" />
+      {status.error && (
+        <div className="page">
+          <ErrorBox message={status.error} onRetry={status.reload} />
+        </div>
+      )}
+      {status.loading && !s && (
+        <div className="page">
+          <Loading what="learning status" />
         </div>
       )}
       {s && (
-        <div className="flex flex-col gap-4">
-          {s.last_handover && <HandoverBanner h={s.last_handover} />}
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-            <div className="panel px-3.5 py-3">
-              <div className="text-[0.78rem] text-ink-2">Active model</div>
-              <div className="mt-0.5 font-mono text-[1.15rem] font-medium" data-testid="learning-active-version">
-                {s.active_version}
-              </div>
-              <div className="mt-0.5 text-[0.75rem] text-muted">
-                Calibration <span className="font-mono">{s.calibration_version}</span>
-              </div>
-              {s.model_in_use && (
-                <div className="mt-1.5 border-t border-rule pt-1.5">
-                  <ModelInUseLine m={s.model_in_use} testId="learning-model-in-use" />
-                </div>
-              )}
-            </div>
-            <div className="panel px-3.5 py-3">
-              <div className="flex flex-wrap items-baseline gap-x-3">
-                <span className="text-[0.78rem] text-ink-2">Labels collected since the last retrain</span>
-                <span className="tnum text-[1.5rem] leading-tight font-bold" data-testid="learning-label-count" data-count={s.labels_since_last_retrain}>
-                  {fmtInt(s.labels_since_last_retrain)}
-                </span>
-              </div>
-              <ul className="mt-1 flex flex-col gap-0.5 text-[0.82rem]">
-                {sources.map(([src, count]) => (
-                  <li key={src} className="flex items-center gap-3" data-testid={`learning-source-${src}`} data-count={count}>
-                    <span className="tnum w-12 text-right font-semibold">{fmtInt(count)}</span>
-                    {sourceLabel(src)}
+        <div className="split">
+          <aside className="split-list" aria-label="Model versions">
+            <h2 className="split-h">Model versions</h2>
+            <ul className="vlist" data-testid="learning-version-table">
+              {versions.map((v) => {
+                const active = v.version === s.active_version
+                const st = versionState(v, s.active_version)
+                return (
+                  <li key={v.version} className={`vcard${active ? ' is-active' : ''}`} data-testid="learning-version-row" data-version={v.version} data-active={active}>
+                    <div className="vcard-top">
+                      <span className="mono vcard-name">{v.version}</span>
+                      {!active && v.ever_deployed !== false && v.gate_passed !== false && (
+                        <button
+                          type="button"
+                          className="vcard-btn"
+                          data-testid="learning-rollback-button"
+                          data-version={v.version}
+                          disabled={rollbackBusy !== null || retrainBusy}
+                          onClick={() => rollback(v.version)}
+                          title={`Make ${v.version} the active model again`}
+                        >
+                          <Icon name="history" size={14} />
+                          {rollbackBusy === v.version ? 'Rolling back...' : 'Roll back'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="vcard-meta">
+                      <span className="dot" style={{ background: st.tone }} aria-hidden="true" />
+                      {st.word === 'Refused by gate' ? <span data-testid="learning-version-rejected">Rejected by gate</span> : st.word}
+                      <span>· {fmtInt(v.n_train)} rows</span>
+                      <span>· {v.metrics ? v.metrics.pr_auc.toFixed(2) : 'PR-AUC n/a'}</span>
+                    </div>
+                    <div className="vcard-sub">
+                      {v.created_at ? v.created_at.replace('T', ' ').slice(0, 16) : 'pipeline-trained'} · {fmtInt(v.n_feedback_labels)} feedback labels
+                      {v.parent ? ` · from ${v.parent}` : ''}
+                    </div>
                   </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-            <div className="flex flex-col gap-4">
-              <Section title="Simulated analyst feedback" aside={<SimulatedChip />}>
-                <p className="text-[0.82rem] text-ink-2">
-                  Demo only. Replays past bookings and labels them from the injected ground truth, as if an analyst had reviewed them.
-                  These labels are flagged simulated everywhere they are stored.
-                </p>
-                <div className="mt-2.5 flex flex-wrap items-end gap-2">
-                  <div>
-                    <label htmlFor="learning-n" className="block text-[0.75rem] text-muted">
-                      Number of labels
-                    </label>
-                    <input
-                      id="learning-n"
-                      data-testid="learning-simulate-n"
-                      className="field tnum w-28"
-                      type="number"
-                      min={1}
-                      max={5000}
-                      value={n}
-                      onChange={(e) => setN(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-                    />
-                  </div>
-                  <button type="button" className="btn" data-testid="learning-simulate-button" disabled={simBusy || retrainBusy} onClick={simulate}>
-                    {simBusy ? 'Adding labels...' : 'Simulate analyst feedback (demo)'}
-                  </button>
-                </div>
-                {simRes && (
-                  <p className="mt-2 text-[0.8rem]" role="status" data-testid="learning-simulate-result">
-                    Added {fmtInt(simRes.added)} simulated labels: {fmtInt(simRes.fraud)} fraud, {fmtInt(simRes.legit)} legitimate.
-                  </p>
-                )}
-              </Section>
-
-              <Section title="Laya">
-                <p className="text-[0.82rem] text-ink-2" data-testid="learning-laya-note">
-                  Laya's weights are not retrained here. They are fine-tuned offline, and the feedback labels are exported for that run
-                  {s.laya_export ? (
-                    <>
-                      {' '}
-                      to <code className="font-mono text-[0.75rem] break-all">{s.laya_export.path}</code> ({fmtInt(s.laya_export.rows)} rows so far).
-                    </>
-                  ) : (
-                    '. No export has been written yet.'
-                  )}
-                </p>
-              </Section>
-            </div>
-
-            <Section title="Retrain">
-              <div className="flex flex-wrap items-center gap-3">
-                <button type="button" className="btn btn-primary" data-testid="learning-retrain-button" disabled={retrainBusy || simBusy} onClick={retrain}>
-                  {retrainBusy ? 'Retraining...' : 'Retrain from analyst labels'}
-                </button>
-                <span className="text-[0.78rem] text-muted">Needs at least 20 new labels. Can take up to about a minute.</span>
+                )
+              })}
+            </ul>
+            <div className="panel laya-card">
+              <div className="flex items-center gap-2.5">
+                <Icon name="cpu" size={18} style={{ color: 'var(--indigo)' }} />
+                <b>Laya</b>
+                <span className="ml-auto pill-mute">Fine-tuned offline</span>
               </div>
-              {retrainBusy && (
-                <div className="mt-3" data-testid="learning-retrain-progress" role="status" aria-live="polite">
-                  <div className="text-[0.82rem]">
-                    Training the candidate and evaluating both models... <span className="tnum">{elapsed} s</span>
+              <p className="mt-2 text-[13.5px] text-muted" data-testid="learning-laya-note">
+                Laya's weights are not retrained here. They are fine-tuned offline, and the feedback labels are exported for that run
+                {s.laya_export ? (
+                  <>
+                    {' '}
+                    to <code className="break-all text-[12px]">{s.laya_export.path}</code> ({fmtInt(s.laya_export.rows)} rows so far).
+                  </>
+                ) : (
+                  '. No export has been written yet.'
+                )}
+              </p>
+            </div>
+          </aside>
+
+          <div className="split-main learn-main">
+            {err && <ErrorBox message={err} testId="learning-error" />}
+            {s.last_handover && <HandoverBanner h={s.last_handover} />}
+
+            <div className="learn-top">
+              <section className="panel learn-active">
+                <div className="min-w-0">
+                  <div className="kpi-label">Active model</div>
+                  <div className="mono learn-active-v" data-testid="learning-active-version">
+                    {s.active_version}
                   </div>
-                  <div
-                    className="prob-track mt-1.5 overflow-hidden"
-                    role="progressbar"
-                    aria-label="Retraining"
-                    aria-valuemin={0}
-                    aria-valuemax={60}
-                    aria-valuenow={Math.min(elapsed, 60)}
-                  >
-                    <div className="absolute inset-y-0 left-0 rounded-l-[2px]" style={{ width: `${Math.min((elapsed / 60) * 100, 95)}%`, background: 'var(--series-1)' }} />
+                  <div className="text-[13px] text-muted">
+                    Calibration <span className="mono">{s.calibration_version}</span>
+                  </div>
+                  {s.model_in_use && (
+                    <div className="mt-2 border-t border-rule pt-2">
+                      <ModelInUseLine m={s.model_in_use} testId="learning-model-in-use" />
+                    </div>
+                  )}
+                </div>
+              </section>
+              <section className="panel learn-labels">
+                <div className="kpi-label">New labels since the last retrain</div>
+                <div className="kpi-value tnum" data-testid="learning-label-count" data-count={s.labels_since_last_retrain}>
+                  {fmtInt(s.labels_since_last_retrain)}
+                </div>
+                <ul className="mt-2 flex flex-col gap-1 text-[13.5px] text-ink-2">
+                  {sources.map(([src, count]) => (
+                    <li key={src} className="flex items-center gap-3" data-testid={`learning-source-${src}`} data-count={count}>
+                      <span className="tnum w-12 text-right font-semibold text-ink">{fmtInt(count)}</span>
+                      {sourceLabel(src)}
+                    </li>
+                  ))}
+                  {sources.length === 0 && <li className="text-muted">None yet. Confirm or clear cases in the review queue.</li>}
+                </ul>
+              </section>
+            </div>
+
+            <Section title="Simulated analyst feedback" icon="user" aside={<SimulatedChip />}>
+              <p className="text-[14px] text-ink-2">
+                Labels past bookings from the known answers, as if an analyst had reviewed them.
+              </p>
+              <div className="mt-3 flex flex-wrap items-end gap-2.5">
+                <div>
+                  <label htmlFor="learning-n" className="fbox-k">
+                    Number of labels
+                  </label>
+                  <input
+                    id="learning-n"
+                    data-testid="learning-simulate-n"
+                    className="field tnum w-32"
+                    type="number"
+                    min={1}
+                    max={5000}
+                    value={n}
+                    onChange={(e) => setN(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+                  />
+                </div>
+                <button type="button" className="btn" data-testid="learning-simulate-button" disabled={simBusy || retrainBusy} onClick={simulate}>
+                  <Icon name="plus" size={16} />
+                  {simBusy ? 'Adding labels...' : 'Simulate analyst feedback (demo)'}
+                </button>
+              </div>
+              {simRes && (
+                <p className="mt-3 text-[14px]" role="status" data-testid="learning-simulate-result">
+                  Added {fmtInt(simRes.added)} simulated labels: {fmtInt(simRes.fraud)} fraud, {fmtInt(simRes.legit)} legitimate.
+                </p>
+              )}
+            </Section>
+
+            {retrainBusy && (
+              <section className="panel p-6" data-testid="learning-retrain-progress" role="status" aria-live="polite">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <b>Training the candidate and testing both models</b>
+                    <p className="text-[13.5px] text-muted">
+                      <span className="tnum">{elapsed} s</span> · usually under a minute
+                    </p>
                   </div>
                 </div>
-              )}
-              {result && !retrainBusy && <RetrainResult r={result} />}
-              {!result && !retrainBusy && <p className="mt-3 text-[0.82rem] text-muted">No retrain has run in this session.</p>}
-            </Section>
-          </div>
+                <div className="prob-track mt-4 overflow-hidden" role="progressbar" aria-label="Retraining" aria-valuemin={0} aria-valuemax={60} aria-valuenow={Math.min(elapsed, 60)}>
+                  <div className="absolute inset-y-0 left-0 rounded-[5px]" style={{ width: `${Math.min((elapsed / 60) * 100, 95)}%`, background: 'var(--indigo)' }} />
+                </div>
+              </section>
+            )}
+            {result && !retrainBusy && <RetrainResult r={result} />}
+            {!result && !retrainBusy && (
+              <div className="panel learn-empty">
+                <Icon name="shieldCheck" size={22} />
+                <p>
+                  No retrain yet in this session.
+                </p>
+              </div>
+            )}
 
-          <Section title="Version history" aside="newest first">
-            <div className="overflow-x-auto">
-              <table className="w-full text-[0.82rem]" data-testid="learning-version-table">
-                <thead>
-                  <tr className="border-b border-rule text-left text-[0.75rem] text-muted">
-                    <th scope="col" className="py-1 pr-3 font-semibold">Version</th>
-                    <th scope="col" className="py-1 pr-3 font-semibold">Created</th>
-                    <th scope="col" className="py-1 pr-3 font-semibold">Parent</th>
-                    <th scope="col" className="py-1 pr-3 text-right font-semibold">Training rows</th>
-                    <th scope="col" className="py-1 pr-3 text-right font-semibold">Feedback labels</th>
-                    <th scope="col" className="py-1 pr-3 text-right font-semibold">PR-AUC</th>
-                    <th scope="col" className="py-1 pr-3 text-right font-semibold">Cost per 1,000</th>
-                    <th scope="col" className="py-1 pr-3 text-right font-semibold">FPR hard neg.</th>
-                    <th scope="col" className="py-1 font-semibold">
-                      <span className="sr-only">Status</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {versions.map((v) => {
-                    const active = v.version === s.active_version
-                    return (
-                      <tr key={v.version} className="border-b border-rule last:border-0" data-testid="learning-version-row" data-version={v.version} data-active={active}>
-                        <td className="py-1.5 pr-3 font-mono">{v.version}</td>
-                        <td className="tnum py-1.5 pr-3 whitespace-nowrap">{v.created_at ? v.created_at.replace('T', ' ').slice(0, 16) : 'n/a'}</td>
-                        <td className="py-1.5 pr-3 font-mono text-ink-2">{v.parent ?? 'none'}</td>
-                        <td className="tnum py-1.5 pr-3 text-right">{fmtInt(v.n_train)}</td>
-                        <td className="tnum py-1.5 pr-3 text-right">{fmtInt(v.n_feedback_labels)}</td>
-                        <td className="tnum py-1.5 pr-3 text-right">{v.metrics ? v.metrics.pr_auc.toFixed(3) : 'n/a'}</td>
-                        <td className="tnum py-1.5 pr-3 text-right">{v.metrics ? fmtBRL(v.metrics.cost_per_1k_brl, true) : 'n/a'}</td>
-                        <td className="tnum py-1.5 pr-3 text-right">{v.metrics ? fmtPct(v.metrics.fpr_hard_negative, 1) : 'n/a'}</td>
-                        <td className="py-1.5 text-right">
-                          {active ? (
-                            <span className="rounded-sm bg-brand px-1.5 py-0.5 text-[0.72rem] font-semibold text-brand-ink">Active</span>
-                          ) : v.ever_deployed === false || v.gate_passed === false ? (
-                            <span className="text-[0.72rem] text-ink-2" data-testid="learning-version-rejected">Rejected by gate</span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="btn px-2 py-0.5 text-[0.75rem]"
-                              data-testid="learning-rollback-button"
-                              data-version={v.version}
-                              disabled={rollbackBusy !== null || retrainBusy}
-                              onClick={() => rollback(v.version)}
-                            >
-                              {rollbackBusy === v.version ? 'Rolling back...' : 'Roll back to this'}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+            <div className="learn-dock">
+              <span className="text-[14px] text-muted">
+                <Icon name="lock" size={15} style={{ display: 'inline', verticalAlign: '-2px' }} /> Active: <span className="mono">{s.active_version}</span>
+              </span>
+              <span className="text-[13px] text-faint">Needs at least 20 new labels</span>
+              <button type="button" className="btn btn-primary ml-auto" data-testid="learning-retrain-button" disabled={retrainBusy || simBusy} onClick={retrain}>
+                <Icon name="refresh" size={16} />
+                {retrainBusy ? 'Retraining...' : 'Retrain with new labels'}
+              </button>
             </div>
-          </Section>
+          </div>
         </div>
       )}
     </div>

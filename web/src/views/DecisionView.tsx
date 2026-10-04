@@ -3,9 +3,12 @@ import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { ACTIONS, SERVED_QUESTIONS, type AskResponse, type DecisionDetail } from '../api/types'
 import { AccountStory } from '../components/AccountStory'
-import { CounterfactualPanel } from '../components/CounterfactualPanel'
 import { ActionPill } from '../components/ActionBadge'
-import { ErrorBox, Loading, Section } from '../components/common'
+import { ErrorBox, Loading, Page, PageTitle, Section } from '../components/common'
+import { SlideInd } from '../components/SlideInd'
+import { Icon, type IconName } from '../components/Icon'
+import { rememberDecision, useStatus } from '../lib/status'
+import { CounterfactualPanel } from '../components/CounterfactualPanel'
 import { FactCheckedExplanation } from '../components/FactCheckedExplanation'
 import { OwnerPasskey } from '../components/OwnerPasskey'
 import { ShippingLabel } from '../components/ShippingLabel'
@@ -164,16 +167,14 @@ function CostTable({ d }: { d: DecisionDetail }) {
   const cheapest = priced.length ? priced.reduce((best, a) => ((costs[a] as number) < (costs[best] as number) ? a : best)) : null
   return (
     <div>
-      <table className="w-full text-[0.85rem]" data-testid="cost-table">
+      <table className="tbl cost-tbl" data-testid="cost-table">
         <caption className="sr-only">Expected cost per action, in Brazilian reais</caption>
         <thead>
-          <tr className="border-b border-rule text-left text-[0.75rem] text-muted">
-            <th scope="col" className="py-1 font-semibold">Action</th>
-            <th scope="col" className="py-1 text-right font-semibold whitespace-nowrap">Expected cost (R$)</th>
-            <th scope="col" className="w-[38%] py-1 pl-3 font-semibold">
-              <span className="sr-only">Relative cost</span>
-            </th>
-            <th scope="col" className="py-1 pl-2 font-semibold">
+          <tr>
+            <th scope="col">Action</th>
+            <th scope="col" className="w-[46%]">Expected cost</th>
+            <th scope="col" className="r">R$</th>
+            <th scope="col">
               <span className="sr-only">Marks</span>
             </th>
           </tr>
@@ -184,26 +185,21 @@ function CostTable({ d }: { d: DecisionDetail }) {
             const chosen = a === d.action
             const greedy = a === d.greedy_action
             return (
-              <tr
-                key={a}
-                data-testid={`cost-row-${a}`}
-                data-chosen={chosen}
-                data-greedy={greedy}
-                className="border-b border-rule last:border-0"
-                style={chosen ? { background: 'var(--surface-2)', boxShadow: `inset 3px 0 0 var(--act-${a})` } : undefined}
-              >
-                <th scope="row" className="py-1.5 pl-2 text-left font-normal">
+              <tr key={a} data-testid={`cost-row-${a}`} data-chosen={chosen} data-greedy={greedy} className={chosen ? 'is-chosen' : ''}>
+                <th scope="row" className="text-left font-normal">
                   <ActionPill action={a} />
                 </th>
-                <td className="tnum py-1.5 text-right">{typeof v === 'number' ? fmtBRL(v) : 'n/a'}</td>
-                <td className="py-1.5 pl-3">
+                <td>
                   {typeof v === 'number' && (
-                    <div className="h-2 rounded-r-[2px]" style={{ width: `${Math.max((v / max) * 100, 1)}%`, background: chosen ? `var(--act-${a})` : 'var(--axis)' }} />
+                    <div className="cost-track">
+                      <span style={{ width: `${Math.max((v / max) * 100, 2)}%`, background: chosen ? `var(--act-${a})` : '#4a4a52' }} />
+                    </div>
                   )}
                 </td>
-                <td className="py-1.5 pl-2 text-[0.75rem] whitespace-nowrap">
-                  {chosen && <span className="mr-1 rounded-sm bg-brand px-1.5 py-0.5 font-semibold text-brand-ink">Chosen</span>}
-                  {a === cheapest && <span className="rounded-sm border border-rule px-1.5 py-0.5 text-ink-2">Lowest cost</span>}
+                <td className="r tnum mono">{typeof v === 'number' ? fmtBRL(v) : 'n/a'}</td>
+                <td className="whitespace-nowrap text-[13.5px]">
+                  {chosen && <b style={{ color: `var(--act-${a})` }}>Chosen</b>}
+                  {a === cheapest && !chosen && <span className="text-muted">Lowest cost</span>}
                 </td>
               </tr>
             )
@@ -211,15 +207,18 @@ function CostTable({ d }: { d: DecisionDetail }) {
         </tbody>
       </table>
       {cheapest && cheapest !== d.action && (
-        <p className="mt-2 text-[0.8rem] text-ink-2" data-testid="cost-override">
-          {d.policy_trace?.block_downgraded && cheapest === 'block'
-            ? 'Block had the lowest expected cost, but a block needs a hard signal (a link to confirmed fraud) and is limited to one per account a day, so the booking was held instead.'
-            : `${actionLabel(cheapest)} had the lowest expected cost, but a guardrail${d.explored ? ' or an exploration sample' : ''} chose ${actionLabel(d.action)}.`}
+        <p className="note mt-3" data-testid="cost-override">
+          <Icon name="info" size={16} />
+          <span>
+            {d.policy_trace?.block_downgraded && cheapest === 'block'
+              ? 'Block had the lowest expected cost, but a block needs a hard signal (a link to confirmed fraud) and is limited to one per account a day, so the booking was held instead.'
+              : `${actionLabel(cheapest)} had the lowest expected cost, but a guardrail${d.explored ? ' or an exploration sample' : ''} chose ${actionLabel(d.action)}.`}
+          </span>
         </p>
       )}
-      <p className="mt-2 text-[0.75rem] text-muted" data-testid="cost-note">
-        Costs are assumptions: estimated loss if fraud gets through plus friction to a legitimate shipper, weighted by the
-        calibrated probabilities. The rule picks the lowest expected cost unless a guardrail or an exploration sample applies
+      <p className="mt-3 text-[13px] text-muted" data-testid="cost-note">
+        Costs are assumptions: estimated loss if fraud gets through plus friction to a legitimate shipper, weighted by the calibrated
+        probabilities. The rule picks the lowest expected cost unless a guardrail or an exploration sample applies
         {d.explored ? ' (this booking was an exploration sample)' : ''}. Logged propensity {fmtNum(d.propensity)}.
       </p>
     </div>
@@ -343,44 +342,56 @@ function AnalystPanel({ d, onDone }: { d: DecisionDetail; onDone: () => void }) 
     }
   }
   return (
-    <div>
-      {d.analyst && !result && (
-        <p className="mb-2 text-[0.85rem]" data-testid="analyst-existing" data-label={d.analyst.label}>
-          Labelled <strong>{d.analyst.label === 'fraud' ? 'fraud' : 'legitimate'}</strong> on {d.analyst.at.replace('T', ' ').slice(0, 16)}
-          {d.analyst.note ? `: ${d.analyst.note}` : ''}
-        </p>
-      )}
-      <label htmlFor="analyst-note" className="block text-[0.78rem] text-muted">
-        Note for the audit record
-      </label>
-      <textarea
-        id="analyst-note"
-        data-testid="analyst-note"
-        className="field min-h-[2.8rem] resize-y"
-        value={note}
-        placeholder="What you checked and why"
-        onChange={(e) => setNote(e.target.value)}
-      />
-      <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" className="btn" style={{ borderColor: 'var(--act-block)' }} disabled={busy !== null} onClick={() => send('fraud')} data-testid="analyst-confirm-fraud">
-          {busy === 'fraud' ? 'Saving...' : 'Confirm fraud'}
-        </button>
-        <button type="button" className="btn" style={{ borderColor: 'var(--act-allow)' }} disabled={busy !== null} onClick={() => send('legit')} data-testid="analyst-mark-legit">
-          {busy === 'legit' ? 'Saving...' : 'Mark legitimate'}
-        </button>
-      </div>
-      {err && <p className="mt-2 text-[0.85rem] text-danger" role="alert">{err}</p>}
-      {result && (
-        <div className="mt-3 rounded-sm border border-rule bg-surface-2 p-2.5 text-[0.82rem]" role="status" data-testid="analyst-result" data-label={result.label}>
-          {result.label === 'fraud' ? 'Fraud confirmed' : 'Marked legitimate'} and added to the audit log and the label store.
-          <div className="mt-1">
-            Audit hash{' '}
-            <code className="font-mono text-[0.78rem] break-all" data-testid="analyst-result-hash">
-              {result.hash}
-            </code>
-          </div>
+    <div className="analyst">
+      {(result || d.analyst || err) && (
+        <div className="analyst-msg">
+          {d.analyst && !result && (
+            <p data-testid="analyst-existing" data-label={d.analyst.label}>
+              <span className={d.analyst.label === 'fraud' ? 'text-danger' : 'text-ok'}>
+                {d.analyst.label === 'fraud' ? '✕ Labelled fraud' : '✓ Labelled legitimate'}
+              </span>{' '}
+              on {d.analyst.at.replace('T', ' ').slice(0, 16)}
+              {d.analyst.note ? `: ${d.analyst.note}` : ''}
+            </p>
+          )}
+          {err && (
+            <p className="text-danger" role="alert">
+              {err}
+            </p>
+          )}
+          {result && (
+            <p role="status" data-testid="analyst-result" data-label={result.label}>
+              <span className={result.label === 'fraud' ? 'text-danger' : 'text-ok'}>{result.label === 'fraud' ? '✕ Fraud confirmed' : '✓ Marked legitimate'}</span>{' '}
+              and added to the audit log and the training labels. Audit hash{' '}
+              <code className="text-[12.5px] break-all text-ink-2" data-testid="analyst-result-hash">
+                {result.hash}
+              </code>
+            </p>
+          )}
         </div>
       )}
+      <div className="analyst-row">
+        <label className="analyst-note">
+          <Icon name="lines" size={17} />
+          <span className="sr-only">Note for the audit record</span>
+          <textarea
+            id="analyst-note"
+            data-testid="analyst-note"
+            rows={1}
+            value={note}
+            placeholder="Note for the audit record — what you checked and why"
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </label>
+        <button type="button" className="btn" disabled={busy !== null} onClick={() => send('legit')} data-testid="analyst-mark-legit">
+          <Icon name="check" size={17} />
+          {busy === 'legit' ? 'Saving...' : 'Mark legitimate'}
+        </button>
+        <button type="button" className="btn btn-danger" disabled={busy !== null} onClick={() => send('fraud')} data-testid="analyst-confirm-fraud">
+          <Icon name="flag" size={17} />
+          {busy === 'fraud' ? 'Saving...' : 'Confirm fraud'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -406,8 +417,7 @@ function DepotScan({ d, onDone }: { d: DecisionDetail; onDone: () => void }) {
     }
   }
   return (
-    <div className="mt-6 max-w-[60ch]" data-testid="depot-scan">
-      <h2 className="verdict-h2">Depot scan</h2>
+    <Section title="Depot scan" icon="scale" testId="depot-scan">
       {scan ? (
         <p className={`scan-result${scan.mismatch ? ' is-bad' : ''}`} data-testid="depot-scan-result" data-mismatch={scan.mismatch} role="status">
           {scan.mismatch
@@ -433,7 +443,7 @@ function DepotScan({ d, onDone }: { d: DecisionDetail; onDone: () => void }) {
           {err && <p className="mt-2 text-[0.85rem] text-danger" role="alert">{err}</p>}
         </>
       )}
-    </div>
+    </Section>
   )
 }
 
@@ -441,206 +451,365 @@ function DepotScan({ d, onDone }: { d: DecisionDetail; onDone: () => void }) {
 
 const short = (id: string, n = 8) => (id.length > n ? id.slice(0, n) : id)
 
+const LOOK: Record<string, { tone: string; icon: IconName }> = {
+  allow: { tone: 'green', icon: 'check' },
+  allow_scan_gated: { tone: 'teal', icon: 'scale' },
+  owner_confirm: { tone: 'orange', icon: 'user' },
+  review: { tone: 'indigo', icon: 'eye' },
+  hold: { tone: 'indigo', icon: 'pause' },
+  block: { tone: 'rose', icon: 'x' },
+}
+
+/** Fraud probability on a scale split into the six action bands, with a marker at this booking. */
+function ProbScale({ p }: { p: number | undefined }) {
+  const v = p ?? 0
+  return (
+    <div className="pscale">
+      <div className="pscale-top">
+        <span className="text-ink-2">Fraud probability</span>
+        <b className="tnum">{p == null ? 'n/a' : v.toFixed(2)}</b>
+      </div>
+      <div className="pscale-bar" role="img" aria-label={`Fraud probability ${p == null ? 'not available' : v.toFixed(2)}`}>
+        {ACTIONS.map((a) => (
+          <span key={a} style={{ background: `var(--act-${a})` }} />
+        ))}
+        {p != null && <i style={{ left: `${Math.min(Math.max(v * 100, 1), 99)}%` }} />}
+      </div>
+      <div className="pscale-legend" aria-hidden="true">
+        {ACTIONS.map((a) => (
+          <span key={a}>
+            <span className="dot" style={{ background: `var(--act-${a})` }} />
+            {ACTION_META[a].short}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** The owner-passkey panel renders nothing for actions it cannot release; only wrap it in a card when it shows. */
+function OwnerCard({ d, onDone }: { d: DecisionDetail; onDone: () => void }) {
+  const can = d.owner_confirmation || ['owner_confirm', 'hold', 'review'].includes(d.action)
+  if (!can || !d.booking) return null
+  return (
+    <section className="panel min-w-0">
+      <div className="card-b">
+        <OwnerPasskey key={`pk-${d.decision_id}`} d={d} onDone={onDone} />
+      </div>
+    </section>
+  )
+}
+
+const SECTIONS: [string, string, IconName][] = [
+  ['sum', 'Summary', 'lines'],
+  ['why', 'Explanation', 'info'],
+  ['act', 'Owner & what-if', 'user'],
+  ['cost', 'Cost', 'dollar'],
+  ['story', 'Account history', 'user'],
+  ['model', 'Model & audit', 'shieldCheck'],
+]
+
 export default function DecisionView() {
   const { id = '' } = useParams()
   const { data: d, error, polling, reload } = useDecision(id)
+  const { refresh } = useStatus()
   const [howOpen, setHowOpen] = useState(false)
   const [stateOpen, setStateOpen] = useState(false)
+  const [sec, setSec] = useState('sum')
 
-  if (error && !d) return <ErrorBox message={error} onRetry={reload} testId="decision-error" />
-  if (!d) return <Loading what="decision" />
+  useEffect(() => {
+    if (id) rememberDecision(id)
+  }, [id])
+
+  if (error && !d)
+    return (
+      <div>
+        <PageTitle title="Decision" />
+        <Page>
+          <ErrorBox message={error} onRetry={reload} testId="decision-error" />
+        </Page>
+      </div>
+    )
+  if (!d)
+    return (
+      <div>
+        <PageTitle title="Decision" />
+        <Page>
+          <Loading what="decision" />
+        </Page>
+      </div>
+    )
 
   const b = d.booking
   const meta = ACTION_META[d.action]
+  const look = LOOK[d.action] ?? LOOK.review
+  // Tabs switch what is shown in place; Summary shows everything. Nothing scrolls.
+  const jump = (k: string) => {
+    setSec(k)
+    if (k === 'model') setHowOpen(true)
+  }
+  const show = (k: string) => sec === 'sum' || sec === k
   return (
     <div data-testid="decision-detail" data-decision-id={d.decision_id} className="decision">
-      <div className="decision-top">
-        <Link to="/" className="text-[0.85rem] text-ink-2 underline underline-offset-2">
-          Score another booking
+      <PageTitle title="Decision" sub={`${d.booking_id}${b ? ` · acct ${short(b.account_id)}` : ''}`}>
+        <Link to="/" className="btn">
+          <Icon name="box" size={16} />
+          Score another
         </Link>
-        <span className="text-[0.8rem] text-muted">
-          Decision {d.decision_id}, booking {d.booking_id}
-          {b ? `, account ${short(b.account_id)}` : ''}
-        </span>
-      </div>
+      </PageTitle>
 
-      <div className="verdict" style={{ ['--act' as string]: `var(--act-${d.action})` }}>
-        {b && <ShippingLabel booking={b} action={d.action} />}
-        <div className="verdict-body">
-          <h1 className="verdict-action" data-testid="action-badge" data-action={d.action}>
-            {meta?.label ?? d.action}
-          </h1>
-          <p className="verdict-meaning">{meta?.meaning}</p>
-          {d.degraded && (
-            <p className="verdict-flag" data-testid="degraded-flag">
-              Decided by the backup model with stricter thresholds, because the Laya model is not loaded.
-            </p>
+      <div className="page dec-page" style={{ ['--act' as string]: `var(--act-${d.action})` }}>
+        <section className="panel verdict-card" id="dec-sum">
+          <div className="verdict-left">
+            <Icon name={look.icon} size={44} stroke={2.2} className="verdict-ico" />
+            <div className="min-w-0">
+              <p className="verdict-id mono">
+                {d.decision_id} · decided in {fmtMs(d.latency_ms?.total)}
+              </p>
+              <h1 className="verdict-word" data-testid="action-badge" data-action={d.action}>
+                {meta?.label ?? d.action}
+              </h1>
+              <p className="verdict-mean">{meta?.meaning}</p>
+            </div>
+          </div>
+          <ProbScale p={d.probabilities.misuse ?? d.gbm_score ?? undefined} />
+          {(d.degraded || d.decider || d.explored || d.model_versions?.gbm || (d.policy_trace?.rule_hits ?? []).includes('LINK_TO_CONFIRMED_FRAUD')) && (
+            <div className="verdict-flags">
+              {d.degraded && (
+                <p data-testid="degraded-flag">
+                  <Icon name="cpu" size={15} /> Decided by the backup model with stricter thresholds, because the Laya model is not loaded.
+                </p>
+              )}
+              {!d.degraded && d.decider && (
+                <p data-testid="decider-flag" data-decider={d.decider}>
+                  <Icon name="sparkle" size={15} />
+                  {d.laya_action
+                    ? d.laya_action.accepted
+                      ? `Decided by Laya: it weighed the LightGBM score${d.gbm_score != null ? ` (${fmtPct(d.gbm_score)})` : ''} and the rules as evidence and chose this action; the cost check agreed.`
+                      : `Laya proposed "${actionLabel(d.laya_action.proposed)}"; the cost check overruled it: ${d.laya_action.overrule_reason}.`
+                    : `Decided from Laya's answers: it weighed the LightGBM score${d.gbm_score != null ? ` (${fmtPct(d.gbm_score)})` : ''} and the rules as evidence, and the cost rule picked the cheapest action.`}
+                </p>
+              )}
+              {d.model_versions?.gbm && (
+                <p data-testid="decision-gbm-version" data-version={d.model_versions.gbm}>
+                  <Icon name="stack" size={15} /> LightGBM model that scored this booking: <span className="mono">{d.model_versions.gbm}</span>
+                </p>
+              )}
+              {d.explored && (
+                <p data-testid="explored-flag">
+                  <Icon name="info" size={15} /> Exploration sample: sent to a first-scan check to measure the policy.
+                </p>
+              )}
+              {(d.policy_trace?.rule_hits ?? []).includes('LINK_TO_CONFIRMED_FRAUD') && (
+                <p className="is-hard" data-testid="hard-signal">
+                  <Icon name="link" size={15} /> The sender or receiver on this booking appears in a confirmed fraud case.
+                </p>
+              )}
+            </div>
           )}
-          {!d.degraded && d.decider && (
-            <p className="verdict-flag" data-testid="decider-flag" data-decider={d.decider}>
-              {d.laya_action
-                ? d.laya_action.accepted
-                  ? `Decided by Laya: it weighed the LightGBM score${d.gbm_score != null ? ` (${fmtPct(d.gbm_score)})` : ''} and the rules as evidence and chose this action; the cost check agreed.`
-                  : `Laya proposed "${actionLabel(d.laya_action.proposed)}"; the cost check overruled it: ${d.laya_action.overrule_reason}.`
-                : `Decided from Laya's answers: it weighed the LightGBM score${d.gbm_score != null ? ` (${fmtPct(d.gbm_score)})` : ''} and the rules as evidence, and the cost rule picked the cheapest action.`}
-            </p>
-          )}
-          {d.model_versions?.gbm && (
-            <p className="mt-2 text-[0.78rem] text-ink-2" data-testid="decision-gbm-version" data-version={d.model_versions.gbm}>
-              LightGBM model that scored this booking: <span className="font-mono">{d.model_versions.gbm}</span>
-            </p>
-          )}
-          {d.explored && (
-            <p className="verdict-flag" data-testid="explored-flag">
-              Exploration sample: sent to a first-scan check to measure the policy.
-            </p>
-          )}
-          {(d.policy_trace?.rule_hits ?? []).includes('LINK_TO_CONFIRMED_FRAUD') && (
-            <p className="verdict-hard" data-testid="hard-signal">
-              The sender or receiver on this booking appears in a confirmed fraud case.
-            </p>
-          )}
-          {d.reasons.length > 0 && (
-            <div className="mt-5">
-              <h2 className="verdict-h2">What stood out</h2>
-              <ul className="verdict-reasons" data-testid="reason-codes">
-                {d.reasons.map((r) => (
+        </section>
+
+        <div className="itabs dec-tabs" role="tablist" aria-label="Decision sections">
+
+          <SlideInd />
+          {SECTIONS.map(([k, label, icon]) => (
+            <button key={k} type="button" role="tab" aria-selected={sec === k} onClick={() => jump(k)}>
+              <Icon name={icon} size={18} />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="tab-body" key={sec}>
+        {show('why') && (
+        <div className="dec-two" id="dec-why">
+          <Section title="What stood out" icon="flag">
+            {d.reasons.length > 0 ? (
+              <ul className="stood" data-testid="reason-codes">
+                {d.reasons.map((r, i) => (
                   <li key={r} data-code={r}>
-                    {reasonText(r)}
+                    <span className="stood-n tnum">{String(i + 1).padStart(2, '0')}</span>
+                    <span>{reasonText(r)}</span>
                   </li>
                 ))}
               </ul>
+            ) : (
+              <p className="text-muted">No single signal stood out; the booking matches the account's usual pattern.</p>
+            )}
+          </Section>
+          <section className="panel min-w-0" aria-labelledby="why-h" data-testid="explanation-panel">
+            <div className="card-h">
+              <h2 id="why-h">
+                <Icon name="lines" size={18} />
+                Why, in plain words
+              </h2>
+            </div>
+            <div className="card-b">
+              <FactCheckedExplanation d={d} polling={polling} />
+            </div>
+          </section>
+        </div>
+
+        )}
+
+        {show('why') && (d.action === 'allow_scan_gated' || d.first_scan) && <DepotScan d={d} onDone={reload} />}
+
+        {show('act') && (
+          <div className="dec-two dec-act">
+            {/* keyed by decision: their click-loaded results belong to one decision and must not carry over */}
+            {d.action !== 'allow' && b && (
+              <section className="panel min-w-0">
+                <div className="card-b">
+                  <CounterfactualPanel key={`cf-${d.decision_id}`} decisionId={d.decision_id} />
+                </div>
+              </section>
+            )}
+            <OwnerCard d={d} onDone={reload} />
+          </div>
+        )}
+
+        {show('cost') && (
+        <div id="dec-cost">
+          <Section title="Expected cost of each action" icon="dollar" aside="lowest wins">
+            <CostTable d={d} />
+          </Section>
+        </div>
+
+        )}
+
+        {show('story') && (
+        <section className="panel" id="dec-story" aria-labelledby="story-h">
+          <div className="card-h">
+            <h2 id="story-h">
+              <Icon name="user" size={18} />
+              Who is this account paying for?
+            </h2>
+            <span className="ml-auto text-[13.5px] text-muted">last 10 bookings vs the account's previous 90 days</span>
+          </div>
+          <div className="card-b story-grid">
+            {b && <ShippingLabel booking={b} action={d.action} />}
+            <div className="min-w-0">
+              <AccountStory decisionId={d.decision_id} action={d.action} />
+            </div>
+          </div>
+        </section>
+
+        )}
+
+        {show('model') && (
+        <section className="panel how" id="dec-model">
+          <button
+            type="button"
+            className="how-toggle"
+            aria-expanded={howOpen}
+            aria-controls="how-body"
+            onClick={() => setHowOpen((o) => !o)}
+            data-testid="how-toggle"
+          >
+            <span className="flex items-center gap-2.5">
+              <Icon name="shieldCheck" size={18} />
+              How this was decided
+            </span>
+            <span className="how-hint">
+              
+              <Icon name="chevronDown" size={16} style={{ transform: howOpen ? 'rotate(180deg)' : 'none' }} />
+            </span>
+          </button>
+          {howOpen && (
+            <div id="how-body" className="how-body">
+              <div className="flex min-w-0 flex-col gap-4">
+                <Section
+                  title={d.degraded ? 'What the backup model answered' : 'What Laya answered'}
+                  aside={d.degraded ? 'Laya is not loaded, so only the misuse score exists' : 'four named questions, one batched call'}
+                >
+                  <ProbBars d={d} />
+                </Section>
+                <Section title="This booking against the account's own baseline">
+                  <table className="tbl" data-testid="top-features">
+                    <thead>
+                      <tr>
+                        <th scope="col">Signal</th>
+                        <th scope="col" className="r">This booking</th>
+                        <th scope="col" className="r">Account baseline</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {d.top_features.map((f) => (
+                        <tr key={f.name}>
+                          <th scope="row" className="text-left font-normal">
+                            {featureLabel(f.name)}
+                          </th>
+                          <td className="tnum r font-semibold">{fmtNum(f.value)}</td>
+                          <td className="tnum r text-ink-2">{fmtNum(f.baseline)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Section>
+              </div>
+              <div className="flex min-w-0 flex-col gap-4">
+                <Section title="Speed" icon="pulse">
+                  <LatencyBreakdown lat={d.latency_ms} />
+                </Section>
+                <Section title="Ask a new question" icon="sparkle" testId="ask-panel">
+                  <AskPanel id={d.decision_id} />
+                </Section>
+                <section className="panel" aria-labelledby="state-h">
+                  <button
+                    type="button"
+                    className="card-h w-full text-left"
+                    aria-expanded={stateOpen}
+                    aria-controls="state-body"
+                    onClick={() => setStateOpen((o) => !o)}
+                    data-testid="state-text-toggle"
+                    style={{ paddingBottom: 18, background: 'none', border: 0, color: 'inherit', cursor: 'pointer' }}
+                  >
+                    <h2 id="state-h">
+                      <Icon name="eye" size={18} />
+                      What the model read
+                    </h2>
+                    <span className="ml-auto text-[13.5px] text-muted">{stateOpen ? 'Hide' : 'Show'} the input text</span>
+                  </button>
+                  {stateOpen && (
+                    <div id="state-body" className="card-b pt-0">
+                      <p className="text-[13px] text-muted">The exact fixed-order text the model scored. No free text from the shipper goes in.</p>
+                      <pre className="state-pre" data-testid="state-text">
+                        {d.state_text}
+                      </pre>
+                    </div>
+                  )}
+                </section>
+                <Section title="Audit record" icon="lock">
+                  <dl className="kv text-[13.5px]">
+                    <dt>Audit hash</dt>
+                    <dd className="mono break-all" data-testid="decision-audit-hash" title={d.audit_hash}>
+                      {shortHash(d.audit_hash, 24)}
+                    </dd>
+                    {Object.entries(d.model_versions ?? {}).map(([k, v]) => (
+                      <div key={k} className="contents">
+                        <dt>{featureLabel(k)} version</dt>
+                        <dd className="mono break-all">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Section>
+              </div>
             </div>
           )}
-          {(d.action === 'allow_scan_gated' || d.first_scan) && <DepotScan d={d} onDone={reload} />}
-          {/* keyed by decision: their click-loaded results belong to one decision and must not carry over */}
-          {d.action !== 'allow' && b && <CounterfactualPanel key={`cf-${d.decision_id}`} decisionId={d.decision_id} />}
-          <OwnerPasskey key={`pk-${d.decision_id}`} d={d} onDone={reload} />
-          <div className="mt-6 max-w-[60ch]" data-testid="analyst-panel">
-            <h2 className="verdict-h2">Your decision as the analyst</h2>
-            <AnalystPanel d={d} onDone={reload} />
-          </div>
+        </section>
+        )}
         </div>
       </div>
 
-      <section className="sheet" aria-labelledby="story-h">
-        <h2 id="story-h" className="sheet-h">
-          Who is this account paying for?
-        </h2>
-        <p className="sheet-sub">
-          The 10 bookings before this one, compared with the account's own previous 90 days. A stolen account starts paying
-          for other people's parcels.
-        </p>
-        <AccountStory decisionId={d.decision_id} action={d.action} />
-      </section>
-
-      <section className="sheet" aria-labelledby="why-h" data-testid="explanation-panel">
-        <h2 id="why-h" className="sheet-h">
-          Why, in plain words
-        </h2>
-        <FactCheckedExplanation d={d} polling={polling} />
-      </section>
-
-      <section className="how">
-        <button
-          type="button"
-          className="how-toggle"
-          aria-expanded={howOpen}
-          aria-controls="how-body"
-          onClick={() => setHowOpen((o) => !o)}
-          data-testid="how-toggle"
-        >
-          <span>How this was decided</span>
-          <span className="how-hint">{howOpen ? 'Hide' : 'Model answers, cost of each action, speed and the audit record'}</span>
-        </button>
-        {howOpen && (
-          <div id="how-body" className="how-body">
-            <div className="flex min-w-0 flex-col gap-4">
-              <Section
-                title={d.degraded ? 'What the backup model answered' : 'What Laya answered'}
-                aside={d.degraded ? 'Laya is not loaded, so only the misuse score exists' : 'four named questions, one batched call'}
-              >
-                <ProbBars d={d} />
-              </Section>
-              <Section title="Expected cost of each action" aside={`chosen: ${actionLabel(d.action)}`}>
-                <CostTable d={d} />
-              </Section>
-              <Section title="This booking against the account's own baseline">
-                <table className="w-full text-[0.85rem]" data-testid="top-features">
-                  <thead>
-                    <tr className="border-b border-rule text-left text-[0.75rem] text-muted">
-                      <th scope="col" className="py-1 font-semibold">Signal</th>
-                      <th scope="col" className="py-1 text-right font-semibold">This booking</th>
-                      <th scope="col" className="py-1 text-right font-semibold">Account baseline</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.top_features.map((f) => (
-                      <tr key={f.name} className="border-b border-rule last:border-0">
-                        <th scope="row" className="py-1 text-left font-normal">
-                          {featureLabel(f.name)}
-                        </th>
-                        <td className="tnum py-1 text-right font-semibold">{fmtNum(f.value)}</td>
-                        <td className="tnum py-1 text-right text-ink-2">{fmtNum(f.baseline)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Section>
-            </div>
-            <div className="flex min-w-0 flex-col gap-4">
-              <Section title="Speed">
-                <LatencyBreakdown lat={d.latency_ms} />
-              </Section>
-              <Section title="Ask a new question" testId="ask-panel">
-                <AskPanel id={d.decision_id} />
-              </Section>
-              <section className="panel p-4" aria-labelledby="state-h">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between text-left"
-                  aria-expanded={stateOpen}
-                  aria-controls="state-body"
-                  onClick={() => setStateOpen((o) => !o)}
-                  data-testid="state-text-toggle"
-                >
-                  <h2 id="state-h" className="text-[0.95rem] font-bold">
-                    What the model read
-                  </h2>
-                  <span className="text-[0.8rem] text-ink-2">{stateOpen ? 'Hide' : 'Show'} the input text</span>
-                </button>
-                {stateOpen && (
-                  <div id="state-body">
-                    <p className="mt-1 text-[0.78rem] text-muted">
-                      The exact fixed-order text the model scored. No free text from the shipper goes in.
-                    </p>
-                    <pre
-                      className="mt-2 overflow-x-auto rounded-sm border border-rule bg-surface-2 p-3 font-mono text-[0.78rem] leading-relaxed whitespace-pre-wrap"
-                      data-testid="state-text"
-                    >
-                      {d.state_text}
-                    </pre>
-                  </div>
-                )}
-              </section>
-              <Section title="Audit record">
-                <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-0.5 text-[0.78rem]">
-                  <dt className="text-muted">Audit hash</dt>
-                  <dd className="font-mono break-all" data-testid="decision-audit-hash" title={d.audit_hash}>
-                    {shortHash(d.audit_hash, 24)}
-                  </dd>
-                  {Object.entries(d.model_versions ?? {}).map(([k, v]) => (
-                    <div key={k} className="contents">
-                      <dt className="text-muted">{featureLabel(k)} version</dt>
-                      <dd className="font-mono break-all">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Section>
-            </div>
-          </div>
-        )}
-      </section>
+      <div className="dec-dock" data-testid="analyst-panel">
+        <AnalystPanel
+          d={d}
+          onDone={() => {
+            reload()
+            refresh()
+          }}
+        />
+      </div>
     </div>
   )
 }
