@@ -16,10 +16,11 @@ Per decision:
   have, a field the record does not have. Each is planted into the template claims and must be rejected.
 
 Groq calls are paced to stay under the free tier's 8000 tokens/minute and cached in
-artifacts/results_explanations_calls.jsonl (a rerun reuses them). With no GROQ_API_KEY (or --no-llm) the LLM rows
-are reported as not run.
+artifacts/results_explanations_calls.jsonl (a rerun reuses them). LLM rows are paired: only decisions where both
+paths got an answer. With no GROQ_API_KEY (or --no-llm), or after repeated rate limits, the rest are reported as
+not run.
 
-Usage: uv run --no-sync python scripts/eval_explanations.py [--n 60] [--no-llm]
+Usage: uv run --no-sync python scripts/eval_explanations.py [--n 60] [--no-llm | --cache-only]
 """
 from __future__ import annotations
 
@@ -61,6 +62,7 @@ ART = ROOT / "artifacts"
 CALLS = ART / "results_explanations_calls.jsonl"
 STOP = ("owner_confirm", "review", "hold", "block")
 TPM_BUDGET = 6500  # Groq free tier: 8000 tokens/minute for openai/gpt-oss-120b; keep a margin
+MAX_429 = 4
 
 
 class _NullAudit:
@@ -134,6 +136,8 @@ def _load_calls() -> dict[str, dict]:
     for line in CALLS.read_text(encoding="utf-8").splitlines():
         if line.strip():
             x = json.loads(line)
+            if "429" in str(x.get("error")):  # rate-limited: kept in the file as a log, retried on the next run
+                continue
             out[f"{x['booking_id']}|{x['path']}"] = x
     return out
 
@@ -241,6 +245,7 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=60)
     ap.add_argument("--no-llm", action="store_true")
     ap.add_argument("--llm-first", type=int, default=None, help="call the LLM only for the first K sampled decisions")
+    ap.add_argument("--cache-only", action="store_true", help="no new Groq calls: report the cached LLM answers")
     a = ap.parse_args()
 
     recs, info = score_test_window()
@@ -255,10 +260,12 @@ def main() -> None:
     model = RC._get_gbm()
     load_dotenv(ROOT / ".env")
     key = os.environ.get("GROQ_API_KEY")
-    llm = None if a.no_llm or not key else PacedClient(GroqClient(key, timeout=60.0))
+    llm = None if a.no_llm or a.cache_only or not key else PacedClient(GroqClient(key, timeout=60.0))
+    use_llm = llm is not None or a.cache_only
     model_id = (load_config(None).get("explain") or {}).get("groq_model_id", "openai/gpt-oss-120b")
     cache = _load_calls()
     rows = []
+    n429 = 0  # consecutive rate-limited calls; after MAX_429 the remaining LLM rows are reported as not run
     lie_rng = np.random.default_rng(1)
     for k, rec in enumerate(sample):
         mr = model_reasons(model, rec["feature_values"])
@@ -272,12 +279,14 @@ def main() -> None:
                          "agreement": agreement([c["reason_code"] for c in t["claims"] if c["ok"]], mcodes, reasons)},
             "lies": plant(rec, lie_rng),
         }
-        if llm is not None and a.llm_first is not None and k >= a.llm_first:
+        if use_llm and a.llm_first is not None and k >= a.llm_first:
             rows.append(row)
             continue
-        if llm is not None:
+        if use_llm:
             for path in ("prose", "claims"):
                 ck = f"{rec['booking_id']}|{path}"
+                if ck not in cache and (llm is None or n429 >= MAX_429):
+                    continue
                 if ck not in cache:
                     t0 = time.perf_counter()
                     if path == "prose":
@@ -294,16 +303,25 @@ def main() -> None:
                     cache[ck] = {"booking_id": rec["booking_id"], "path": path, "model_id": model_id,
                                  "seconds": round(time.perf_counter() - t0, 2), **res}
                     _save_call(cache[ck])
+                    if "429" in str(res.get("error")):  # the shared key is over its limit: back off before the next
+                        n429 += 1
+                        if n429 < MAX_429:
+                            time.sleep(120)
+                    else:
+                        n429 = 0
                 row[path] = cache[ck]
         rows.append(row)
         print(f"{k + 1}/{len(sample)} {rec['booking_id']} {rec['action']}"
-              + (f" prose={row['prose']['source']} claims={row['claims']['source']}" if llm else ""), flush=True)
+              + (f" prose={row.get('prose', {}).get('source', 'not run')} "
+                 f"claims={row.get('claims', {}).get('source', 'not run')}" if use_llm else ""), flush=True)
 
-    summary = summarize(rows, sample, llm is not None)
+    summary = summarize(rows, sample, use_llm)
     summary["data"] = info
-    summary["llm"] = {"ran": llm is not None, "model_id": model_id if llm else None,
+    summary["llm"] = {"ran": use_llm, "model_id": model_id if use_llm else None, "cache_only": a.cache_only,
                       "calls_this_run": llm.calls if llm else 0, "tokens_this_run": llm.tokens if llm else 0,
-                      "why_not": None if llm else ("--no-llm" if a.no_llm else "no GROQ_API_KEY")}
+                      "rate_limited_calls_logged": sum("429" in line for line in CALLS.read_text(encoding="utf-8")
+                                                       .splitlines()) if CALLS.exists() else 0,
+                      "why_not": None if use_llm else ("--no-llm" if a.no_llm else "no GROQ_API_KEY")}
     (ART / "results_explanations.json").write_text(json.dumps({"summary": summary, "rows": rows}, indent=1,
                                                               default=str), encoding="utf-8")
     write_md(summary)
@@ -326,6 +344,8 @@ def summarize(rows: list[dict], sample: list[dict], llm_ran: bool) -> dict:
     }
     s["reachable_mean"] = _mean_sd([r["template"]["agreement"]["reachable"] for r in rows])[0]
     s["model_top_n_mean"] = _mean_sd([len(r["model_top"]) for r in rows])[0]
+    s["hit_at_3_ceiling"] = _mean_sd([r["template"]["agreement"]["reachable"] / len(r["model_top"])
+                                      for r in rows if r["model_top"]])[0]
     s["mapped_share"] = _mean_sd([r["mapped_share"] for r in rows])
     lies: dict[str, Any] = {}
     for k in ("fabricated_number", "moved_number", "invented_reason", "invented_field", "moved_number_prose_rejected"):
@@ -335,7 +355,10 @@ def summarize(rows: list[dict], sample: list[dict], llm_ran: bool) -> dict:
         s["prose"] = s["claims"] = None
         return s
     rate_limited = lambda x: bool(x.get("error")) and "429" in str(x.get("error"))  # noqa: E731
-    pr = [r for r in rows if "prose" in r and not rate_limited(r["prose"])]
+    # paired: only decisions where BOTH LLM paths ran (not rate-limited), so (a) and (b) see the same decisions
+    pr = [r for r in rows if "prose" in r and "claims" in r and not rate_limited(r["prose"])
+          and not rate_limited(r["claims"])]
+    s["template_paired"] = _agree([r["template"]["agreement"] for r in pr])
     s["prose"] = {"n": len(pr), "not_run": len(rows) - len(pr),
                   "api_errors": sum(bool(r["prose"]["error"]) and not r["prose"]["text"] for r in pr),
                   "rejected_first_try": sum(r["prose"]["source"] != "llm" for r in pr)}
@@ -349,7 +372,7 @@ def summarize(rows: list[dict], sample: list[dict], llm_ran: bool) -> dict:
                                 r["reasons"]))
     s["prose"]["sentences_grounded"] = (g_ok, g_n)
     s["prose"].update(_agree(ag))
-    cl = [r for r in rows if "claims" in r and not rate_limited(r["claims"])]
+    cl = pr
     s["claims"] = {"n": len(cl), "not_run": len(rows) - len(cl),
                    "modes": {m: sum(r["claims"]["mode"] == m for r in cl) for m in
                              ("json_schema", "json_object", "prose", "template")},
@@ -365,7 +388,10 @@ def summarize(rows: list[dict], sample: list[dict], llm_ran: bool) -> dict:
             probs[key] = probs.get(key, 0) + 1
     s["claims"]["claim_problem_counts"] = dict(sorted(probs.items(), key=lambda kv: -kv[1]))
     s["claims"].update(_agree([agreement([c["reason_code"] for c in r["claims"]["claims"]], r["model_top"],
-                                         r["reasons"]) for r in cl if r["claims"]["claims"]]))
+                                         r["reasons"]) for r in cl]))
+    for path in ("prose", "claims"):  # why whole explanations were rejected (first try)
+        s[path]["rejections"] = [p for r in pr for p in ((r[path].get("validator") or {}).get("problems") or [])
+                                 if r[path]["source"] != "llm"]
     return s
 
 
@@ -438,25 +464,38 @@ def write_md(s: dict) -> None:
                 cells.append(_pct(x["top1_match"]))
         L.append(f"| {nm} | " + " | ".join(cells) + " |")
     if c:
+        tp = s["template_paired"]
+        L.append(f"| hit@3, template on the same {c['n']} decisions | {_f3(tp['hit_at_3_mean'])} "
+                 f"({_f3(tp['hit_at_3_sd'])}), n={tp['agreement_n']} | | |")
         L.append(f"| Mode used | | | " + ", ".join(f"{k} {v}" for k, v in c["modes"].items() if v) + " |")
         L.append(f"| API errors / not run (rate-limited or skipped) | | {p['api_errors']} / {p['not_run']} | "
                  f"{c['api_errors']} / {c['not_run']} |")
     L += ["", f"Ceiling: a validated explanation may only cite the decision's own reasons (codes whose rule fired); "
           f"on average {_f3(s['reachable_mean'])} of the model's {_f3(s['model_top_n_mean'])} top codes are among "
-          f"them. Share of the model's positive push that any reason code describes: mean "
-          f"{_f3(s['mapped_share'][0])} (sd {_f3(s['mapped_share'][1])}).", ""]
+          f"them, so no checked explanation can score a mean hit@3 above {_f3(s['hit_at_3_ceiling'])}. Share of the "
+          f"model's positive push that any reason code describes: mean "
+          f"{_f3(s['mapped_share'][0])} (sd {_f3(s['mapped_share'][1])}). Low agreement is therefore mostly a gap "
+          "between the fixed reason rules and what LightGBM leans on, not the explainer's wording.", ""]
     if c:
+        L += [f"LLM rows are paired: (a) and (b) on the same {c['n']} decisions where both ran. The other "
+              f"{c['not_run']} sampled decisions were **not run**: the Groq free tier's 200,000 tokens/day limit for "
+              f"this model (shared with everything else using the key today) was reached mid-run "
+              f"({s['llm']['rate_limited_calls_logged']} rate-limited calls logged in the calls file). Nothing was "
+              "filled in for them.", ""]
         L += ["Why LLM claims failed (counts over all claims):", ""]
         L += [f"- {k}: {v}" for k, v in c["claim_problem_counts"].items()] or ["- none"]
-        L += [""]
+        L += ["", "Why whole explanations were rejected on first try: prose "
+              + (", ".join(p["rejections"]) or "none") + "; claims " + (", ".join(c["rejections"]) or "none") + ".",
+              ""]
     L += ["Notes:", "",
           "- Prose sentences are judged with the record-wide number/id test (the prose validator's own rule); "
           "claims additionally must use their own reason's numbers, a real reason code and real fields, so the "
           "claims column is the stricter test. The record-wide row puts both on the same test.",
           "- Prose 'cited reasons' are found by keyword (REASON_WORDS) in order of first mention: approximate.",
           "- First try only (retry_invalid=0); the service retries once with the checker's problems.",
-          f"- Groq calls this run: {s['llm']['calls_this_run']}, tokens {s['llm']['tokens_this_run']} (cached calls "
-          "in artifacts/results_explanations_calls.jsonl are reused and not counted).",
+          "- Every LLM answer used here is in artifacts/results_explanations_calls.jsonl (one line per call, "
+          "rate-limited calls included as a log); reruns reuse them (`--cache-only` makes no new calls). "
+          f"New Groq calls in this run: {s['llm']['calls_this_run']}.",
           "- Sources: Groq Structured Outputs (strict json_schema, constrained decoding on openai/gpt-oss-120b; "
           "https://console.groq.com/docs/structured-outputs). arXiv 2512.00163: LLM self-explanations disagree with "
           "SHAP; LightGBM SHAP is more reliable on financial tabular data. arXiv 2605.26770: LLM-written XAI "
