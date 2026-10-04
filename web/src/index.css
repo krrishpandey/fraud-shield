@@ -1,105 +1,64 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/archivo/wdth.css';
-@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/figtree/400';
+@import '@fontsource/figtree/500';
+@import '@fontsource/figtree/600';
+@import '@fontsource/figtree/700';
+@import '@fontsource/figtree/800';
+@import '@fontsource/jetbrains-mono/400';
+@import '@fontsource/jetbrains-mono/500';
+/* Poster face, used only by the sign-in label and the 3D scene */
+@import '@fontsource/big-shoulders-display/800';
+@import '@fontsource/big-shoulders-display/900';
 @import '@fontsource/ibm-plex-mono/500.css';
 
 /*
-  FraudShield console tokens.
-  Subject: a carrier's booking desk. Cool label-stock greys, freight navy, routing-label ink.
-  Action colors always ship with a text label and a glyph, never color alone.
+  tracd console, from the "Tracd app redesign" style sheet.
+  Surfaces are flat: no gradients, no blur. Colour lives in the mosaic tiles, active states and decisions.
+  Radius: card 14 · button/input 9 · pill 7 · tab 10. Spacing: page 28 · card 22x24 · gap 16-18.
 */
 :root {
-  color-scheme: light;
-  --page: #eceff2;
-  --surface: #ffffff;
-  --surface-2: #f6f8fa;
-  --ink: #14212e;
-  --ink-2: #485868;
-  --muted: #687886;
-  --rule: #d2d9e0;
-  --rule-strong: #14212e;
-  --brand: #163a5c;
-  --brand-ink: #ffffff;
-  --tape: #f2c230;
-  --focus: #1f5fbf;
-  --danger: #b42318;
-  --ok: #1f7a3e;
-
-  --act-allow: #1f7a3e;
-  --act-allow_scan_gated: #0f6e7a;
-  --act-owner_confirm: #2d5bb8;
-  --act-review: #6a45b0;
-  --act-hold: #a35a00;
-  --act-block: #b42318;
-
-  /* Reference categorical palette (dataviz skill), fixed order. */
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --series-4: #eda100;
-  --series-5: #e87ba4;
-  --series-6: #008300;
-  --series-7: #4a3aa7;
-  --series-8: #e34948;
-  --grid: #e1e5e9;
-  --axis: #b9c2cb;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --page: #0d1318;
-    --surface: #151d25;
-    --surface-2: #1b252f;
-    --ink: #e6ecf1;
-    --ink-2: #aab7c3;
-    --muted: #8593a0;
-    --rule: #2a3641;
-    --rule-strong: #c9d4de;
-    --brand: #9cc0e4;
-    --brand-ink: #0d1318;
-    --focus: #f2c230;
-    --danger: #f07066;
-    --ok: #4cb872;
-    --act-allow: #4cb872;
-    --act-allow_scan_gated: #3fb3c2;
-    --act-owner_confirm: #7fa3f0;
-    --act-review: #a88beb;
-    --act-hold: #f0a33a;
-    --act-block: #f07066;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
-    --series-6: #008300;
-    --series-7: #9085e9;
-    --series-8: #e66767;
-    --grid: #26313b;
-    --axis: #3a4752;
-  }
-}
-:root[data-theme='dark'] {
   color-scheme: dark;
-  --page: #0d1318;
-  --surface: #151d25;
-  --surface-2: #1b252f;
-  --ink: #e6ecf1;
-  --ink-2: #aab7c3;
-  --muted: #8593a0;
-  --rule: #2a3641;
-  --rule-strong: #c9d4de;
-  --brand: #9cc0e4;
-  --brand-ink: #0d1318;
-  --focus: #f2c230;
-  --danger: #f07066;
-  --ok: #4cb872;
+  --sidebar: #09090a;
+  --page: #0e0e10;
+  --surface: #151518;
+  --surface-2: #1f1f23;
+  --banner: #141416;
+  --rule: #26262b;
+  --rule-strong: #34343b;
+  --ink: #ededef;
+  --ink-2: #b4b4bb;
+  --muted: #8b8b93;
+  --faint: #5e5e66;
+  --brand: #ededef;
+  --brand-ink: #0e0e10;
+  --link: #ffffff;
+  --tape: #f2c230;
+  --focus: #6c7be0;
+
+  --indigo: #6c7be0;
+  --rose: #e5677a;
+  --green: #30a46c;
+  --teal: #2bb3a6;
+  --orange: #f0883e;
+  --danger: #f07066; /* main's, kept: meaning colour */
+  --ok: #4cb872; /* main's, kept: meaning colour */
+
+  /* Decisions: main's action colours, unchanged (the redesign greyed four of them; we keep them distinct).
+     Chip backgrounds are a faint tint of the same colour. */
   --act-allow: #4cb872;
+  --act-allow-bg: color-mix(in srgb, var(--act-allow) 14%, transparent);
   --act-allow_scan_gated: #3fb3c2;
+  --act-allow_scan_gated-bg: color-mix(in srgb, var(--act-allow_scan_gated) 14%, transparent);
   --act-owner_confirm: #7fa3f0;
+  --act-owner_confirm-bg: color-mix(in srgb, var(--act-owner_confirm) 14%, transparent);
   --act-review: #a88beb;
+  --act-review-bg: color-mix(in srgb, var(--act-review) 14%, transparent);
   --act-hold: #f0a33a;
+  --act-hold-bg: color-mix(in srgb, var(--act-hold) 14%, transparent);
   --act-block: #f07066;
+  --act-block-bg: color-mix(in srgb, var(--act-block) 14%, transparent);
+
+  /* Charts: main's dark-mode palette, unchanged. */
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
@@ -110,11 +69,22 @@
   --series-8: #e66767;
   --grid: #26313b;
   --axis: #3a4752;
+
+  --f-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Figtree', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --f-poster: 'Big Shoulders Display', 'Arial Narrow', 'Bahnschrift', sans-serif;
+  --f-label-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --r-card: 14px;
+  --r-btn: 9px;
+  --r-pill: 7px;
+  --r-tab: 10px;
 }
 
 @theme {
-  --font-sans: 'Archivo Variable', 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font-sans: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --color-page: var(--page);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -136,50 +106,119 @@ body {
   color: var(--ink);
 }
 body {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.45;
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  font-optical-sizing: auto;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  margin: 0;
+}
+::selection {
+  background: #3a3f6b;
 }
 
+.disp,
 .condensed {
-  font-stretch: 78%;
+  font-family: var(--f-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.label-s {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mono,
+code {
+  font-family: var(--f-mono);
 }
 .tnum {
   font-variant-numeric: tabular-nums;
+}
+.bign {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.muted {
+  color: var(--muted);
 }
 
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 3px;
-}
-
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--rule);
   border-radius: 6px;
 }
 
+/* ---------- Cards ---------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+}
+.card-h {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 20px 24px 6px;
+}
+.card-h h2 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-h h2 svg {
+  color: var(--muted);
+}
+.card-b {
+  padding: 14px 24px 22px;
+}
+
+/* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  border-radius: 4px;
-  padding: 0.45rem 0.9rem;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border-radius: var(--r-btn);
+  padding: 0 16px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 14.5px;
   border: 1px solid var(--rule-strong);
-  background: var(--surface);
+  background: var(--page);
   color: var(--ink);
   cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 }
 .btn:hover:not(:disabled) {
   background: var(--surface-2);
+  border-color: #45454d;
 }
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 .btn-primary {
@@ -188,50 +227,321 @@ body {
   color: var(--brand-ink);
 }
 .btn-primary:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #ffffff;
+}
+.btn-danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 70%, transparent);
+  background: transparent;
+}
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-color: var(--danger);
+}
+.btn svg {
+  flex: none;
+}
+
+/* Segmented tabs (filter chips, rate pickers) */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  background: var(--page);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-tab);
+}
+.seg > button {
+  border: 0;
+  background: transparent;
+  padding: 0 13px;
+  min-height: 34px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.seg > button:hover:not(:disabled) {
+  color: var(--ink);
+}
+.seg > button[aria-pressed='true'],
+.seg > button[aria-checked='true'],
+.seg > button.is-on {
   background: var(--brand);
-  filter: brightness(1.12);
+  color: var(--brand-ink);
+}
+.seg > button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.seg .n {
+  color: inherit;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Big icon tabs (Booking / Account / Route...) */
+.itabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+}
+.itabs > button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 6px 9px;
+  border: 0;
+  border-radius: var(--r-tab);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.itabs > button:hover {
+  color: var(--ink);
+}
+.itabs > button[aria-selected='true'] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.itabs > button[aria-selected='true'] svg {
+  color: var(--teal);
 }
 
 .field {
   width: 100%;
+  min-height: 40px;
   border: 1px solid var(--rule);
-  background: var(--surface);
+  background: var(--page);
   color: var(--ink);
-  border-radius: 4px;
-  padding: 0.4rem 0.55rem;
-  font-size: 0.9rem;
+  border-radius: var(--r-btn);
+  padding: 8px 12px;
+  font-size: 14.5px;
 }
 .field:focus-visible {
-  border-color: var(--focus);
+  outline: none;
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 25%, transparent);
+}
+.field::placeholder {
+  color: var(--faint);
+}
+select.field {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 50%,
+    calc(100% - 11px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+}
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search svg {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.search .field {
+  padding-left: 38px;
 }
 
-/* Routing-label stamp: the one loud element. A barcode band in the action color over a framed label. */
-.route-label {
-  border: 3px solid var(--rule-strong);
-  border-radius: 4px;
-  background: var(--surface);
-  overflow: hidden;
+.tag {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 1px 6px;
+  color: var(--muted);
+  white-space: nowrap;
 }
-.route-label .band {
+.tag-inj {
+  color: var(--rose);
+  border-color: color-mix(in srgb, var(--rose) 45%, transparent);
+}
+
+/* Decision chip: dot + word on a dark pill */
+.act-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 3px 10px 3px 9px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--act-bg);
+  border: 1px solid transparent;
+}
+.act-chip::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--act);
+  flex: none;
+}
+.act-chip[data-action='allow'] {
+  border-color: var(--rule-strong);
+  color: var(--ink-2);
+}
+.act-chip[data-action='hold'],
+.act-chip[data-action='block'] {
+  color: var(--act);
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* Tables */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+.tbl th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--muted);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.tbl td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.tbl tbody tr:last-child td {
+  border-bottom: 0;
+}
+.tbl tbody tr.click {
+  cursor: pointer;
+}
+.tbl tbody tr.click:hover td {
+  background: #19191d;
+}
+.tbl .r {
+  text-align: right;
+}
+.tbl .mono {
+  font-size: 13.5px;
+}
+
+/* Key/value rows */
+.kv {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+}
+.kv > dt,
+.kv > dd {
+  margin: 0;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.kv > dt {
+  color: var(--muted);
+  padding-right: 24px;
+}
+.kv > dd {
+  text-align: right;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.kv > dt:last-of-type,
+.kv > dd:last-of-type {
+  border-bottom: 0;
+}
+
+/* Toggle switch */
+.switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--rule-strong);
+  cursor: pointer;
+  flex: none;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
   height: 18px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--act) 0 3px,
-    transparent 3px 5px,
-    var(--act) 5px 6px,
-    transparent 6px 9px,
-    var(--act) 9px 13px,
-    transparent 13px 15px
-  );
-  border-bottom: 3px solid var(--rule-strong);
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s;
+}
+.switch[aria-checked='true'] {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.switch[aria-checked='true']::after {
+  transform: translateX(18px);
+  background: var(--brand-ink);
 }
 
 .prob-track {
   position: relative;
-  height: 12px;
-  border-radius: 2px;
+  height: 10px;
+  border-radius: 5px;
   background: var(--surface-2);
-  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+.route-label {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.fs-loading-bar {
+  display: inline-block;
+  width: 28px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--surface-2) 0 30%, var(--indigo) 30% 60%, var(--surface-2) 60%);
+  background-size: 200% 100%;
+  animation: fs-scan 0.9s linear infinite;
+}
+@keyframes fs-scan {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #33333a transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -241,7 +551,44 @@ body {
   }
 }
 
-.field::placeholder {
-  color: var(--muted);
-  opacity: 0.8;
+/* Sliding "blob" highlight behind the selected tab or segment */
+.seg,
+.itabs,
+.flagged-chips {
+  position: relative;
+}
+.slide-ind {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 7px;
+  background: var(--brand);
+}
+.itabs > .slide-ind {
+  border-radius: var(--r-tab);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
+}
+.seg > button,
+.itabs > button,
+.flagged-chips > button {
+  position: relative;
+  z-index: 1;
+  transition: color 0.25s ease;
+}
+.seg > button[aria-pressed='true'],
+.seg > button[aria-checked='true'],
+.seg > button.is-on,
+.flagged-chips > .flagged-chip.is-on,
+.itabs > button[aria-selected='true'] {
+  background: transparent !important;
+}
+.itabs > button svg {
+  transition:
+    color 0.25s ease,
+    transform 0.3s cubic-bezier(0.3, 0.9, 0.25, 1);
+}
+.itabs > button[aria-selected='true'] svg {
+  color: var(--ink);
+  transform: translateY(-1px) scale(1.06);
 }
