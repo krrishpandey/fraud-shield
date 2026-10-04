@@ -491,6 +491,48 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
             raise HTTPException(503, f"audit write failed, counterfactual not shown: {e}")
         return _json_safe({"decision_id": decision_id, **out, "audit_hash": h})
 
+    # ---------- red team you can watch (fraudshield/redteam/live.py) ----------
+    rt_cfg = cfg.get("redteam") or {}
+    rt_results = _path(rt_cfg.get("results_path") or "artifacts/results_redteam.json")
+    rt_targets = _path(rt_cfg.get("targets_path") or "docs/demo_block_bookings.json")
+
+    @r.post("/decisions/{decision_id}/redteam")
+    def redteam_attack(decision_id: str):
+        """The red-team attacker run live on this decision: sees only the returned action, at most 2 changed fields,
+        50 tries. Every try is returned in order; the attack is audited before anything is returned."""
+        from fraudshield.redteam.live import attack_payload  # noqa: PLC0415
+        from fraudshield.redteam.search import Outcome, WhatIf, search  # noqa: PLC0415
+        rec = _get(decision_id)
+        if not rec.get("booking"):
+            raise HTTPException(409, "this decision has no stored booking (replayed record), so there is nothing to vary")
+        owner = _owner(decision_id)
+        probs = rec.get("probabilities") or {}
+        current = Outcome(rec["action"], float(probs.get("misuse", rec.get("gbm_score") or 0.0)),
+                          float(rec.get("gbm_score") or 0.0), rec.get("greedy_action") or rec["action"])
+        out = attack_payload(search(WhatIf.for_pipeline(owner), Booking(**rec["booking"]), current,
+                                    feedback="action", seed=0))
+        try:
+            _, h = owner.audit.append("redteam_attack", {
+                "decision_id": decision_id, "booking_id": rec["booking_id"], "queries": out["queries"],
+                "evaded": out["evaded"], "first_allow_at": out["first_allow_at"],
+                "first_softer_at": out["first_softer_at"], "latency_ms": out["latency_ms"]})
+        except OSError as e:
+            raise HTTPException(503, f"audit write failed, attack not shown: {e}")
+        return _json_safe({"decision_id": decision_id, **out, "audit_hash": h})
+
+    @r.get("/redteam/results")
+    def redteam_results():
+        from fraudshield.redteam.live import load_results  # noqa: PLC0415
+        s = load_results(rt_results)
+        if s is None:
+            raise HTTPException(404, f"no red-team results at {rt_results} (run scripts/redteam.py)")
+        return _json_safe(s)
+
+    @r.get("/redteam/targets")
+    def redteam_targets():
+        from fraudshield.redteam.live import load_targets  # noqa: PLC0415
+        return load_targets(rt_targets)
+
     @r.post("/decisions/{decision_id}/first-scan")
     def first_scan(decision_id: str, body: ScanIn):
         """Depot scale reading for a booking (integration point for the carrier's scanners)."""

@@ -5,6 +5,7 @@ import type {
   ExplanationClaims,
 } from './types'
 import type { MonitorEstimate } from './types'
+import type { RedTeamAttack, RedTeamResults, RedTeamTarget } from './types'
 import type {
   CredentialJSON, OwnerConfirmation, OwnerConfirmOptions, PasskeyEnrollOptions, PasskeyEnrollResult, PasskeyStatus,
   TamperTestResult,
@@ -81,6 +82,10 @@ export const api = {
   accountStory: (id: string) => request<AccountStory>(`/decisions/${encodeURIComponent(id)}/account-story`),
   /** Analyst-only: smallest booker-controlled changes that would soften the decision (audited per view). */
   counterfactual: (id: string) => request<Counterfactual>(`/decisions/${encodeURIComponent(id)}/counterfactual`),
+  /** Red team: the attacker (sees the action only, at most 2 fields, 50 tries) run live on this decision; audited. */
+  redteamAttack: (id: string) => post<RedTeamAttack>(`/decisions/${encodeURIComponent(id)}/redteam`, {}),
+  redteamResults: () => request<RedTeamResults>('/redteam/results'),
+  redteamTargets: () => request<RedTeamTarget[]>('/redteam/targets'),
   checkExplanation: (id: string, text: string) =>
     post<ExplanationCheck>(`/decisions/${encodeURIComponent(id)}/explanation/check`, { text }),
   claims: (id: string) => request<ExplanationClaims>(`/decisions/${encodeURIComponent(id)}/claims`),

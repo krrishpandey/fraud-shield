@@ -159,6 +159,9 @@ export async function mockFetch(path: string, init?: RequestInit): Promise<Respo
   // The label-free monitor reads the stream's decisions: no stream in mock mode, so no monitor either.
   if (p.startsWith('/monitor/'))
     return json({ detail: 'not available in mock mode: the label-free monitor runs over the live stream' }, 503)
+  // The red team attacks the real model, so the mock does not invent attacks or results either.
+  if (p.startsWith('/redteam/') || /^\/decisions\/[^/]+\/redteam$/.test(p))
+    return json({ detail: 'not available in mock mode: the red team attacks the real model in the Python backend' }, 503)
   // Account history and the explanation validator live in the Python backend only; the mock never invents them.
   // The counterfactual search runs the real model too (analyst-only), so the mock does not invent one either.
   if (/^\/decisions\/[^/]+\/(account-story|explanation\/check|counterfactual|claims)$/.test(p))

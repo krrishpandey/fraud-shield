@@ -608,3 +608,68 @@ export interface ExplanationClaims {
   rejected_problems: string[]
   attribution: ClaimsAttribution
 }
+
+/* ---------- red team you can watch (docs/API.md "Red team") ---------- */
+export interface RedTeamAttempt {
+  n: number
+  changes: string[]
+  /** The only thing the attacker sees: the action the system returned. */
+  action: string
+  softer: boolean
+  allow: boolean
+}
+export interface RedTeamAttack {
+  decision_id: string
+  booking_id: string
+  original_action: string
+  attacker_sees: 'action only'
+  budget: number
+  max_fields: number
+  mutable_fields: string[]
+  queries: number
+  attempts: RedTeamAttempt[]
+  first_softer_at: number | null
+  first_allow_at: number | null
+  evaded: 'allow' | 'softer' | null
+  best_action: string | null
+  still_stopped: boolean
+  evasion: { n: number; action: string; changes: CounterfactualChange[] } | null
+  message: string
+  latency_ms: number
+  audit_hash: string
+}
+export interface RedTeamRate {
+  n: number
+  n_seeds: number
+  flip_allow_mean: number
+  flip_allow_sd: number
+  flip_softer_mean: number
+  flip_softer_sd: number
+}
+export interface RedTeamResults {
+  run_at: string
+  budget: number
+  max_fields: number
+  split: string
+  seeds: number[]
+  per_seed: number
+  trained: { all: RedTeamRate }
+  by_type: (RedTeamRate & { type: string })[]
+  held_out: { all: RedTeamRate; by_type: (RedTeamRate & { type: string })[] }
+  fields_used: Record<string, number>
+  median_queries_softer: number | null
+  hardening: {
+    passed: boolean | null
+    mode: string | null
+    n_attacked: number | null
+    n_evaded: number | null
+    n_labels: number | null
+    failed_checks: { name: string; passed: boolean; detail: string }[]
+  }
+  synthetic: string
+  evidence: string
+}
+export interface RedTeamTarget {
+  title: string
+  booking: Booking
+}

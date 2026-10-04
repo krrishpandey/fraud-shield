@@ -1,0 +1,53 @@
+/* Red team you can watch (views/RedTeamView.tsx) */
+.rt-log {
+  max-height: 22rem;
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--surface-2);
+}
+.rt-row {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.82rem;
+}
+.rt-row:last-child {
+  border-bottom: 0;
+}
+.rt-row[data-result='allow'] {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+.rt-row[data-result='softer'] {
+  background: color-mix(in srgb, var(--tape) 22%, transparent);
+}
+.rt-n {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.rt-verdict {
+  margin-top: 0.8rem;
+  padding: 0.7rem 0.85rem;
+  border-left: 4px solid var(--ok);
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+}
+.rt-verdict[data-tone='evaded'] {
+  border-left-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+.rt-verdict[data-tone='partial'] {
+  border-left-color: var(--tape);
+  background: color-mix(in srgb, var(--tape) 16%, transparent);
+}
+.rt-verdict-h {
+  font-weight: 800;
+  font-size: 1rem;
+}
+.rt-gate {
+  border-left: 4px solid var(--danger);
+  padding: 0.6rem 0.8rem;
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}

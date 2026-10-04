@@ -240,3 +240,31 @@ LightGBM `pred_contrib` of the scoring model summed per reason code (fraudshield
 model's top reasons: <hits> of <of>". `available` is false (with `why`) when the decision has no stored feature values
 or the scorer is not a LightGBM model. `GET /decisions/{id}` also carries `explanation.mode` and `explanation.claims`.
 Measured on the test window: artifacts/results_explanations.md.
+
+## Red team you can watch (v1.5)
+
+The attacker of `scripts/redteam.py`, run live on one decision (`fraudshield/redteam/live.py`, console tab **Red team**).
+
+`POST /decisions/{decision_id}/redteam` attacks the stored booking: the attacker sees **only the returned action**
+(never the risk score), changes at most 2 booker-controlled fields (declared value, declared weight, parcel size,
+service, a sender the account already used, booking time; carrier cost follows the weight) and stops after 50 tries
+or at the first plain allow. Every try is scored through the real feature, LightGBM, calibration and cost-rule path
+without storing a decision. A `redteam_attack` audit record is written before anything is returned (503 if it fails).
+
+```json
+{"decision_id":"dec_000002","booking_id":"blk-06","original_action":"hold","attacker_sees":"action only",
+ "budget":50,"max_fields":2,"queries":24,
+ "attempts":[{"n":1,"changes":["declared value were R$60.75 (not R$121.50)"],"action":"hold","softer":false,"allow":false}],
+ "first_softer_at":9,"first_allow_at":24,"evaded":"allow","best_action":"allow","still_stopped":false,
+ "evasion":{"n":24,"action":"allow","changes":[{"field":"weight_kg","from":20.0,"to":0.85,"text":"..."}]},
+ "message":"Evaded: plain allow after 24 tries.","latency_ms":321.0,"audit_hash":"..."}
+```
+
+`evaded` is `allow`, `softer` (a softer action but never a plain allow) or null. `still_stopped` is true when the
+softest action reached is still owner_confirm, review, hold or block. 404 for an unknown decision, 409 for a replayed
+record without a booking.
+
+`GET /redteam/results` returns the measured run (`artifacts/results_redteam.json`, trimmed): flip rates per trained
+type and for never-trained T3/T5 (mean and sd over seeds), fields used, and the hardening gate verdict with its failed
+checks. 404 if the file is missing. `GET /redteam/targets` lists ready-made stopped bookings to attack
+(`docs/demo_block_bookings.json`). Config: `redteam.results_path`, `redteam.targets_path`.

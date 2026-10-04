@@ -9,6 +9,7 @@ const NAV = [
   { to: '/queue', label: 'Review queue', id: 'queue', icon: 'M3 5h14M3 10h14M3 15h9' },
   { to: '/dashboard', label: 'Dashboard', id: 'dashboard', icon: 'M4 16V9M8 16V5M12 16v-4M16 16V7' },
   { to: '/learning', label: 'Learning', id: 'learning', icon: 'M3 15l4-4 3 3 7-7M13 7h4v4' },
+  { to: '/redteam', label: 'Red team', id: 'redteam', icon: 'M10 2v4M10 14v4M2 10h4M14 10h4M10 6.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z' },
   { to: '/audit', label: 'Audit', id: 'audit', icon: 'M10 3l6 3v4c0 4-3 6-6 7-3-1-6-3-6-7V6zM7.5 10l2 2 3-4' },
 ]
 
