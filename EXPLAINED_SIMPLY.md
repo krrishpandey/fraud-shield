@@ -111,54 +111,129 @@ All of this takes well under a second.
 - **What it is:** a normal Windows app. Double-click `FraudShield.bat` and a window opens. No website or server setup.
 - **Tabs:** Score (try a booking), Decision (see details), Queue (bookings waiting for review), Dashboard, Learning (retraining), Audit (check the log).
 
-### The six round-3 additions in one line each
+### The round-3 additions at a glance
 
-| What you see in the app | What it means in plain words |
+| Where in the app | What it does, concretely |
 |---|---|
-| **"Show what would change it"** on a stopped booking | The app tells the analyst the smallest change that would have let the parcel through, e.g. "allowed if the declared weight were 0.85 kg instead of 20 kg". Only analysts see it. |
-| **Red team** tab | We play the fraudster against our own model, live on screen: an attacker that only sees our decision tries up to 50 small changes, row by row, until it gets through or gives up. Across the test period, 18% of the stopped fraud got a plain "allow" this way. Every trick it finds is kept; once an analyst confirms the original was fraud, a **Retrain** button teaches the model those tricks, and our own safety gate decides whether the new model may take over. |
-| **"Was this you?" with a passkey** | The real owner approves the parcel with Windows Hello or a phone unlock, and the approval only fits *this* parcel: change the price and it no longer counts. |
-| **Label-free monitor** on the Live tab | A daily guess of how well we're doing before the real fraud reports arrive, plus a warning about the kind of fraud the guess can't see. |
-| **"From now on…" banner** on the Learning tab | After retraining, one sentence says which model is now making the decisions, and if the old one stayed, why. |
-| **Ticks next to each sentence** of the explanation | Every sentence the AI writer produces is checked on its own against the facts; a true number in the wrong sentence is caught. |
+| **Decision page → "Show what would change it"** | Lists the smallest edit to the booking that would have changed our decision. Example: a held booking would have been allowed if its declared weight were 0.85 kg instead of 20 kg and its declared value R$30.10 instead of R$121.50. |
+| **Red team tab** | A program plays the fraudster: it edits a stopped booking up to 50 times and shows every attempt and our answer. On booking blk-06 it got an "Allow" on attempt 24; on the takeover demo all 50 attempts stayed "Hold". |
+| **Red team tab → "Retrain with N new evasion labels"** | Turns the attacker's successful edits into training examples and retrains the model. Our safety gate then decides whether the new model replaces the old one. |
+| **Decision page → "Was this you?"** | The account owner approves a stopped booking with Windows Hello (PIN, face or fingerprint). The approval is tied to this booking's price, destination and receiver. |
+| **Live tab → "Label-free monitor"** | Estimates how many of today's stopped bookings are really fraud, and how much fraud we let through, weeks before the fraud reports arrive. |
+| **Learning tab → banner after retraining** | One sentence saying which model now scores new bookings, and if the old one stayed, the exact reason. |
+| **Decision page → ticks next to the explanation** | Each sentence of the AI-written explanation is checked separately against the decision's own numbers. |
+| **Sign-in page** | The console opens on a sign-in screen and has a new dark design. |
 
-### Feature 10: "What would change this decision?" (for analysts only)
+### Feature 10: "What would change this decision?" (analysts only)
 
-- **What it is:** for a stopped booking, the app tries small changes the person booking could make (a lower declared value, a lighter declared weight, a different service, a sender the account has used before) and tells the analyst the smallest change that would have made the decision softer. Example: "allowed if the declared weight were 0.85 kg instead of 20 kg".
-- **Analogy:** asking a bank clerk "what would you have needed to see to say yes?"
-- **Why only analysts:** if the person booking saw it, it would be a recipe for getting fraud through. So it is never shown to them, and every time an analyst looks, it is written in the tamper-proof log.
-- **Result:** 73% of stopped bookings have an answer with at most two changes.
+- **Where:** the Decision page of any stopped booking (Hold, Block, Review, Ask the owner, or Allow-with-depot-check), button **"Show what would change it"**.
+- **What it does:** it makes up to 50 edited copies of the booking and runs each one through the real model and the real cost rule, without saving anything. Each copy changes at most 2 things that the person booking controls:
+  - the declared value;
+  - the declared weight (the shipping price is recalculated from the weight, so a lighter parcel also costs less);
+  - the parcel size;
+  - the service (standard or express);
+  - the sender, swapped to one this account has used before;
+  - the booking time.
+- **What you see** (booking blk-06, which we hold):
+  - "Allow if declared weight were 0.85 kg (not 20.00 kg; carrier cost R$34.19) and declared value were R$30.10 (not R$121.50)";
+  - "Ask the owner if declared weight were 1.87 kg (not 20.00 kg)".
+- **Measured:** we took 60 random stopped bookings from the test period (2018-05-15 to 2018-08-31).
+  - 73.3% had at least one edit of 2 fields or fewer that led to a less strict action.
+  - 21.7% had one that led to a plain "Allow".
+  - A search takes about 1.1 seconds (median).
+- **Why only analysts see it:** a booker who saw it would learn exactly how to get fraud through. It is never shown to the booker, and every time an analyst opens it, an entry goes into the tamper-proof audit log.
+- **Limit:** about 1 in 4 stopped bookings has no answer within 50 tries. The takeover demo is one of them.
 
 ### Feature 11: We attack our own model (red team)
 
-- **What it is:** we played the fraudster. Our "attacker" only sees the decision, and may change at most two things on a booking, with up to 50 tries. We counted how often it got stopped fraud through.
-- **Result (inserted fraud, test period):** 18% got a plain "allow", 63% got some softer action. Most did it by pretending to ship from a sender the account already uses.
-- **What we did with it:** we retrained the model on those tricks. Our own safety gate (Feature 7) refused the new model, because it would have bothered more honest customers.
-- **Why it matters:** we report how easily we can be fooled, instead of only how often we are right.
+- **Where:** the **Red team** tab. Every stopped booking also has a link, "Red-team this decision".
+- **How the attacker works:**
+  - It sees only what a real fraudster would see: our answer (Allow, Hold, and so on), never the risk score.
+  - It may edit at most 2 of the fields listed in Feature 10.
+  - It stops after 50 tries, or as soon as it gets a plain "Allow".
+- **What you see:** you pick a stopped booking and click **Launch attack**. Each try appears as a row, with the edit and our answer.
+  - On blk-06, tries 1 to 6 change the declared value and all get "Hold".
+  - Try 9 (weight 0.85 kg) gets "Allow, check at first scan": the label is issued, but the parcel is weighed at the depot.
+  - Try 24 (weight 0.85 kg and value R$30.10) gets a plain "Allow". The row turns red: "The attacker got through".
+  - On the takeover demo booking, all 50 tries get "Hold": "Our model held".
+- **Measured** (test period, run once, 320 stopped fraud bookings of the 5 fraud types the model was trained on, 8 random variants of the injected fraud):
+  - 18.1% got a plain "Allow".
+  - 63.1% got any less strict answer. Many of those are still stopped, for example "Hold" instead of "Block", or "Allow, check at first scan".
+  - The most common trick, 159 of the 238 edits, was switching the sender to one the account already uses.
+- **Turning attacks into training data:**
+  1. Each attack keeps its 3 smallest successful edits.
+  2. They become training examples labelled "fraud" only once we know the original booking was fraud. An analyst clicks **"Confirm original as fraud"**, or the booking is one of our injected test frauds (then the labels are marked "simulated").
+  3. **"Retrain with N new evasion labels"** retrains the model and runs the safety gate. The gate's verdict appears as the same banner as on the Learning tab (Feature 14).
+- **What happened when we tried:**
+  - In the measured run, we retrained on 113 such edits. The gate refused the new model: honest bookings wrongly stopped in our hard test cases would have gone from 0.27% to 1.68%, and the gate allows at most +0.5 percentage points.
+  - In a live test with 2 attacks (6 examples), the gate kept the old model: "no proven improvement".
+- **Limit:** the fraud is injected into a real dataset, so these are attacks on our model with our test fraud, not on a real carrier.
 
-### Feature 12: "Was this you?" with a passkey, tied to the parcel
+### Feature 12: "Was this you?" with a passkey, tied to the booking
 
-- **What it is:** when the app asks the account owner to confirm a booking, the owner answers with a **passkey** (the fingerprint, face or PIN unlock on their phone or laptop, like Windows Hello). A text message can be answered by a criminal who stole the account; a passkey lives on the owner's own device.
-- **The clever bit:** the passkey signs the details of **this parcel**: its price, destination and receiver. Change the price by R$100 and the same signature no longer fits. The owner approves *this* parcel, not "any parcel".
-- **Honest note:** in the demo, the laptop plays the owner's phone, and the screen says so.
+- **Where:** the Decision page of a stopped booking, box **"Was this you? The owner's passkey"**.
+- **Why:** if a criminal has stolen the account login, they may also control its e-mail or phone number, so a "was this you?" text can be answered by the criminal. A passkey is a key stored on the owner's own device, unlocked with Windows Hello (PIN, face or fingerprint), and a stolen password can't use it.
+- **Steps:**
+  1. **Enroll owner passkey:** the owner's device creates a key. Done once per account.
+  2. **Confirm as owner:** Windows Hello asks for the PIN or face. The device signs a code built from this booking's id, account, shipping price, declared value, destination and receiver.
+  3. Our server rebuilds that code from the booking it has stored and checks the signature.
+  4. If it matches, the booking is released. A "Hold" becomes "Allow, check at first scan"; an "Ask the owner" becomes "Allow". A "Block" can't be released this way.
+- **Tamper test:** this button re-checks the same signature against a copy of the booking with the shipping price raised by R$100 (R$72.78 becomes R$172.78). The result is "Rejected: the signature no longer matches". The owner approved this exact booking, not any booking.
+- **Measured:** the signature check takes 0.18 ms (median of 1,000 checks); the whole server step takes 2.6 ms. The time a person takes at the Windows Hello prompt was not measured.
+- **Limits:**
+  - In the demo, this laptop plays the owner's phone, and the screen says so.
+  - In the demo we enroll the passkey just before confirming. In real use it would be enrolled when the account is opened, and changing it would itself need checking.
 
-### Feature 13: A health check that knows where it is blind
+### Feature 13: The label-free monitor (and where it is blind)
 
-- **What it is:** fraud is only confirmed weeks later. This card on the Live tab estimates **today** how accurate our stops are and how much fraud we are letting through, using only the model's own (calibrated) scores.
-- **Analogy:** a weather forecast for our own accuracy, before the "real weather" (the confirmed fraud reports) arrives.
-- **Where it fails, measured:** for fraud types the model has never seen, it under-counts the fraud we miss (by about 1.45 per week in our test). The usual "something changed" alarm doesn't notice those types either. We show that warning on screen instead of hiding it.
+- **Where:** the **Live** tab, card **"Label-free monitor"**. It works while the live booking stream is running.
+- **The problem it solves:** we only learn that a booking was fraud days or weeks later, when a chargeback or complaint arrives. Until then we can't count our mistakes directly.
+- **How it estimates:** every booking gets a probability from the model, for example 0.30 means "30% chance it is fraud". These probabilities are calibrated (we checked that, across many bookings, about 30 in 100 of the ones scored 0.30 really are fraud). So:
+  - adding up the probabilities of the bookings we stopped estimates how many of them are really fraud (the "precision of stops");
+  - adding up the probabilities of the bookings we let through estimates how much fraud we missed.
+- **What you see** (after about 25 seconds of the stream): "Estimated precision of stops 33.5% (no labels needed)", "Estimated fraud missed 1.7 of 830 let through". Next to it is a grey box with the real answer, which only exists because the demo replays a dataset where we know the truth.
+- **Where it fails, measured** (test period, all 10 variants of the injected fraud):
+  - For fraud types the model has never seen (T3 and T5), the model gives low probabilities, so the monitor doesn't count them as missed.
+  - Over the test period it estimated 52.8 missed frauds when the real number was 67.4: about 1.45 too few per week.
+  - The usual "the data has changed" alarm (it compares the spread of today's scores with last month's) gave the same reading with or without these new fraud types.
+  - The card shows this warning permanently.
 
 ### Feature 14: Which model is in charge, said in one sentence
 
-- **What it is:** after every retraining, the Learning tab says plainly either **"From now on, new bookings are scored by the new model"** or **"Still using the old model, because..."**, with the reason in everyday words (for example, "honest customers would be wrongly stopped more often"). Every decision shows which model version made it.
-- **Latest try:** we made one more, honestly pre-announced attempt to fix the new model. It fixed the "bothers honest customers" problem and was better on every average, but the gate's money check was still too uncertain, so the old model stays in charge.
-- **Note:** this is not "reinforcement learning". It is retraining with a safety gate.
+- **Where:** the **Learning** tab, after you click **Retrain with new labels**. The Decision page also shows "LightGBM model that scored this booking: gbm-B2-F-v1", and the Live tab shows "Model in use".
+- **What you see:** a banner with one of three messages:
+  - green: "From now on, new bookings are scored by gbm-B2-F-v2 (since 14:02). Previous model gbm-B2-F-v1 kept for rollback."
+  - amber: "Still using gbm-B2-F-v1. Candidate gbm-B2-F-v2 was not deployed because:", followed by each failed check in plain words, e.g. "honest hard-case false positives would rise from 0.27% to 0.94%; the limit is +0.5 points".
+  - blue, after a rollback: "Rolled back. From now on, new bookings are scored by …".
+- **If you leave the tab during a retrain:** the retrain keeps running on the server. When you come back, the progress bar returns (timed from when the run started) and the result appears when it finishes. Clicking Retrain again during a run follows that run instead of starting a second one.
+- **Our latest attempt to get a better model accepted** (written down before we ran it, run once):
+  - It fixed the earlier problem: honest hard cases wrongly stopped went from 0.32% to 0.64%, inside the +0.5-point limit.
+  - It was better on every average: PR-AUC 0.807 to 0.830, and 0.535 to 0.577 of never-seen fraud caught.
+  - It was still refused on cost. The 95% range for the saving was −R$9.61 to +R$21.41 per 1,000 bookings, and the gate requires the bottom of that range to be at least −R$5.98. About 180 frauds in the test set is not enough to be that sure.
+- **Note:** this is not "reinforcement learning". It is retraining with a pass/fail safety gate written before testing.
 
 ### Feature 15: Every sentence of the explanation is checked
 
-- **What it is:** the AI writer (Feature 5) now hands back its explanation as separate **claims**, each one tied to one reason, like "the account paid for 9 new senders". We check every claim on its own: the reason must really apply to this booking, and every number must come from the decision record **and belong to that claim**.
-- **Why that matters:** a sneaky mistake is a true number in the wrong sentence. The old check looked at the whole paragraph and missed all 33 we planted; the new check caught all 33.
-- **Honest part:** we also measure whether the explanation mentions the same things the model actually relied on most. It's low (about 1 in 5), because our fixed reason rules only describe about 58% of what the model leans on. The page shows that number instead of hiding it.
+- **Where:** the Decision page, section **"Why, in plain words"**.
+- **What changed:** the AI writer (Groq's gpt-oss-120b) now returns its explanation as separate claims. Each claim names one reason code and the fields it uses. Example from the takeover booking: "The dimensions are 20 standard units above the account norm", citing reason DIMS_UNUSUAL and field dims_z.
+- **What each claim must pass:**
+  - its reason code is one of this decision's reasons;
+  - every number in it appears in the decision record and in that claim's own fields;
+  - every field it cites exists.
+
+  Passing claims get a tick. If any claim fails, the page shows the fixed template instead and crosses out the failed claim.
+- **Measured:**
+  - We planted 33 explanations where a true number was moved into the wrong sentence. The new check caught 33 of 33; the old whole-paragraph check caught 0.
+  - Made-up numbers, reasons or fields were caught 57 of 57 each.
+  - These were measured on 31 of 60 sampled decisions; the other 29 were not run because the free Groq quota ran out that day.
+- **The honest number on the page:** "Agrees with the model's top reasons: 1 of 3". The model's 3 biggest influences often aren't among our fixed reason rules (those rules describe only about 58% of what drives the score), so the best possible average is 0.29. Our explanations score 0.20 to 0.24.
+
+### Feature 16: Sign-in page and new look
+
+- **What it is:** the console now opens on a sign-in screen with a 3D parcel sorting line, then shows a dark interface with a new sidebar, quick search (Ctrl+K) and status chips.
+- **How to sign in:** any analyst name and a code of at least 4 characters.
+- **Honest note:** this only records who is at the desk. It is not real security: the API behind the console has no user accounts.
+- **What stayed the same:** the action colours (green Allow, teal check-at-depot, blue Ask the owner, purple Review, orange Hold, red Block) and all charts.
 
 ---
 
