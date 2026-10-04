@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { StreamAccuracy, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus } from '../api/types'
 import { ActionPill } from '../components/ActionBadge'
+import { ErrorBox, Loading, Page, PageTitle } from '../components/common'
+import { SlideInd } from '../components/SlideInd'
+import { Icon, type IconName } from '../components/Icon'
 import LabelFreeMonitorCard from '../components/LabelFreeMonitorCard'
+import { ModelInUseBadge } from '../components/ModelHandover'
 import { ACTION_META, reasonText } from '../lib/domain'
 import { fmtBRL, fmtInt } from '../lib/format'
-import { ModelInUseBadge } from '../components/ModelHandover'
 
 /*
   Live stream: the seed-0 test window replayed into its own decision service at a steady rate.
@@ -204,6 +207,7 @@ function FlaggedPanel({ data, fresh }: { data: StreamFlagged | null; fresh: Set<
         </h2>
         <p className="flagged-sub">Every streamed booking that did not get a label, newest first. Click one to review it.</p>
         <div className="flagged-chips" role="radiogroup" aria-label="Show">
+          <SlideInd />
           {chips.map(([k, label, n]) => (
             <button
               key={k}
@@ -277,12 +281,59 @@ function FlaggedPanel({ data, fresh }: { data: StreamFlagged | null; fresh: Set<
   )
 }
 
+/** Bookings scored per second over the last two minutes, as bars; the newest bar is lit. */
+function RateBars({ values }: { values: (number | null)[] }) {
+  const vs = values.slice(-40)
+  const max = Math.max(1, ...vs.map((v) => v ?? 0))
+  const last = [...vs].reverse().find((v) => v != null) ?? null
+  const prev = vs.length > 10 ? vs.slice(-11, -1).reduce<number>((a, v) => a + (v ?? 0), 0) / 10 : null
+  const delta = last != null && prev != null ? last - prev : null
+  return (
+    <figure className="rate-card" data-testid="live-throughput">
+      <figcaption>
+        <span className="rate-h">Bookings scored per second</span>
+        <span className="rate-big tnum">{last == null ? '—' : last.toFixed(0)}</span>
+        {delta != null && (
+          <span className={`rate-delta tnum${delta < 0 ? ' is-down' : ''}`}>
+            {delta >= 0 ? '+' : ''}
+            {delta.toFixed(1)} vs last 10 s
+          </span>
+        )}
+      </figcaption>
+      <div className="rate-bars" role="img" aria-label={`Bookings scored per second, latest ${last ?? 'n/a'}`}>
+        {vs.length === 0 ? (
+          <span className="rate-empty">Waiting for the first bookings</span>
+        ) : (
+          vs.map((v, i) => <span key={i} className={i === vs.length - 1 ? 'is-now' : ''} style={{ height: `${Math.max(((v ?? 0) / max) * 100, 4)}%` }} />)
+        )}
+      </div>
+    </figure>
+  )
+}
+
+function Stat({ icon, label, value, sub }: { tone?: string; icon: IconName; label: string; value: string; sub: string }) {
+  return (
+    <div className="panel stat">
+      <div className="stat-h">
+        <Icon name={icon} size={18} />
+        <span>{label}</span>
+      </div>
+      <div className="stat-v tnum">{value}</div>
+      <div className="stat-s">{sub}</div>
+    </div>
+  )
+}
+
+type FeedFilter = 'all' | 'flagged' | 'allowed'
+
 export default function LiveView() {
   const { status, metrics, feed, flagged, freshIds, error, refresh } = useLive()
   const [rate, setRate] = useState(20)
   const [busy, setBusy] = useState(false)
   const [actionErr, setActionErr] = useState<string | null>(null)
-  const feedRef = useRef<HTMLOListElement>(null)
+  const [ff, setFf] = useState<FeedFilter>('all')
+  const [q, setQ] = useState('')
+  const nav = useNavigate()
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true)
@@ -302,165 +353,280 @@ export default function LiveView() {
   const load = metrics?.load
   const timeline = metrics?.timeline ?? []
   const total = status?.total ?? 0
+  const acts = metrics?.actions ?? {}
+  const pulled = (acts.hold ?? 0) + (acts.block ?? 0) + (acts.review ?? 0) + (acts.owner_confirm ?? 0)
+  const term = q.trim().toLowerCase()
+  const rows = feed.filter(
+    (r) =>
+      (ff === 'all' || (ff === 'allowed' ? r.action === 'allow' : r.action !== 'allow')) &&
+      (!term || r.route.toLowerCase().includes(term) || r.booking_id.toLowerCase().includes(term) || r.decision_id.toLowerCase().includes(term)),
+  )
+  const stateWord = state === 'loading' ? 'Loading' : state === 'idle' ? 'Not started' : state[0].toUpperCase() + state.slice(1)
+
+  const controls = (
+    <>
+      <div className="seg" role="radiogroup" aria-label="Bookings per second">
+        <SlideInd />
+        {RATES.map((r) => (
+          <button key={r} type="button" role="radio" aria-checked={rate === r} disabled={running} onClick={() => setRate(r)} data-testid={`live-rate-${r}`} title={`${r} bookings per second`}>
+            ×{r}
+          </button>
+        ))}
+      </div>
+      {!running ? (
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy || state === 'loading' || status?.available === false}
+          onClick={() => act(() => api.streamStart({ rate, concurrency: 4 }))}
+          data-testid="live-start"
+        >
+          <Icon name="play" size={15} />
+          {state === 'idle' ? 'Start the stream' : 'Start again'}
+        </button>
+      ) : (
+        <>
+          {state === 'running' ? (
+            <button type="button" className="btn" disabled={busy} onClick={() => act(api.streamPause)} data-testid="live-pause">
+              <Icon name="pause" size={15} />
+              Pause
+            </button>
+          ) : (
+            <button type="button" className="btn" disabled={busy} onClick={() => act(api.streamResume)} data-testid="live-resume">
+              <Icon name="play" size={15} />
+              Resume
+            </button>
+          )}
+          <button type="button" className="btn" disabled={busy} onClick={() => act(api.streamStop)} data-testid="live-stop">
+            <Icon name="x" size={15} />
+            Stop
+          </button>
+        </>
+      )}
+      <span className={`live-state is-${state}`} data-testid="live-state" data-state={state}>
+        <span className="live-dot" aria-hidden="true" />
+        {stateWord}
+        {total > 0 && (
+          <span className="tnum text-muted" data-testid="live-sent">
+            {' '}
+            · {fmtInt(status?.sent)} of {fmtInt(total)} sent
+          </span>
+        )}
+      </span>
+    </>
+  )
 
   if (error && !metrics) {
     return (
       <div className="live">
-        <h1 className="live-h1">Live stream</h1>
-        <p className="live-unavailable" role="alert" data-testid="live-unavailable">
-          The live stream is not available: {error}
-        </p>
+        <PageTitle title="Live stream" />
+        <Page>
+          <p className="note" role="alert" data-testid="live-unavailable">
+            <Icon name="info" size={16} />
+            <span>The live stream is not available: {error}</span>
+          </p>
+        </Page>
       </div>
     )
   }
 
   return (
     <div className="live" data-testid="live-view" data-state={state}>
-      <header className="live-head">
-        <div>
-          <h1 className="live-h1">Live stream</h1>
-          <p className="live-sub">
-            Replays the seed-0 test window (real Olist bookings plus the injected fraud, in booking-time order) into its own
-            decision service, the way a booking system sends bookings. A simulation of continuous traffic, not live carrier data.
-          </p>
+      <PageTitle title="Live stream">{controls}</PageTitle>
+      <Page>
+        {actionErr && <ErrorBox message={actionErr} />}
+        <div className="model-line">
           <ModelInUseBadge testId="live-model-in-use" />
         </div>
-        <p className="live-state" data-testid="live-state" data-state={state}>
-          <span className={`live-dot is-${state}`} aria-hidden="true" />
-          {state === 'loading' ? 'Loading' : state === 'idle' ? 'Not started' : state[0].toUpperCase() + state.slice(1)}
-          {total > 0 && (
-            <span className="tnum" data-testid="live-sent">
-              {' '}
-              {fmtInt(status?.sent)} of {fmtInt(total)} sent
-            </span>
-          )}
-        </p>
-      </header>
-
-      <div className="live-controls" role="group" aria-label="Stream controls">
-        <span className="live-ctl-label" id="rate-label">Bookings per second</span>
-        <div className="live-rates" role="radiogroup" aria-labelledby="rate-label">
-          {RATES.map((r) => (
-            <button
-              key={r}
-              type="button"
-              role="radio"
-              aria-checked={rate === r}
-              className={`live-rate${rate === r ? ' is-on' : ''}`}
-              disabled={running}
-              onClick={() => setRate(r)}
-              data-testid={`live-rate-${r}`}
-            >
-              {r}
-            </button>
-          ))}
+        <div className="stats">
+          <Stat tone="indigo" icon="box" label="Scored" value={fmtInt(load?.scored ?? 0)} sub={total ? `of ${fmtInt(total)} held-out bookings` : 'of the test-window replay'} />
+          <Stat tone="teal" icon="list" label="Waiting in flight" value={fmtInt(load?.in_flight ?? 0)} sub={`${fmtInt(load?.errors ?? 0)} errors · ${fmtInt(load?.retries ?? 0)} retries`} />
+          <Stat tone="rose" icon="lock" label="Labels pulled" value={fmtInt(pulled)} sub="stopped before printing" />
+          <Stat
+            tone="green"
+            icon="pulse"
+            label="Per decision"
+            value={load?.latency_p50_ms == null ? '—' : `${Math.round(load.latency_p50_ms)} ms`}
+            sub={load?.latency_p95_ms == null ? 'median scoring time' : `p95 ${Math.round(load.latency_p95_ms)} ms`}
+          />
         </div>
-        {!running ? (
-          <button type="button" className="btn btn-primary" disabled={busy || state === 'loading' || status?.available === false}
-            onClick={() => act(() => api.streamStart({ rate, concurrency: 4 }))} data-testid="live-start">
-            {state === 'idle' ? 'Start the stream' : 'Start again'}
-          </button>
+
+        {state === 'loading' ? (
+          <Loading what="the stream status" />
+        ) : state === 'idle' ? (
+          <div className="panel live-empty">
+            <div>
+              <h2>Replay the test window</h2>
+              <p>About 22,900 real and injected bookings, sent in booking-time order.</p>
+            </div>
+          </div>
         ) : (
           <>
-            {state === 'running' ? (
-              <button type="button" className="btn" disabled={busy} onClick={() => act(api.streamPause)} data-testid="live-pause">
-                Pause
-              </button>
-            ) : (
-              <button type="button" className="btn" disabled={busy} onClick={() => act(api.streamResume)} data-testid="live-resume">
-                Resume
-              </button>
-            )}
-            <button type="button" className="btn" disabled={busy} onClick={() => act(api.streamStop)} data-testid="live-stop">
-              Stop
-            </button>
+            <div className="live-grid">
+              <section className="panel min-w-0" aria-labelledby="feed-h">
+                <div className="card-h">
+                  <h2 id="feed-h">
+                    <Icon name="pulse" size={18} />
+                    Newest decisions
+                  </h2>
+                  <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <div className="seg" role="radiogroup" aria-label="Show">
+                      <SlideInd />
+                      {(
+                        [
+                          ['all', 'All'],
+                          ['flagged', 'Flagged'],
+                          ['allowed', 'Allowed'],
+                        ] as [FeedFilter, string][]
+                      ).map(([k, l]) => (
+                        <button key={k} type="button" role="radio" aria-checked={ff === k} onClick={() => setFf(k)}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                    <label className="search w-[210px]">
+                      <Icon name="search" size={16} />
+                      <span className="sr-only">Filter by lane or id</span>
+                      <input className="field" placeholder="Lane or id" value={q} onChange={(e) => setQ(e.target.value)} />
+                    </label>
+                  </div>
+                </div>
+                <div className="feed-scroll">
+                  <table className="tbl feed-tbl" data-testid="live-feed" aria-live="off">
+                    <thead>
+                      <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Booking</th>
+                        <th scope="col">Lane</th>
+                        <th scope="col" className="r">R$</th>
+                        <th scope="col" className="r">Fraud P</th>
+                        <th scope="col">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r) => (
+                        <tr
+                          key={r.decision_id}
+                          className="click"
+                          data-testid="live-feed-row"
+                          data-decision-id={r.decision_id}
+                          onClick={() => nav(`/decisions/${r.decision_id}`)}
+                        >
+                          <td className="mono text-muted">
+                            <Link
+                              to={`/decisions/${r.decision_id}`}
+                              className="row-link"
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label={`${ACTION_META[r.action]?.label ?? r.action}, ${r.route}, open decision`}
+                            >
+                              {r.booked_at.replace('T', ' ').slice(11, 19) || r.booked_at.slice(5, 16)}
+                            </Link>
+                          </td>
+                          <td className="mono">{r.booking_id.replace(/^bk_/, '').slice(0, 8)}</td>
+                          <td>{r.route.replace(' to ', ' → ')}</td>
+                          <td className="r tnum mono">{r.carrier_cost.toFixed(2).replace('.', ',')}</td>
+                          <td className="r tnum mono">{r.score.toFixed(2)}</td>
+                          <td>
+                            <ActionPill action={r.action} />
+                          </td>
+                        </tr>
+                      ))}
+                      {rows.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-muted">
+                            {feed.length === 0 ? 'Waiting for the first decisions…' : 'No decisions match this filter.'}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <div className="flex min-w-0 flex-col gap-[18px]">
+                <section className="panel rate-panel">
+                  <RateBars values={timeline.map((b) => b.scored)} />
+                </section>
+                <section className="panel">
+                  <div className="card-h">
+                    <h2>
+                      <Icon name="chart" size={18} />
+                      Outcomes so far
+                    </h2>
+                    <span className="ml-auto pill-mute">Measured live</span>
+                  </div>
+                  <div className="card-b">{metrics && <AccuracyTable m={metrics} />}</div>
+                </section>
+              </div>
+            </div>
+
+            <FlaggedPanel data={flagged} fresh={freshIds} />
+
+            <LabelFreeMonitorCard scored={load?.scored ?? 0} />
+
+            <div className="live-load">
+              <section className="panel min-w-0">
+                <div className="card-b">
+                  <Spark testId="live-latency" label="Scoring time, p95 per second" unit="ms" values={timeline.map((b) => b.latency_p95_ms)} />
+                </div>
+              </section>
+              <section className="panel min-w-0">
+                <div className="card-b live-facts">
+                  <dl className="kv text-[14px]">
+                    <dt>Scored</dt>
+                    <dd className="tnum">{fmtInt(load?.scored)}</dd>
+                    <dt>Scoring time p50 / p99</dt>
+                    <dd className="tnum">
+                      {num(load?.latency_p50_ms, 0)} / {num(load?.latency_p99_ms, 0)} ms
+                    </dd>
+                    <dt>Errors / retries</dt>
+                    <dd className="tnum">
+                      {fmtInt(load?.errors)} / {fmtInt(load?.retries)}
+                    </dd>
+                    <dt>Decided by the backup model</dt>
+                    <dd className="tnum">{pct(metrics?.degraded_share, 0)}</dd>
+                  </dl>
+                  {metrics?.scans && (
+                    <p className="mt-3 text-[13px] text-muted" data-testid="live-scans">
+                      Depot scans (simulated from the dataset's true weights): {fmtInt(metrics.scans.checked)} parcels weighed,{' '}
+                      {fmtInt(metrics.scans.mismatch)} heavier than declared. Their accounts' next parcels are weighed too.
+                    </p>
+                  )}
+                  {metrics?.explanations && (
+                    <p className="mt-2 text-[13px] text-muted" data-testid="live-explanations">
+                      Explanations: every held or blocked booking gets one from the language model ({fmtInt(metrics.explanations.llm_held_blocked ?? 0)}{' '}
+                      so far). Other decisions share {metrics.explanations.llm_cap_per_min} per minute; {fmtInt(metrics.explanations.template)} used
+                      the fixed template.
+                    </p>
+                  )}
+                </div>
+              </section>
+              <section className="panel min-w-0" data-testid="live-actions">
+                <div className="card-h">
+                  <h2>Decisions so far</h2>
+                </div>
+                <div className="card-b">
+                  {/* chart kept from main: one bar per action, share of scored bookings */}
+                  <div className="live-mix">
+                    <ul>
+                      {Object.entries(metrics?.actions ?? {}).map(([a, n]) => {
+                        const share = load?.scored ? n / load.scored : 0
+                        return (
+                          <li key={a} style={{ ['--act' as string]: `var(--act-${a})` }} data-action={a} data-count={n}>
+                            <span className="live-mix-name">{ACTION_META[a as keyof typeof ACTION_META]?.label ?? a}</span>
+                            <span className="live-mix-bar" aria-hidden="true"><span style={{ width: `${Math.max(share * 100, n ? 0.6 : 0)}%` }} /></span>
+                            <span className="tnum live-mix-n">{fmtInt(n)}</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              </section>
+            </div>
           </>
         )}
-        {actionErr && <p className="text-[0.85rem] text-danger" role="alert">{actionErr}</p>}
-      </div>
-
-      {state === 'loading' ? (
-        <p className="live-empty" role="status">Loading the stream status...</p>
-      ) : state === 'idle' ? (
-        <p className="live-empty">
-          Start the stream to watch every booking get a decision as it arrives. At 20 bookings per second the whole window of
-          about 22,900 bookings takes about 19 minutes.
-        </p>
-      ) : (
-        <>
-          <FlaggedPanel data={flagged} fresh={freshIds} />
-          <section className="live-main">
-            <div className="live-feed-wrap">
-              <h2 className="live-h2">Newest decisions</h2>
-              <ol className="live-feed" ref={feedRef} data-testid="live-feed" aria-live="off">
-                {feed.map((r) => (
-                  <li key={r.decision_id} className="live-row" style={{ ['--act' as string]: `var(--act-${r.action})` }}
-                    data-testid="live-feed-row" data-decision-id={r.decision_id}>
-                    <Link to={`/decisions/${r.decision_id}`} className="live-row-link"
-                      aria-label={`${ACTION_META[r.action]?.label ?? r.action}, ${r.route}, open decision`}>
-                      <span className="tnum live-time">{r.booked_at.replace('T', ' ').slice(5, 16)}</span>
-                      <span className="live-route">{r.route}</span>
-                      <span className="tnum live-cost">{fmtBRL(r.carrier_cost)}</span>
-                      <span className="tnum live-score">{(r.score * 100).toFixed(1)}%</span>
-                      <ActionPill action={r.action} />
-                    </Link>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="live-acc-wrap">
-              <h2 className="live-h2">Accuracy, live against the offline test</h2>
-              {metrics && <AccuracyTable m={metrics} />}
-            </div>
-          </section>
-
-          <LabelFreeMonitorCard scored={load?.scored ?? 0} />
-
-          <section className="live-load">
-            <Spark testId="live-throughput" label="Bookings scored per second" unit="/s"
-              values={timeline.map((b) => b.scored)} />
-            <Spark testId="live-latency" label="Scoring time, p95 per second" unit="ms"
-              values={timeline.map((b) => b.latency_p95_ms)} />
-            <div className="live-facts">
-              <dl>
-                <div><dt>Scored</dt><dd className="tnum">{fmtInt(load?.scored)}</dd></div>
-                <div><dt>Waiting in flight</dt><dd className="tnum">{fmtInt(load?.in_flight)}</dd></div>
-                <div><dt>Scoring time p50 / p99</dt><dd className="tnum">{num(load?.latency_p50_ms, 0)} / {num(load?.latency_p99_ms, 0)} ms</dd></div>
-                <div><dt>Errors / retries</dt><dd className="tnum">{fmtInt(load?.errors)} / {fmtInt(load?.retries)}</dd></div>
-                <div><dt>Decided by the backup model</dt><dd className="tnum">{pct(metrics?.degraded_share, 0)}</dd></div>
-              </dl>
-              {metrics?.scans && (
-                <p className="live-note" data-testid="live-scans">
-                  Depot scans (simulated from the dataset's true weights): {fmtInt(metrics.scans.checked)} parcels weighed,{' '}
-                  {fmtInt(metrics.scans.mismatch)} heavier than declared. Their accounts' next parcels are weighed too.
-                </p>
-              )}
-              {metrics?.explanations && (
-                <p className="live-note" data-testid="live-explanations">
-                  Explanations: every held or blocked booking gets one from the language model
-                  ({fmtInt(metrics.explanations.llm_held_blocked ?? 0)} so far). Other decisions share{' '}
-                  {metrics.explanations.llm_cap_per_min} per minute; {fmtInt(metrics.explanations.template)} used the fixed template.
-                </p>
-              )}
-            </div>
-            <div className="live-mix" data-testid="live-actions">
-              <h2 className="live-h2">Decisions so far</h2>
-              <ul>
-                {Object.entries(metrics?.actions ?? {}).map(([a, n]) => {
-                  const share = load?.scored ? n / load.scored : 0
-                  return (
-                    <li key={a} style={{ ['--act' as string]: `var(--act-${a})` }} data-action={a} data-count={n}>
-                      <span className="live-mix-name">{ACTION_META[a as keyof typeof ACTION_META]?.label ?? a}</span>
-                      <span className="live-mix-bar" aria-hidden="true"><span style={{ width: `${Math.max(share * 100, n ? 0.6 : 0)}%` }} /></span>
-                      <span className="tnum live-mix-n">{fmtInt(n)}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          </section>
-        </>
-      )}
+      </Page>
     </div>
   )
 }
