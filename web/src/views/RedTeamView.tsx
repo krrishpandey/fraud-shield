@@ -4,6 +4,7 @@ import { api } from '../api/client'
 import type { Booking, RedTeamAttack, RedTeamHardening, RedTeamRate, RedTeamResults, RetrainResponse } from '../api/types'
 import { ActionPill } from '../components/ActionBadge'
 import { ErrorBox, Loading, PageTitle, Section } from '../components/common'
+import { Icon } from '../components/Icon'
 import { HandoverBanner, ModelInUseLine } from '../components/ModelHandover'
 import { actionLabel } from '../lib/domain'
 import { fmtMs, fmtPct, shortHash } from '../lib/format'
@@ -115,7 +116,7 @@ function LiveAttack({ onAttacked }: { onAttacked: () => void }) {
   const done = attack != null && shown >= attack.attempts.length
   const rows = attack ? attack.attempts.slice(0, shown) : []
   return (
-    <Section title="Watch an attack" testId="redteam-live" aside="the attacker sees only our decision, never the risk score">
+    <Section title="Watch an attack" icon="target" testId="redteam-live" aside="the attacker sees only our decision, never the risk score">
       <p className="text-[0.85rem] text-ink-2">
         Pick a booking our system stopped. The attacker changes at most 2 things a fraudster controls (declared value, weight, size,
         service, a sender the account already used, booking time) and gets 50 tries.
@@ -172,23 +173,23 @@ function Measured({ r }: { r: RedTeamResults }) {
     ['Never trained (T3, T5)', r.held_out.all, 'redteam-row-held-out'],
   ]
   return (
-    <Section title="Measured on the test window" testId="redteam-results" aside={`run once · seeds ${r.seeds[0]}-${r.seeds[r.seeds.length - 1]}`}>
-      <table className="w-full text-[0.85rem]">
+    <Section title="Measured on the test window" icon="chart" testId="redteam-results" aside={`run once · seeds ${r.seeds[0]}-${r.seeds[r.seeds.length - 1]}`}>
+      <table className="tbl">
         <thead>
-          <tr className="border-b border-rule text-left text-[0.75rem] text-muted">
-            <th scope="col" className="py-1.5 font-semibold">Stopped fraud</th>
-            <th scope="col" className="py-1.5 text-right font-semibold">n</th>
-            <th scope="col" className="py-1.5 text-right font-semibold">Got a plain allow</th>
-            <th scope="col" className="py-1.5 text-right font-semibold">Got any softer action</th>
+          <tr>
+            <th scope="col">Stopped fraud</th>
+            <th scope="col" className="r">n</th>
+            <th scope="col" className="r">Got a plain allow</th>
+            <th scope="col" className="r">Got any softer action</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(([label, v, id]) => (
-            <tr key={id} className="border-b border-rule last:border-0" data-testid={id}>
-              <td className="py-1.5">{label}</td>
-              <td className="tnum py-1.5 text-right">{v.n}</td>
-              <td className="tnum py-1.5 text-right">{rate(v, 'allow')}</td>
-              <td className="tnum py-1.5 text-right">{rate(v, 'softer')}</td>
+            <tr key={id} data-testid={id}>
+              <td>{label}</td>
+              <td className="tnum r">{v.n}</td>
+              <td className="tnum r">{rate(v, 'allow')}</td>
+              <td className="tnum r">{rate(v, 'softer')}</td>
             </tr>
           ))}
         </tbody>
@@ -232,7 +233,7 @@ function Hardening({ r, h, reload }: { r: RedTeamResults | null; h: RedTeamHarde
       ]
     : []
   return (
-    <Section title="Harden the model with these attacks" testId="redteam-hardening">
+    <Section title="Harden the model with these attacks" icon="refresh" testId="redteam-hardening">
       {h ? (
         <>
           <dl className="grid grid-cols-3 gap-2 text-center" data-testid="redteam-session" data-attacks={h.attacks}>
@@ -308,10 +309,12 @@ export default function RedTeamView() {
   const hard = useAsync(() => api.redteamHardening().catch(() => null), [])
   return (
     <div data-testid="redteam-view">
-      <PageTitle
-        title="Red team: we attack our own model"
-        sub="We play the fraudster against our own system and publish how often we lose, instead of only how often we are right."
-      />
+      <PageTitle title="Red team" />
+      <div className="page">
+      <p className="note mb-4">
+        <Icon name="info" size={16} />
+        <span>We attack our own model: we play the fraudster against our own system and publish how often we lose, instead of only how often we are right.</span>
+      </p>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <LiveAttack onAttacked={hard.reload} />
         <div className="flex flex-col gap-4">
@@ -320,6 +323,7 @@ export default function RedTeamView() {
           {res.data && <Measured r={res.data} />}
           {!hard.loading && <Hardening r={res.data ?? null} h={hard.data ?? null} reload={hard.reload} />}
         </div>
+      </div>
       </div>
     </div>
   )
