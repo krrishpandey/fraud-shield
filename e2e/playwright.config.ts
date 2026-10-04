@@ -18,6 +18,11 @@ export default defineConfig({
   grepInvert: LLM ? undefined : /@llm/,
   use: {
     baseURL: BASE,
+    // The console opens on a sign-in screen; tests start already signed in.
+    storageState: {
+      cookies: [],
+      origins: [BASE, `http://localhost:${PORT}`].map((origin) => ({ origin, localStorage: [{ name: 'fs-analyst', value: 'e2e' }] })),
+    },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     ...(CHANNEL ? { channel: CHANNEL } : {}),

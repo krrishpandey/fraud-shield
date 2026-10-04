@@ -151,7 +151,7 @@ export default function QueueView() {
   const [sort, setSort] = useState<SortKey>('misuse')
   const [tab, setTab] = useState<Tab>('all')
   const [q, setQ] = useState('')
-  const [sel, setSel] = useState<string | null>(null)
+  const [picked, setSel] = useState<string | null>(null)
   const { data, error, loading, reload } = useAsync(() => api.decisions({ limit: 200, action: action || undefined }), [action])
   const learning = useAsync(() => api.learningStatus(), [])
 
@@ -169,9 +169,8 @@ export default function QueueView() {
     return r
   }, [all, sort, tab, q])
 
-  useEffect(() => {
-    if (sel && !rows.some((r) => r.decision_id === sel)) setSel(null)
-  }, [rows, sel])
+  // the selected case, if it is still in the filtered list (a filtered-out selection is not shown)
+  const sel = picked && rows.some((r) => r.decision_id === picked) ? picked : null
 
   // J / K move through the list; Enter opens the full decision.
   useEffect(() => {
