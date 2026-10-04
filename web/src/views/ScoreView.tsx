@@ -324,7 +324,7 @@ export default function ScoreView() {
                     </span>
                     <span className="min-w-0">
                       <span className="bcard-t">{parseTitle(d.title).name}</span>
-                      <span className="bcard-s mono">
+                      <span className="bcard-s tnum">
                         {d.booking.origin_uf} {d.booking.origin_zip3} → {d.booking.dest_uf} {d.booking.dest_zip3} · {kindOf(d)}
                       </span>
                     </span>
@@ -351,7 +351,7 @@ export default function ScoreView() {
                     <h2 id="hero-t" className="hero-t">
                       {cur.name}
                     </h2>
-                    <p className="hero-ids mono">
+                    <p className="hero-ids tnum">
                       {b.booking_id} · acct {b.account_id.slice(0, 8)} · via {b.channel}
                     </p>
                   </div>
@@ -370,7 +370,7 @@ export default function ScoreView() {
                       {t}
                     </span>
                   ))}
-                  <span className="ml-auto mono text-ink-2">
+                  <span className="ml-auto tnum text-ink-2">
                     <Icon name="route" size={15} /> {b.origin_uf} {b.origin_zip3} → {b.dest_uf} {b.dest_zip3}
                   </span>
                 </div>

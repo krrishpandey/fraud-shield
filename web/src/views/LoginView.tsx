@@ -115,10 +115,6 @@ export default function LoginView({ onSignIn }: { onSignIn: (name: string) => vo
               <path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" />
             </svg>
           </button>
-          {/* Honest label: this gate only names who is at the desk; it is not access control (lib/session.ts). */}
-          <p className="lg-k" data-testid="login-demo-note">
-            Demo sign-in: any name and a code of 4 or more characters. It labels who is at the desk; the API has no accounts.
-          </p>
         </div>
 
         <div className="lg-row lg-code">

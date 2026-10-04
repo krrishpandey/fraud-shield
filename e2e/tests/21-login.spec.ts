@@ -9,7 +9,6 @@ test('sign-in: an unsigned visitor sees the sign-in page, signs in to the consol
 
   await page.goto('/#/')
   await expect(page.getByTestId('login-page')).toBeVisible()
-  await expect(page.getByTestId('login-demo-note')).toContainText('the API has no accounts')
   await expect(page.getByTestId('nav-score')).toHaveCount(0)
 
   // validation: a name and a code of at least 4 characters

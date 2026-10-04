@@ -9,7 +9,7 @@ Target length: about 5 minutes. All numbers come from our own runs (see `PROJECT
 ## Before you start (checklist)
 
 - [ ] Open the app with `FraudShield.bat` and confirm the window opens.
-- [ ] Sign in **before** you go on stage: the console opens on a sign-in screen (3D sorting line). Type any analyst name and a code of 4 or more characters, then "Open the console". It is a demo gate that labels who is at the desk, not access control (the API has no accounts; the page says so). The sign-in is remembered until you sign out from the account menu at the foot of the sidebar.
+- [ ] Sign in **before** you go on stage: the console opens on a sign-in screen (3D sorting line). Type any analyst name and a code of 4 or more characters, then "Open the console". It is a demo gate that labels who is at the desk, not access control (the API has no accounts). The page doesn't say so, so if a judge asks, say it plainly: "the sign-in only names the analyst; real access control would sit in front of the API". The sign-in is remembered until you sign out from the account menu at the foot of the sidebar.
 - [ ] Look at the status bar. If it says **degraded**, the fine-tuned Laya model is not loaded and the app is using the LightGBM backup score. Say so if asked. Do not hide it.
 - [ ] Skip the "ask a new question" segment unless Laya is loaded (it needs Laya to answer).
 - [ ] Check that `.env` has the Groq key. Without it, explanations fall back to a fixed template (still fine, just less fluent).

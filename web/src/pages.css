@@ -979,3 +979,9 @@
   gap: 18px;
   animation: route-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+
+/* Score page: booking facts read as UI text, not code (same font as the rest of the card) */
+.hero-meta .tag {
+  font-family: var(--f-body);
+  font-size: 12px;
+}
