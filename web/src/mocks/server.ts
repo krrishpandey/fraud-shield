@@ -161,7 +161,7 @@ export async function mockFetch(path: string, init?: RequestInit): Promise<Respo
     return json({ detail: 'not available in mock mode: the label-free monitor runs over the live stream' }, 503)
   // Account history and the explanation validator live in the Python backend only; the mock never invents them.
   // The counterfactual search runs the real model too (analyst-only), so the mock does not invent one either.
-  if (/^\/decisions\/[^/]+\/(account-story|explanation\/check|counterfactual)$/.test(p))
+  if (/^\/decisions\/[^/]+\/(account-story|explanation\/check|counterfactual|claims)$/.test(p))
     return json({ detail: 'not available in mock mode: run the backend to see account history and the live fact check' }, 503)
   // Owner passkeys are verified with real signatures in the Python backend; the mock never fakes a verification.
   if (p.startsWith('/passkey/') || /^\/decisions\/[^/]+\/owner_confirm\//.test(p))

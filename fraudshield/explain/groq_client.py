@@ -29,6 +29,7 @@ class _Block:
 class _Response:
     content: list[_Block]
     stop_reason: str
+    usage: dict[str, Any] | None = None  # Groq token counts (lets batch jobs pace themselves under the TPM limit)
 
 
 class _Messages:
@@ -36,9 +37,13 @@ class _Messages:
         self._o = owner
 
     def create(self, *, model: str, max_tokens: int, temperature: float, system: str,
-               messages: list[dict[str, Any]]) -> _Response:
+               messages: list[dict[str, Any]], response_format: dict[str, Any] | None = None) -> _Response:
         body = {"model": model, "max_tokens": max_tokens, "temperature": temperature,
                 "messages": [{"role": "system", "content": system}, *messages]}
+        if response_format is not None:
+            # Structured outputs (explain/claims.py): {"type": "json_schema", ...} or {"type": "json_object"}.
+            # A schema Groq cannot serve comes back as HTTP 400, which the caller treats as "try the next mode".
+            body["response_format"] = response_format
         if model.startswith(REASONING_PREFIXES):
             # Hidden reasoning tokens count against max_tokens; without room the answer is cut off.
             body["reasoning_effort"] = "low"
@@ -56,13 +61,16 @@ class _Messages:
                 wait = float(2 ** attempt)
             time.sleep(min(max(wait, 0.5), MAX_RETRY_WAIT_S))
         r.raise_for_status()
-        choice = r.json()["choices"][0]
+        j = r.json()
+        choice = j["choices"][0]
         text = (choice.get("message") or {}).get("content") or ""
         stop = "end_turn" if choice.get("finish_reason") == "stop" else str(choice.get("finish_reason"))
-        return _Response([_Block(text.strip())], stop)
+        return _Response([_Block(text.strip())], stop, j.get("usage"))
 
 
 class GroqClient:
+    supports_response_format = True  # explain/claims.py asks for strict JSON claims only from clients that say so
+
     def __init__(self, api_key: str, http: httpx.Client | None = None, timeout: float = 15.0):
         self.api_key = api_key
         self.http = http or httpx.Client()

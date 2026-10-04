@@ -2,6 +2,7 @@ import type {
   AccountStory, AnalystRequest, AnalystResponse, AskRequest, AskResponse, AuditVerify, Booking, Counterfactual, DashboardMetrics,
   DecisionDetail, DecisionSummary, DemoBooking, ExplanationCheck, FirstScan, FirstScanDial, Health, LearningStatus, RetrainResponse, RollbackResponse,
   ScoreResponse, SimulateFeedbackResponse, StreamFeedRow, StreamFlagged, StreamMetricsResponse, StreamStatus,
+  ExplanationClaims,
 } from './types'
 import type { MonitorEstimate } from './types'
 import type {
@@ -82,6 +83,7 @@ export const api = {
   counterfactual: (id: string) => request<Counterfactual>(`/decisions/${encodeURIComponent(id)}/counterfactual`),
   checkExplanation: (id: string, text: string) =>
     post<ExplanationCheck>(`/decisions/${encodeURIComponent(id)}/explanation/check`, { text }),
+  claims: (id: string) => request<ExplanationClaims>(`/decisions/${encodeURIComponent(id)}/claims`),
   dashboard: (source: 'app' | 'stream' | 'all' = 'app') => request<DashboardMetrics>(`/dashboard/metrics?source=${source}`),
   auditVerify: () => request<AuditVerify>('/audit/verify'),
   learningStatus: () => request<LearningStatus>('/learning/status'),

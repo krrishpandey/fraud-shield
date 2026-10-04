@@ -74,6 +74,8 @@ export interface Explanation {
   source: 'llm' | 'template'
   valid: boolean
   model_id: string | null
+  /** json_schema | json_object | prose | template: how the text was produced (explain/claims.py) */
+  mode?: string
 }
 
 export interface AnalystRecord {
@@ -561,4 +563,48 @@ export interface TamperTestResult {
   tampered_bound_fields_hash: string
   verify_ms: number | null
   audit_hash: string
+}
+
+/** GET /decisions/{id}/claims: the explanation claim by claim, each checked, and agreement with the model's own
+ *  attributions (LightGBM pred_contrib summed per reason code). */
+export interface CheckedClaim {
+  text: string
+  reason_code: string
+  reason_label: string | null
+  cited_fields: string[]
+  numbers: number[]
+  ok: boolean
+  problems: string[]
+}
+export interface ClaimsAgreement {
+  cited: string[]
+  model: string[]
+  hits: number | null
+  of: number
+  hit_at_3: number | null
+  top1_match: boolean | null
+  reachable: number | null
+}
+export interface ClaimsAttribution {
+  available: boolean
+  why?: string
+  method?: string
+  model_version?: string | null
+  top_codes?: { code: string; contribution: number }[]
+  top_features?: { name: string; value: number | null; contribution: number; code: string | null }[]
+  mapped_share?: number | null
+  agreement?: ClaimsAgreement
+}
+export interface ExplanationClaims {
+  decision_id: string
+  action: string
+  explanation_status: string | null
+  explanation_source: 'llm' | 'template' | null
+  mode: string
+  claims_source: 'llm' | 'template'
+  ok: boolean
+  claims: CheckedClaim[]
+  rejected_claims: CheckedClaim[]
+  rejected_problems: string[]
+  attribution: ClaimsAttribution
 }

@@ -220,3 +220,23 @@ Additive fields that say which GBM scores new bookings from now on. Existing fie
 - Every decision's `model_versions.gbm` (API record and audit log) is the exact registry version of the scorer that
   produced its score (e.g. `gbm-B2-F-v1`, no longer the generic `gbm` when `learning.wire_active` is on). A deploy or
   rollback also swaps the GBM of a running live stream. The retrain and rollback audit payloads include `handover`.
+
+## Every sentence checked: claims (v1.4)
+
+`GET /decisions/{id}/claims` returns the explanation claim by claim:
+`{decision_id, action, explanation_status, explanation_source, mode, claims_source, ok, claims, rejected_claims,
+rejected_problems, attribution}`. Each claim is `{text, reason_code, reason_label, cited_fields, numbers, ok, problems}`.
+`mode` is how the text was produced: `json_schema` (Groq strict structured outputs), `json_object` (the schema was
+refused), `prose` (both JSON modes refused or ignored, or a client without structured outputs) or `template` (no LLM).
+`claims_source` is `llm` only when the model's claims passed; otherwise the template's claims are shown and any
+rejected model claims are in `rejected_claims` with their problems. A claim passes if its `reason_code` is one of the
+decision's reasons, the sentence is about that reason, every number (text and `numbers`) is in the record and comes
+from its own cited fields or its reason's fixed wording, every cited field exists, and there is no unknown id or
+banned phrase (fraudshield/explain/claims.py).
+
+`attribution` is `{available, why?, method, model_version, top_codes, top_features, mapped_share, agreement}`:
+LightGBM `pred_contrib` of the scoring model summed per reason code (fraudshield/explain/attribution.py).
+`agreement` = `{cited, model, hits, of, hit_at_3, top1_match, reachable}`; the console shows "Agrees with the
+model's top reasons: <hits> of <of>". `available` is false (with `why`) when the decision has no stored feature values
+or the scorer is not a LightGBM model. `GET /decisions/{id}` also carries `explanation.mode` and `explanation.claims`.
+Measured on the test window: artifacts/results_explanations.md.

@@ -520,6 +520,13 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
     def check_explanation(decision_id: str, body: CheckIn):
         return check_text(_get(decision_id), body.text)
 
+    @r.get("/decisions/{decision_id}/claims")
+    def explanation_claims(decision_id: str):
+        """The explanation claim by claim, each checked, and agreement with the model's own attributions."""
+        from fraudshield.explain.claims import claims_view  # noqa: PLC0415
+        rec = _get(decision_id)
+        return claims_view(rec, _owner(decision_id).gbm)
+
     # ---------- live booking stream ----------
     def _stream_status() -> dict:
         r = stream.get("runner")
