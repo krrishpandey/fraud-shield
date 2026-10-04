@@ -116,7 +116,7 @@ All of this takes well under a second.
 | What you see in the app | What it means in plain words |
 |---|---|
 | **"Show what would change it"** on a stopped booking | The app tells the analyst the smallest change that would have let the parcel through, e.g. "allowed if the declared weight were 0.85 kg instead of 20 kg". Only analysts see it. |
-| **Red team** tab | We play the fraudster against our own model, live on screen: an attacker that only sees our decision tries up to 50 small changes, row by row, until it gets through or gives up. Across the test period, 18% of the stopped fraud got a plain "allow" this way, and retraining against it was refused by our own safety gate. |
+| **Red team** tab | We play the fraudster against our own model, live on screen: an attacker that only sees our decision tries up to 50 small changes, row by row, until it gets through or gives up. Across the test period, 18% of the stopped fraud got a plain "allow" this way. Every trick it finds is kept; once an analyst confirms the original was fraud, a **Retrain** button teaches the model those tricks, and our own safety gate decides whether the new model may take over. |
 | **"Was this you?" with a passkey** | The real owner approves the parcel with Windows Hello or a phone unlock, and the approval only fits *this* parcel: change the price and it no longer counts. |
 | **Label-free monitor** on the Live tab | A daily guess of how well we're doing before the real fraud reports arrive, plus a warning about the kind of fraud the guess can't see. |
 | **"From now on…" banner** on the Learning tab | After retraining, one sentence says which model is now making the decisions, and if the old one stayed, why. |

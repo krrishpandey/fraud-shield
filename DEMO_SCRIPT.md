@@ -184,6 +184,10 @@ Each beat below replaces or extends a segment above, so the talk stays about 5 m
 
 Optional second run (8 s): target **"Demo: Label-resale account takeover"**: 50 tries, all Hold, green **"Our model held"**.
 
+**Then harden it, live (0:20):** the right-hand panel **"Harden the model with these attacks"** has counted the attack and kept the evading bookings (3 for blk-06). Click **"Confirm original as fraud (analyst)"**: they become fraud labels. Click **"Retrain with N new evasion labels"** (about 5 s). The banner says which model scores new bookings from now on. In rehearsal (blk-06 and blk-08, 6 labels) it said **"Still using gbm-B2-F-v1 … no proven improvement"**; read out whatever it says. The offline measured run stays underneath for reference.
+
+> "Every attack feeds the same learning loop as the analysts. Once an analyst confirms the original was fraud, the tricks become training data, and the same pre-registered gate decides. Here a handful of new examples isn't enough proof, so the old model stays. In our measured run, 113 of them would have bothered honest shippers, so the gate said no there too."
+
 Any stopped decision also has a **"Red-team this decision"** link that opens this tab with that decision selected.
 
 **Say:**
