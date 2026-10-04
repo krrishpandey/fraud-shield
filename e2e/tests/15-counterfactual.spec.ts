@@ -38,5 +38,15 @@ test('analyst sees what would change a stopped decision, and the view is audited
   const audit = await (await request.get('/audit/verify')).json()
   expect(audit.ok).toBe(true)
   expect(audit.records).toBeGreaterThanOrEqual(before + 2) // the UI view and the API view
+
+  // opening another stopped decision must not carry this decision's result over (panel is per decision)
+  const demo = await (await request.get('/demo/bookings')).json()
+  const drop = demo.find((d: { scenario: string }) => d.scenario === 'reshipping-drop')
+  const s = await (await request.post('/score', { data: { ...drop.booking, booking_id: `e2e-cf-other-${drop.booking.booking_id}` } })).json()
+  expect(STOP_ACTIONS).toContain(s.action)
+  await page.goto(`/#/decisions/${s.decision_id}`)
+  await expect(page.getByTestId('decision-detail')).toHaveAttribute('data-decision-id', s.decision_id)
+  await expect(page.getByTestId('counterfactual-load')).toBeVisible()
+  await expect(page.getByTestId('counterfactual-result')).toHaveCount(0)
   expect(errors).toEqual([])
 })

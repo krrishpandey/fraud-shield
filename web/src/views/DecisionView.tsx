@@ -513,8 +513,9 @@ export default function DecisionView() {
             </div>
           )}
           {(d.action === 'allow_scan_gated' || d.first_scan) && <DepotScan d={d} onDone={reload} />}
-          {d.action !== 'allow' && b && <CounterfactualPanel decisionId={d.decision_id} />}
-          <OwnerPasskey d={d} onDone={reload} />
+          {/* keyed by decision: their click-loaded results belong to one decision and must not carry over */}
+          {d.action !== 'allow' && b && <CounterfactualPanel key={`cf-${d.decision_id}`} decisionId={d.decision_id} />}
+          <OwnerPasskey key={`pk-${d.decision_id}`} d={d} onDone={reload} />
           <div className="mt-6 max-w-[60ch]" data-testid="analyst-panel">
             <h2 className="verdict-h2">Your decision as the analyst</h2>
             <AnalystPanel d={d} onDone={reload} />

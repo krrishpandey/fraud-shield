@@ -111,10 +111,24 @@ def test_rate_limit_waits_as_asked_and_retries(monkeypatch):
     assert resp.content[0].text == "Held." and len(calls) == 3 and slept == [2.0, 2.0]
 
 
-def test_rate_limit_wait_is_capped_and_gives_up_after_max_tries(monkeypatch):
+def test_rate_limit_gives_up_after_max_tries(monkeypatch):
     slept = []
     monkeypatch.setattr("fraudshield.explain.groq_client.time.sleep", lambda s: slept.append(s))
-    c = _client(lambda req: httpx.Response(429, headers={"retry-after": "600"}))
+    c = _client(lambda req: httpx.Response(429))  # no Retry-After: short exponential waits
     with pytest.raises(httpx.HTTPStatusError):
         c.messages.create(model="m", max_tokens=10, temperature=0, system="s", messages=[])
     assert len(slept) == 3 and max(slept) <= 30.0
+
+
+def test_retry_after_beyond_the_cap_gives_up_at_once(monkeypatch):
+    # Daily token quota spent: Groq asks for minutes or hours. Waiting 3 x 30 s only delays the template by 90 s.
+    slept, calls = [], []
+    monkeypatch.setattr("fraudshield.explain.groq_client.time.sleep", lambda s: slept.append(s))
+
+    def handler(req):
+        calls.append(1)
+        return httpx.Response(429, headers={"retry-after": "600"})
+
+    with pytest.raises(httpx.HTTPStatusError):
+        _client(handler).messages.create(model="m", max_tokens=10, temperature=0, system="s", messages=[])
+    assert slept == [] and len(calls) == 1

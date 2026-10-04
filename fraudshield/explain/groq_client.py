@@ -48,8 +48,9 @@ class _Messages:
             # Hidden reasoning tokens count against max_tokens; without room the answer is cut off.
             body["reasoning_effort"] = "low"
             body["max_tokens"] = max(max_tokens, 2000)
-        # Rate limited (429): wait as long as Groq asks (Retry-After, capped) and try again. Explanations run in
-        # the background, so waiting is fine; after the last try the error reaches the caller (template shown).
+        # Rate limited (429): wait as long as Groq asks (Retry-After) and try again. Explanations run in the
+        # background, so a short wait is fine. A Retry-After beyond the cap means the daily quota is spent: give up
+        # at once rather than delay the template. After the last try the error reaches the caller (template shown).
         for attempt in range(RATE_LIMIT_RETRIES + 1):
             r = self._o.http.post(GROQ_URL, json=body, headers={"Authorization": f"Bearer {self._o.api_key}"},
                                   timeout=self._o.timeout)
@@ -59,7 +60,9 @@ class _Messages:
                 wait = float(r.headers.get("retry-after", 2 ** attempt))
             except ValueError:
                 wait = float(2 ** attempt)
-            time.sleep(min(max(wait, 0.5), MAX_RETRY_WAIT_S))
+            if wait > MAX_RETRY_WAIT_S:
+                break
+            time.sleep(max(wait, 0.5))
         r.raise_for_status()
         j = r.json()
         choice = j["choices"][0]
