@@ -2,17 +2,21 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from 'recharts'
 import { api } from '../api/client'
 import { ACTIONS, type DashboardMetrics, type FirstScanDial } from '../api/types'
-import { ErrorBox, Loading, PageTitle, Section } from '../components/common'
+import { ErrorBox, Loading, Page, PageTitle, Section } from '../components/common'
+import { SlideInd } from '../components/SlideInd'
+import { Icon } from '../components/Icon'
 import { ACTION_META, TYPOLOGY_META, typologyName } from '../lib/domain'
 import { fmtBRL, fmtInt, fmtMs, fmtPct } from '../lib/format'
 import { useCssVars } from '../lib/useCssVars'
 
 function Kpi({ name, label, value, sub }: { name: string; label: string; value: ReactNode; sub?: ReactNode }) {
   return (
-    <div className="panel px-3.5 py-3" data-testid={`dashboard-kpi-${name}`}>
-      <div className="text-[0.78rem] text-ink-2">{label}</div>
-      <div className="mt-0.5 text-[1.5rem] leading-tight font-bold">{value}</div>
-      {sub && <div className="mt-0.5 text-[0.75rem] text-muted">{sub}</div>}
+    <div className="panel kpi" data-testid={`dashboard-kpi-${name}`}>
+      <div className="min-w-0">
+        <div className="kpi-label">{label}</div>
+        <div className="kpi-value">{value}</div>
+        {sub && <div className="kpi-sub">{sub}</div>}
+      </div>
     </div>
   )
 }
@@ -61,32 +65,27 @@ function TrendChart({ m }: { m: DashboardMetrics }) {
 
   return (
     <div data-testid="trend-chart" data-mode={mode}>
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="Series" className="flex gap-1">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div role="group" aria-label="Series" className="seg">
+          <SlideInd />
           {(
             [
-              ['typology', 'Fraud stopped, by typology'],
+              ['typology', 'By fraud type'],
               ['held', 'Held shipments'],
             ] as [Mode, string][]
           ).map(([k, l]) => (
-            <button
-              key={k}
-              type="button"
-              aria-pressed={mode === k}
-              data-testid={`trend-mode-${k}`}
-              onClick={() => setMode(k)}
-              className={`rounded-sm border px-2.5 py-1 text-[0.78rem] font-semibold ${mode === k ? 'border-brand bg-brand text-brand-ink' : 'border-rule text-ink-2'}`}
-            >
+            <button key={k} type="button" aria-pressed={mode === k} data-testid={`trend-mode-${k}`} onClick={() => setMode(k)}>
               {l}
             </button>
           ))}
         </div>
-        <button type="button" className="btn ml-auto py-1 text-[0.78rem]" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)} data-testid="trend-table-toggle">
+        <button type="button" className="btn ml-auto" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)} data-testid="trend-table-toggle">
+          <Icon name={asTable ? 'chart' : 'lines'} size={16} />
           {asTable ? 'Show chart' : 'Show as table'}
         </button>
       </div>
-      {mode === 'typology' && !asTable && (
-        <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.75rem] text-ink-2" aria-label="Legend">
+      {mode === 'typology' && !asTable && typologies.length > 0 && (
+        <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-2" aria-label="Legend">
           {typologies.map((t) => (
             <li key={t} className="flex items-center gap-1.5">
               <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-[2px]" style={{ background: colorOf(t) }} />
@@ -96,15 +95,15 @@ function TrendChart({ m }: { m: DashboardMetrics }) {
         </ul>
       )}
       {asTable ? (
-        <div className="max-h-[260px] overflow-auto">
-          <table className="w-full text-[0.78rem]" data-testid="trend-table">
+        <div className="max-h-[280px] overflow-auto">
+          <table className="tbl" data-testid="trend-table">
             <thead className="sticky top-0 bg-surface">
-              <tr className="border-b border-rule text-left text-muted">
-                <th scope="col" className="py-1 pr-3">Date</th>
-                <th scope="col" className="py-1 pr-3 text-right">Fraud stopped</th>
-                <th scope="col" className="py-1 pr-3 text-right">Held</th>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col" className="r">Fraud stopped</th>
+                <th scope="col" className="r">Held</th>
                 {typologies.map((t) => (
-                  <th key={t} scope="col" className="py-1 pr-3 text-right" title={typologyName(t)}>
+                  <th key={t} scope="col" className="r" title={typologyName(t)}>
                     {t}
                   </th>
                 ))}
@@ -112,12 +111,12 @@ function TrendChart({ m }: { m: DashboardMetrics }) {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.date} className="tnum border-b border-rule">
-                  <td className="py-0.5 pr-3">{r.date}</td>
-                  <td className="py-0.5 pr-3 text-right">{r.fraud_stopped}</td>
-                  <td className="py-0.5 pr-3 text-right">{r.held}</td>
+                <tr key={r.date} className="tnum">
+                  <td>{r.date}</td>
+                  <td className="r">{r.fraud_stopped}</td>
+                  <td className="r">{r.held}</td>
                   {typologies.map((t) => (
-                    <td key={t} className="py-0.5 pr-3 text-right">
+                    <td key={t} className="r">
                       {(r as Record<string, number | string>)[t]}
                     </td>
                   ))}
@@ -125,6 +124,11 @@ function TrendChart({ m }: { m: DashboardMetrics }) {
               ))}
             </tbody>
           </table>
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="empty-chart">
+          <Icon name="chart" size={22} />
+          <p>No decisions in this window yet. Score a booking or start the live stream and the days fill in here.</p>
         </div>
       ) : (
         <div className="h-[240px]" role="img" aria-label={mode === 'typology' ? 'Fraud bookings stopped per day, stacked by typology' : 'Held shipments per day'}>
@@ -155,11 +159,14 @@ function TrendChart({ m }: { m: DashboardMetrics }) {
           </ResponsiveContainer>
         </div>
       )}
-      <p className="mt-1 text-[0.75rem] text-muted">Bookings per day, {m.window.from} to {m.window.to}. Typology comes from the evaluation labels.</p>
+      <p className="mt-2 text-[13px] text-muted">
+        Bookings per day{m.window.from ? `, ${m.window.from} to ${m.window.to}` : ''}. Fraud type comes from the evaluation labels.
+      </p>
     </div>
   )
 }
 
+/** "What the gate did": share let through with no friction, then a stacked bar and a row per stopping action. */
 function ActionMix({ m }: { m: DashboardMetrics }) {
   const by = m.totals.by_action
   const total = m.totals.bookings || 1
@@ -218,26 +225,45 @@ function DepotDial() {
   }
   if (!dial || dial.levels.length === 0) return null
   return (
-    <Section title="Depot weighing" aside="weight fraud is only visible on a scale" testId="depot-dial">
-      <p className="mb-3 max-w-[80ch] text-[0.85rem] text-ink-2">
-        Parcels declared far below an account's usual size and weight are weighed at the first depot scan, and one failed
-        scan puts that account's next parcels on the scale too. Weighing more honest parcels catches more weight fraud.
-        Measured on the test window over 10 seeds; thresholds chosen on separate validation data.
+    <Section title="Depot weighing" icon="scale" aside="weight fraud only shows on a scale" testId="depot-dial">
+      <p className="mb-4 max-w-[86ch] text-[14px] text-ink-2">
+        Parcels declared far lighter than an account usually ships are weighed at the first depot scan.
       </p>
-      <div className="dial-grid" role="radiogroup" aria-label="How many parcels to weigh">
-        {dial.levels.map((lv) => (
-          <button key={lv.name} type="button" role="radio" aria-checked={dial.current === lv.name} disabled={busy}
-            className={`dial-opt${dial.current === lv.name ? ' is-on' : ''}`} onClick={() => choose(lv.name)}
-            data-testid={`dial-${lv.name}`} data-current={dial.current === lv.name}>
-            <span className="dial-name">{lv.name === 'standard' ? 'Standard' : `Target ${lv.name}`}</span>
-            <span className="dial-big tnum">{Math.round(lv.t6_caught * 100)}%</span>
-            <span className="dial-small">of weight fraud caught</span>
-            <span className="dial-small tnum">{(lv.honest_weighed * 100).toFixed(1)}% of honest parcels weighed</span>
-          </button>
-        ))}
+      <div className="dial-row" role="radiogroup" aria-label="How many parcels to weigh">
+        {dial.levels.map((lv) => {
+          const on = dial.current === lv.name
+          return (
+            <button
+              key={lv.name}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              disabled={busy}
+              className={`dial-card${on ? ' is-on' : ''}`}
+              onClick={() => choose(lv.name)}
+              data-testid={`dial-${lv.name}`}
+              data-current={on}
+            >
+              <span className="dial-card-name">
+                {lv.name === 'standard' ? 'Standard' : `Target ${lv.name}`}
+                {on && <span className="dial-card-in">In use</span>}
+              </span>
+              <span className="dial-card-big tnum">{Math.round(lv.t6_caught * 100)}%</span>
+              <span className="text-[13px] text-muted">of weight fraud caught</span>
+              <span className="dial-card-meter" aria-hidden="true">
+                <span style={{ width: `${Math.min(lv.honest_weighed * 100 * 4, 100)}%` }} />
+              </span>
+              <span className="tnum text-[13px] text-ink-2">{(lv.honest_weighed * 100).toFixed(1)}% of honest parcels weighed</span>
+            </button>
+          )
+        })}
       </div>
-      {err && <p className="mt-2 text-[0.85rem] text-danger" role="alert">{err}</p>}
-      <p className="mt-2 text-[0.78rem] text-muted" data-testid="dial-current">
+      {err && (
+        <p className="mt-2 text-[14px] text-danger" role="alert">
+          {err}
+        </p>
+      )}
+      <p className="mt-3 text-[13px] text-muted" data-testid="dial-current">
         In use: {dial.current}. Changes apply to new bookings and are written to the audit log.
       </p>
     </Section>
@@ -288,67 +314,83 @@ export default function DashboardView() {
   const loading = !m && !error
   return (
     <div>
-      <PageTitle title="Dashboard" sub={m && m.window.from ? `Window ${m.window.from} to ${m.window.to}.` : undefined} />
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="live-rates" role="radiogroup" aria-label="Which bookings">
+      <PageTitle title="Dashboard">
+        <span className="chip-btn">
+          <Icon name="calendar" size={16} />
+          {m && m.window.from ? `${m.window.from} – ${m.window.to}` : 'No decisions yet'}
+        </span>
+        <div className="seg" role="radiogroup" aria-label="Which bookings">
+          <SlideInd />
           {SOURCES.map(([k, label]) => (
-            <button key={k} type="button" role="radio" aria-checked={source === k}
-              className={`live-rate${source === k ? ' is-on' : ''}`} style={{ padding: '0.4rem 0.8rem' }}
-              onClick={() => setSource(k)} data-testid={`dashboard-source-${k}`}>
+            <button key={k} type="button" role="radio" aria-checked={source === k} onClick={() => setSource(k)} data-testid={`dashboard-source-${k}`}>
               {label}
             </button>
           ))}
         </div>
-        <span className="text-[0.8rem] text-muted" data-testid="dashboard-updated" role="status">
-          {updated ? `Updated ${updated.toLocaleTimeString()}, refreshes every ${REFRESH_MS / 1000} seconds` : 'Loading...'}
-          {source !== 'app' && m?.stream_bookings ? `. Live stream truth comes from the replayed dataset.` : ''}
-        </span>
-      </div>
-      {error && <ErrorBox message={error} onRetry={reload} />}
-      {loading && <Loading what="metrics" />}
-      {m && (
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <Kpi name="bookings" label="Bookings scored" value={<span className="tnum">{fmtInt(m.totals.bookings)}</span>} />
-            <Kpi name="held" label="Shipments held" value={<span className="tnum">{fmtInt(m.held_shipments)}</span>} sub="no label until verified" />
-            <Kpi
-              name="net-prevented"
-              label="Net revenue loss prevented"
-              value={<span className="tnum">{fmtBRL(m.net_prevented_brl, true)}</span>}
-              sub={
-                <span className="tnum">
-                  {fmtBRL(m.revenue_loss_prevented_brl, true)} stopped, minus {fmtBRL(m.friction_cost_brl, true)} friction
-                </span>
-              }
-            />
-            <Kpi name="fpr-legit" label="False positives, legit shippers" value={<span className="tnum">{fmtPct(m.fpr_legit, 1)}</span>} sub="legitimate bookings flagged" />
-            <Kpi name="fpr-hard-negative" label="False positives, hard negatives" value={<span className="tnum">{fmtPct(m.fpr_hard_negative, 1)}</span>} sub="legit but unusual, like a first new state" />
-            <Kpi
-              name="latency"
-              label="Decision latency"
-              value={<span className="tnum">{fmtMs(m.latency.p50_ms)}</span>}
-              sub={<span className="tnum">p50, with p99 {fmtMs(m.latency.p99_ms)}</span>}
-            />
-          </div>
+      </PageTitle>
+      <Page>
+        <div className="offline-row">
+          <Kpi name="offline-prauc" label="Main score · PR-AUC" value={<span className="tnum">0.74</span>} sub="Rules alone: 0.17 — about 4× better" />
+          <Kpi name="offline-campaign" label="Campaign recall" value={<span className="tnum">87%</span>} sub="of coordinated fraud waves caught" />
+          <Kpi name="offline-precision" label="Precision" value={<span className="tnum">55%</span>} sub="Recall 45% at the chosen threshold" />
+          <Kpi name="offline-fpr" label="Honest shippers stopped" value={<span className="tnum">0.5%</span>} sub="False-positive rate · limit 1%" />
+        </div>
+        <p className="-mt-1.5 text-[12.5px] text-muted">Offline test · real data columns only · 10 seeds</p>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-            <Section title="Fraud stopped and held, per day">
-              <TrendChart m={m} />
-            </Section>
-            <Section title="Action mix">
+        {error && <ErrorBox message={error} onRetry={reload} />}
+        {loading && <Loading what="metrics" />}
+
+        <div className="dash-grid">
+          {m && (
+            <Section title="What the gate did" icon="box">
               <ActionMix m={m} />
             </Section>
-          </div>
-
-          <DepotDial />
-
-          <div className="panel border-dashed p-3 text-[0.8rem] text-ink-2" data-testid="dashboard-assumptions" role="note">
-            <strong>Assumptions.</strong> Money figures use cost matrix <code className="font-mono">{m.assumptions.cost_matrix_version}</code>: {m.assumptions.note}.
-            Friction is the estimated cost to legitimate shippers of checks, delays and holds, and is shown separately from the loss
-            prevented.
-          </div>
+          )}
         </div>
-      )}
+
+        {m && (
+          <>
+            <div className="sect-h">
+              <h2>Decisions in this console</h2>
+              <span className="text-[13px] text-muted" data-testid="dashboard-updated" role="status">
+                {updated ? `Updated ${updated.toLocaleTimeString()}` : 'Loading...'}
+              </span>
+            </div>
+            <div className="live-kpis">
+              <Kpi name="bookings" label="Bookings scored" value={<span className="tnum">{fmtInt(m.totals.bookings)}</span>} />
+              <Kpi name="held" label="Shipments held" value={<span className="tnum">{fmtInt(m.held_shipments)}</span>} sub="no label until verified" />
+              <Kpi
+                name="net-prevented"
+                label="Net loss prevented"
+                value={<span className="tnum">{fmtBRL(m.net_prevented_brl, true)}</span>}
+                sub={
+                  <span className="tnum">
+                    {fmtBRL(m.revenue_loss_prevented_brl, true)} stopped − {fmtBRL(m.friction_cost_brl, true)} friction
+                  </span>
+                }
+              />
+              <Kpi name="fpr-legit" label="Honest flagged" value={<span className="tnum">{fmtPct(m.fpr_legit, 1)}</span>} sub="legitimate bookings stopped" />
+              <Kpi name="fpr-hard-negative" label="Hard cases flagged" value={<span className="tnum">{fmtPct(m.fpr_hard_negative, 1)}</span>} sub="honest but unusual, like a first new state" />
+              <Kpi name="latency" label="Decision time" value={<span className="tnum">{fmtMs(m.latency.p50_ms)}</span>} sub={<span className="tnum">p50 · p99 {fmtMs(m.latency.p99_ms)}</span>} />
+            </div>
+
+            <Section title="Fraud stopped and held, per day" icon="chart">
+              <TrendChart m={m} />
+            </Section>
+
+            <DepotDial />
+
+            <p className="note" data-testid="dashboard-assumptions" role="note">
+              <Icon name="info" size={16} />
+              <span>
+                <b>Assumptions.</b> Money figures use cost matrix <code className="text-[12.5px]">{m.assumptions.cost_matrix_version}</code>:{' '}
+                {m.assumptions.note}. Friction is the estimated cost to legitimate shippers of checks, delays and holds, shown separately from
+                the loss prevented.
+              </span>
+            </p>
+          </>
+        )}
+      </Page>
     </div>
   )
 }
