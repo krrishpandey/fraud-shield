@@ -99,7 +99,7 @@ Rows 9-13 were added for round 3 (2026-10-04) and scored with the same three tes
 - **Proof:**
   - Red team (`artifacts/results_redteam.md`; test window, run once, n = 320 stopped fraud bookings of trained types, seeds 0-7, injected fraud): an attacker who only sees our decision and changes at most 2 fields in 50 tries gets 18.1 ± 7.6% to plain allow and 63.1 ± 7.3% to some softer action. Retraining on evasions made from train-window fraud only was **rejected** by our unchanged gate (hard-negative false positives 0.27% to 1.68%).
   - Monitor (`artifacts/results_monitor.md`; test window, 10 seeds): estimating from calibrated scores alone, it under-counts missed fraud from never-trained types by 1.45 ± 0.43 per week, and the score-drift signal does not change when they are present.
-- **Demo moment:** Live tab, the "Label-free monitor" card with its blind-spot line. Then one sentence with the red-team numbers.
+- **Demo moment:** Red team tab: launch the attack on blk-06 and watch it get through at try 24, next to the measured table and the gate's rejection. Then the Live tab's "Label-free monitor" card with its blind-spot line.
 - **Judge challenge:** "So 63% of the fraud you catch can get past you?"
 - **Our answer:** "63% can get something softer with two changes and 50 tries; 18% get a plain allow. Most do it by claiming a sender the account already uses. We publish it because a fraudster will find it anyway, and our gate stopped us from 'fixing' it in a way that hurts honest shippers."
 

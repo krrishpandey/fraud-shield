@@ -178,7 +178,20 @@ Each beat below replaces or extends a segment above, so the talk stays about 5 m
 **Say:**
 > "Fraud labels arrive weeks late. This card estimates how precise our stops are and how much fraud we let through, today, from calibrated scores alone. And we measured where it fails: on fraud types the model never learned, it under-counts missed fraud by 1.45 per week. Our drift alarm doesn't see those types either. So we say it on screen instead of trusting a green light."
 
-### 9. (extends segment 9) We attacked our own model (one sentence)
+### 8b. Red team: we attack our own model, live (0:35; replaces segment 8 if short on time)
+
+**Screen:** the **Red team** tab. Target **"Stopped booking blk-06"**, click **Launch attack**. The tries scroll in one per row, each with the decision it got back (Hold, Hold, Scan-gated...). At try 24 the row turns red: **"The attacker got through"**. Point right: the measured table, then the red **"our own gate said no"** box.
+
+Optional second run (8 s): target **"Demo: Label-resale account takeover"**: 50 tries, all Hold, green **"Our model held"**.
+
+Any stopped decision also has a **"Red-team this decision"** link that opens this tab with that decision selected.
+
+**Say:**
+> "We play the fraudster against our own system. This attacker sees only what a fraudster would see, our decision, never the risk score. It may change two things a fraudster controls, and it gets 50 tries. Watch: hold, hold, scan check... and at try 24 it gets through, by declaring a 20-kilo parcel as 0.85 kilos at a lower value. Across the test window that happens to 18% of the fraud we stop. We publish that number. Then we retrained on those tricks, and our own safety gate rejected the new model, because it would have stopped more honest shippers."
+
+**If asked "how often does it fail?":** the takeover booking held for all 50 tries; on the test window 63% of stopped fraud gets some softer action, but most of those are still stopped (hold instead of block) or still weighed at the depot.
+
+### 9. (extends segment 9) We attacked our own model (one sentence, if 8b was skipped)
 
 **Say:**
 > "We also attacked our own model. An attacker who only sees our decision and changes at most two fields gets 18% of the fraud we stop through as a plain allow, and 63% to some softer action, mostly by reusing a sender the account already knows. We retrained on those evasions and our own gate rejected that model too, because it bothered honest shippers."
