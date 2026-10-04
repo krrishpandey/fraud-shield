@@ -330,12 +330,16 @@ export default function DashboardView() {
       </PageTitle>
       <Page>
         <div className="offline-row">
-          <Kpi name="offline-prauc" label="Main score · PR-AUC" value={<span className="tnum">0.74</span>} sub="Rules alone: 0.17 — about 4× better" />
-          <Kpi name="offline-campaign" label="Campaign recall" value={<span className="tnum">87%</span>} sub="of coordinated fraud waves caught" />
-          <Kpi name="offline-precision" label="Precision" value={<span className="tnum">55%</span>} sub="Recall 45% at the chosen threshold" />
-          <Kpi name="offline-fpr" label="Honest shippers stopped" value={<span className="tnum">0.5%</span>} sub="False-positive rate · limit 1%" />
+          {/* Measured offline (artifacts/results_gbm.md, B2 tier R, mean of 10 seeds): exact values, never rounded up. */}
+          <Kpi name="offline-prauc" label="Main score · PR-AUC" value={<span className="tnum">0.743</span>} sub="Rules alone: 0.168, about 4× lower" />
+          <Kpi name="offline-campaign" label="Campaign recall" value={<span className="tnum">86.7%</span>} sub="of coordinated fraud waves caught" />
+          <Kpi name="offline-precision" label="Precision" value={<span className="tnum">55.5%</span>} sub="Recall 44.6%, flagging the top 1% of bookings per day" />
+          <Kpi name="offline-fpr" label="Honest shippers stopped" value={<span className="tnum">0.5%</span>} sub="False-positive rate on legitimate bookings" />
         </div>
-        <p className="-mt-1.5 text-[12.5px] text-muted">Offline test · real data columns only · 10 seeds</p>
+        <p className="-mt-1.5 text-[12.5px] text-muted">
+          Measured offline: test window, real data columns only, mean of 10 seeds (artifacts/results_gbm.md). Fraud is injected (synthetic) on real
+          Olist histories.
+        </p>
 
         {error && <ErrorBox message={error} onRetry={reload} />}
         {loading && <Loading what="metrics" />}
