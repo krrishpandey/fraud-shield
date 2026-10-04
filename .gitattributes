@@ -1,0 +1,2 @@
+# LightGBM text models: never convert line endings (CRLF makes LightGBM abort on load)
+*.lgb -text

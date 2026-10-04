@@ -28,3 +28,5 @@ artifacts/models/registry.json
 artifacts/models/versions/
 # runtime owner passkeys enrolled on this machine (demo)
 artifacts/passkeys/
+# Claude Code agent worktrees (contain junctions to local data)
+.claude/worktrees/
