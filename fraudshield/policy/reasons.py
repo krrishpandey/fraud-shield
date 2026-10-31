@@ -117,6 +117,7 @@ REASON_PLAIN: dict[str, str] = {
     "DROP_ADDRESS_PATTERN": "Receiver looks like a reshipping drop",
     "UNDER_DECLARED_PARCEL": "Declared weight and size far below the account's usual parcels",
     "ACCOUNT_FAILED_DEPOT_SCAN": "A parcel from this account failed a depot weight check",
+    "ACCOUNT_LOCKED": "Account locked: the owner said a booking on it was not theirs",
 }
 
 

@@ -10,6 +10,7 @@ import type {
   CredentialJSON, OwnerConfirmation, OwnerConfirmOptions, PasskeyEnrollOptions, PasskeyEnrollResult, PasskeyStatus,
   TamperTestResult,
 } from './types'
+import type { AuditRecord, LayaExplanation, LayaStatus, SimAnswer, Verification, VerifyFeedRow, VerifyMetrics, VerifyScenario, VerifyStatusInfo } from './verify'
 
 export const MOCK = import.meta.env.VITE_MOCK === '1' || import.meta.env.VITE_MOCK === 'true'
 // Empty VITE_API_URL means same origin (the desktop app serves web/dist and the API together).
@@ -123,6 +124,34 @@ export const api = {
     post<OwnerConfirmation>(`/decisions/${encodeURIComponent(id)}/owner_confirm/verify`, body),
   ownerConfirmTamper: (id: string, body: { nonce_id: string; credential: CredentialJSON; field: string; delta?: number; value?: string }) =>
     post<TamperTestResult>(`/decisions/${encodeURIComponent(id)}/owner_confirm/tamper_test`, body),
+  // Tracd Verify: owner voice calls for held bookings (fraudshield/voice)
+  verifyStatus: () => request<VerifyStatusInfo>('/verify/status'),
+  verifyFeed: (limit = 60) => request<VerifyFeedRow[]>(`/verify/feed?limit=${limit}`),
+  verification: (id: string) => request<Verification>(`/verify/verifications/${encodeURIComponent(id)}`),
+  verifications: (limit = 200) => request<Verification[]>(`/verify/verifications?limit=${limit}`),
+  verifyStart: (id: string, answer?: SimAnswer) =>
+    post<Verification>(`/verify/start/${encodeURIComponent(id)}`, { simulated: Boolean(answer), answer: answer ?? null }),
+  verifyCases: (includeResolved = false) => request<Verification[]>(`/verify/cases?include_resolved=${includeResolved}`),
+  verifyResolve: (id: string, label: 'fraud' | 'legit', note = '') =>
+    post<Verification>(`/verify/cases/${encodeURIComponent(id)}`, { label, note }),
+  verifyMetrics: () => request<VerifyMetrics>('/verify/metrics'),
+  verifyScenarios: () => request<VerifyScenario[]>('/verify/scenarios'),
+  verifyDemo: (scenario: string, simulated = false) =>
+    post<{ decision_id: string; action: string; score_ms: number; verification: Verification | null }>(
+      `/verify/demo/${encodeURIComponent(scenario)}?simulated=${simulated}`,
+      {},
+    ),
+  layaStatus: () => request<LayaStatus>('/laya/status'),
+  decisionLaya: (id: string) =>
+    request<LayaExplanation & { verification: { status: string; final_action: string | null; mode: string | null } | null }>(
+      `/decisions/${encodeURIComponent(id)}/laya`,
+    ),
+  auditRecords: (params: { limit?: number; decision_id?: string; event_type?: string } = {}) => {
+    const q = new URLSearchParams({ limit: String(params.limit ?? 100) })
+    if (params.decision_id) q.set('decision_id', params.decision_id)
+    if (params.event_type) q.set('event_type', params.event_type)
+    return request<{ records: AuditRecord[]; total: number }>(`/audit/records?${q.toString()}`)
+  },
 }
 
 /** Accepts either DemoBooking items or bare Booking objects (scenario taken from meta.scenario). */

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { API_LABEL } from '../api/client'
 import { useStatus } from '../lib/status'
 import { Icon, type IconName } from './Icon'
@@ -64,7 +63,7 @@ export function Section({
 
 /** The CPU · latency · open-cases cluster from the design, plus history and help buttons. */
 function StatusCluster() {
-  const { health, healthError, latencyMs, openCases } = useStatus()
+  const { health, healthError, latencyMs } = useStatus()
   let state = 'unknown'
   let word = 'Checking'
   let tone = 'var(--muted)'
@@ -92,29 +91,19 @@ function StatusCluster() {
           aria-live="polite"
           title={healthError ? `${API_LABEL}: ${healthError}` : `${word} · ${layaWord} · API ${API_LABEL}`}
         >
-          <span className="dot" style={{ background: tone }} aria-hidden="true" />
-          <span className="sr-only">{word}. {layaWord}. </span>
-          <b>{health ? (health.gpu ? 'GPU' : 'CPU') : '—'}</b>
-          <span className="sr-only">{health && !health.gpu ? ' only' : ''}</span>
-          {health?.laya_mode === 'cached' && (
-            <span className="cluster-tag" title="Laya answers come from a cache">
-              Cached
-            </span>
-          )}
+          {/* Shown: one word. The technical detail stays for screen readers and the title tooltip. */}
+          <span className="dot" style={{ background: healthError ? 'var(--danger)' : health ? 'var(--ok)' : tone }} aria-hidden="true" />
+          <b>{healthError ? 'Offline' : health ? 'Online' : '…'}</b>
+          <span className="sr-only">
+            {' '}{word}. {layaWord}. {health ? (health.gpu ? 'GPU' : 'CPU only') : ''}
+            {health?.laya_mode === 'cached' ? '. Cached' : ''}
+          </span>
         </span>
-        <span className="cluster-seg" title="Median decision time">
-          <Icon name="pulse" size={16} />
+        <span className="cluster-seg" title="Median time to check a booking">
           <b className="tnum">{latencyMs == null ? '—' : `${Math.round(latencyMs)} ms`}</b>
         </span>
-        <Link to="/queue" className="cluster-seg" title="Open cases waiting for an analyst">
-          <Icon name="list" size={16} />
-          <b className="tnum">{openCases.length}</b>
-        </Link>
       </div>
-      <Link to="/audit" className="ph-icon" aria-label="Audit log" title="Audit log">
-        <Icon name="history" size={18} />
-      </Link>
-      <a className="ph-icon" href="#/" aria-label="Help: start from Score a booking" title="Start from Score a booking">
+      <a className="ph-icon" href="#/how" aria-label="How it works" title="How it works">
         <Icon name="help" size={18} />
       </a>
     </div>

@@ -14,7 +14,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from typing import Any, Callable
 
-from fraudshield.contracts import SERVED_QUESTIONS, Booking
+from fraudshield.contracts import ACTIONS, SERVED_QUESTIONS, Booking, FeatureVector
 from fraudshield.explain.claims import explain_claims
 from fraudshield.explain.llm import DEFAULT_MODEL_ID
 from fraudshield.models.calibration import apply_calibration, p_yes
@@ -22,6 +22,7 @@ from fraudshield.models.laya_client import LayaUnavailable
 from fraudshield.policy.costs import CostConfig
 from fraudshield.policy.decide import PolicyConfig, PolicyContext, audit_laya_action, decide_with_trace
 from fraudshield.policy.reasons import booking_signals, reason_codes
+from fraudshield.voice.damping import active_groups, damp_values
 
 MODE_QUESTIONS = ("foreign_senders", "payoff_max", "drop_consignee")
 
@@ -93,6 +94,10 @@ class Pipeline:
         self.scan_failed_accounts: set[str] = set()
         # Depot weighing dial: parcels whose under_score reaches this threshold are also weighed (None = standard).
         self.scan_threshold: float | None = None
+        # Tracd Verify (fraudshield/voice): accounts locked after the owner said "no", and owner-confirmed changes
+        # (account_id -> [{groups, scope, until}]) that damp the related warning features for 30 days.
+        self.locked_accounts: set[str] = set()
+        self.confirmed_changes: dict[str, list[dict[str, Any]]] = {}
         self.id_prefix = id_prefix  # the live stream uses "str_" so its ids never collide with the main service
         self.on_label: Callable | None = None  # optional hook(label_record), e.g. the Laya export
         self.last_degraded: bool | None = None
@@ -166,6 +171,15 @@ class Pipeline:
         t = time.perf_counter()
         if fv is None:
             fv = self.featurize(b)
+        damped: dict[str, Any] | None = None
+        if self.confirmed_changes.get(b.account_id):
+            # owner-confirmed changes (Tracd Verify) damp the features they explain for 30 days, in scope only
+            groups, used = active_groups(self.confirmed_changes[b.account_id], b, _parse_ts(b.booked_at))
+            if groups:
+                vals, changed = damp_values(dict(fv.values), groups)
+                fv = FeatureVector(fv.booking_id, fv.as_of, vals)
+                damped = {"groups": groups, "features": changed,
+                          "from_decisions": [c.get("decision_id") for c in used]}
         values = {**booking_signals(b), **dict(fv.values)}
         lap("features", t)
 
@@ -210,6 +224,12 @@ class Pipeline:
             rule_hits = [*rule_hits, "UNDER_DECLARED_PARCEL"]
             if floor == "allow":
                 floor = "allow_scan_gated"
+        if b.account_id in self.locked_accounts:
+            # the owner said "no" on a verification call: a hard signal, nothing passes without an analyst
+            rule_hits = [*rule_hits, "ACCOUNT_LOCKED"]
+            hard = True
+            if ACTIONS.index(floor) < ACTIONS.index("hold"):
+                floor = "hold"
         if b.account_id in self.scan_failed_accounts:
             rule_hits = [*rule_hits, "ACCOUNT_FAILED_DEPOT_SCAN"]
             if floor == "allow":
@@ -229,6 +249,8 @@ class Pipeline:
             codes = ["UNDER_DECLARED_PARCEL", *codes]
         if "ACCOUNT_FAILED_DEPOT_SCAN" in rule_hits:
             codes = ["ACCOUNT_FAILED_DEPOT_SCAN", *codes]
+        if "ACCOUNT_LOCKED" in rule_hits:
+            codes = ["ACCOUNT_LOCKED", *codes]
         rng = random.Random(f"{self.seed}:{b.booking_id}")
         d, trace = decide_with_trace(probs, ctx, self.costs, self.policy, rng, reasons=codes)
         trace["rule_hits"] = rule_hits
@@ -265,7 +287,7 @@ class Pipeline:
             "model_versions": versions, "calibrated": cal_info["calibrated"],
             "laya_mode": laya_info["mode"], "laya_cached": laya_info["cached"], "laya_error": laya_info["error"],
             "policy_trace": trace, "explanation_status": "pending", "source": "live",
-            "decider": decider, "laya_action": laya_action,
+            "decider": decider, "laya_action": laya_action, "hard_signal": hard, "damped_features": damped,
             # as-of snapshot at decision time, used by the label store (never recomputed later)
             "feature_values": dict(fv.values),
         }
@@ -309,6 +331,58 @@ class Pipeline:
         _, h = self.audit.append("first_scan", {**result, "booking_id": rec["booking_id"],
                                                 "account_id": b.get("account_id")})
         return {**result, "audit_hash": h}
+
+    # ---------- owner verification call (Tracd Verify, fraudshield/voice) ----------
+    def rescore_after_owner(self, decision_id: str, groups: list[str], likelihood_ratio: float,
+                            floor: str = "allow_scan_gated") -> dict[str, Any]:
+        """Re-score a stopped booking after the owner said "yes" on the verification call. Nothing is edited: the
+        caller audits the result as a new record linked to the decision id.
+
+        1. The features the owner's stated change explains get neutral values and LightGBM re-scores (no stated
+           change: the model score stands).
+        2. The "yes" is evidence: posterior odds = model odds x likelihood_ratio (P(yes | fraud) / P(yes | legit)).
+        3. The cost policy re-runs over actions at or above `floor`, without owner_confirm (the owner just answered)
+           and without exploration. A hard signal keeps the booking held whatever the answer.
+        """
+        rec = self._by_id[decision_id]
+        b = rec.get("booking") or {}
+        vals = dict(rec.get("feature_values") or {})
+        trace0 = rec.get("policy_trace") or {}
+        rule_hits = list(trace0.get("rule_hits") or [])
+        p_before = float((rec.get("probabilities") or {}).get("misuse", rec.get("gbm_score") or 0.0))
+        damped, changed = damp_values(vals, groups)
+        t = time.perf_counter()
+        if changed:
+            p_model = float(self.gbm(FeatureVector(rec["booking_id"], str(b.get("booked_at")), damped)))
+            if "DROP_ADDRESS_PATTERN" in rule_hits:
+                p_model = 1.0 - (1.0 - p_model) * (1.0 - DROP_PRIOR)
+        else:
+            p_model = p_before
+        p_model = min(max(p_model, 1e-6), 1 - 1e-6)
+        odds = p_model / (1.0 - p_model) * float(likelihood_ratio)
+        p_after = odds / (1.0 + odds)
+        hard = bool(rec.get("hard_signal")) or any(h in HARD_SIGNALS for h in rule_hits)
+        ctx = PolicyContext(
+            carrier_cost=float(b.get("carrier_cost") or 0.0),
+            account_tenure_days=_maybe_float(vals.get("tenure_days")),
+            owner_contact_age_days=None,  # removes owner_confirm: the owner has just been asked
+            rule_floor=floor, hard_signal=hard,
+            blocks_last_24h=self._blocks_24h(rec["account_id"], _parse_ts(str(b.get("booked_at")))),
+            degraded=bool(rec.get("degraded")),
+        )
+        cfg = PolicyConfig(**{**asdict(self.policy), "explore_eps": 0.0})
+        d, trace = decide_with_trace({"misuse": p_after}, ctx, self.costs, cfg, random.Random(0),
+                                     reasons=list(rec.get("reasons") or []))
+        action = "hold" if hard else d.action
+        return {
+            "p_before": round(p_before, 4), "p_model_after_change": round(p_model, 4),
+            "likelihood_ratio": round(float(likelihood_ratio), 4), "p_after": round(p_after, 4),
+            "damped_groups": list(groups), "damped_features": changed,
+            "action": action, "greedy_action": d.greedy_action, "expected_costs": d.expected_costs,
+            "allowed": trace["allowed"], "floor": floor, "hard_signal": hard,
+            "hard_signal_kept_hold": hard, "rescore_ms": round((time.perf_counter() - t) * 1000, 2),
+            "model_versions": rec.get("model_versions"),
+        }
 
     # ---------- async explanation ----------
     def explain_decision(self, decision_id: str, use_llm: bool = True) -> None:
@@ -408,7 +482,8 @@ def _maybe_float(x):
 SCORE_FIELDS = ("decision_id", "booking_id", "action", "greedy_action", "propensity", "explored", "degraded",
                 "probabilities", "raw_probabilities", "gbm_score", "expected_costs", "reasons", "top_features",
                 "state_text", "model_versions", "latency_ms", "explanation_status", "audit_hash",
-                "calibrated", "laya_mode", "laya_cached", "source", "decider", "laya_action")
+                "calibrated", "laya_mode", "laya_cached", "source", "decider", "laya_action", "hard_signal",
+                "damped_features")
 
 
 def public_view(rec: dict[str, Any]) -> dict[str, Any]:

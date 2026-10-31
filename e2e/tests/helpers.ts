@@ -22,7 +22,7 @@ export async function demoBookings(request: APIRequestContext): Promise<DemoBook
 
 /** Scores a demo booking through the console (select row, click Score) and returns the decision id. */
 export async function scoreDemoInUi(page: Page, scenario: string): Promise<string> {
-  await page.goto('/#/')
+  await page.goto('/#/score')
   const row = page.getByTestId(`demo-booking-${scenario}`)
   await expect(row).toBeVisible()
   await row.click()

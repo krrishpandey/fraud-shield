@@ -16,7 +16,10 @@ from typing import Any
 
 EVENT_TYPES = ("decision", "first_scan", "explanation", "analyst_feedback", "outcome", "ask", "retrain", "rollback",
                "config_change", "counterfactual_view", "passkey_enrolled", "owner_confirmed",
-               "owner_confirm_failed", "redteam_attack")
+               "owner_confirm_failed", "redteam_attack",
+               # Tracd Verify (fraudshield/voice): every call step is a new record linked to the decision id
+               "verify_started", "verify_call_event", "verify_outcome", "verify_escalated", "verify_analyst_resolved",
+               "account_locked")
 GENESIS = "0" * 64
 
 

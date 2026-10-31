@@ -114,7 +114,7 @@ function ManualForm({ onScore, busy, onCancel }: { onScore: (b: Booking) => void
         </button>
         <button type="submit" className="btn btn-primary ml-auto" disabled={busy} data-testid="manual-score-button">
           <Icon name="decision" size={17} />
-          {busy ? 'Scoring...' : 'Send through the gate'}
+          {busy ? 'Checking...' : 'Check this booking'}
         </button>
       </div>
     </form>
@@ -254,6 +254,21 @@ export default function ScoreView() {
     }
   }
 
+  /** Books one of the Tracd Verify demo parcels: it is held, the owner's phone rings, and the journey shows it live. */
+  async function liveCall(scenario: string) {
+    setBusy(true)
+    setErr(null)
+    try {
+      const res = await api.verifyDemo(scenario)
+      refresh()
+      nav(`/decisions/${encodeURIComponent(res.decision_id)}`, { state: { justScored: true } })
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function scoreAll() {
     setBusy(true)
     setErr(null)
@@ -279,7 +294,16 @@ export default function ScoreView() {
 
   return (
     <div>
-      <PageTitle title="Score a booking" />
+      <PageTitle title="Try a booking">
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => liveCall('verify-fraud')} data-testid="live-call-fraud"
+          title="Sri Murugan Textiles: 18 kg express, 2:14 am, new device. It is held and the owner's phone rings: say no.">
+          <Icon name="phone" size={16} /> Suspicious booking: call me
+        </button>
+        <button type="button" className="btn" disabled={busy} onClick={() => liveCall('verify-honest')} data-testid="live-call-honest"
+          title="Kaveri Home Goods: first booking from a new Hosur warehouse. It is held and the owner's phone rings: say yes, Hosur, new warehouse.">
+          <Icon name="phone" size={16} /> Honest new warehouse: call me
+        </button>
+      </PageTitle>
       <div className="split">
         <aside className="split-list" aria-label="Demo bookings">
           <h2 className="split-h">Demo bookings</h2>
@@ -401,11 +425,11 @@ export default function ScoreView() {
                 <div className="dock-bar">
                   <button type="button" className="btn ml-auto" disabled={busy || items.length === 0} onClick={scoreAll}>
                     <Icon name="pulse" size={16} />
-                    {allDone != null ? `Scoring ${allDone} of ${items.length}...` : `Score all ${items.length} demos`}
+                    {allDone != null ? `Scoring ${allDone} of ${items.length}...` : `Check all ${items.length}`}
                   </button>
                   <button type="button" className="btn btn-primary" data-testid="score-button" disabled={busy} onClick={() => score(b)}>
                     <Icon name="decision" size={17} />
-                    {busy && allDone == null ? 'Scoring...' : 'Send through the gate'}
+                    {busy && allDone == null ? 'Checking...' : 'Check this booking'}
                   </button>
                 </div>
               </section>

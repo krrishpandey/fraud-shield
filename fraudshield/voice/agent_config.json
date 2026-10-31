@@ -1,0 +1,95 @@
+{
+  "_comment": "Tracd Verify owner-verification agent, as code. Created/updated by `python -m fraudshield.voice.setup_agent`. Body format: POST https://api.bolna.ai/v2/agent (bolna.ai/docs, read 31 Oct 2026). English only. Variables in {{double braces}} are filled per call from user_data (fraudshield/voice/service.py _call_variables).",
+  "agent_config": {
+    "agent_name": "Tracd Verify",
+    "agent_welcome_message": "Hello, this is Tracd calling for {{company_name}} about your courier account. We will never ask for your OTP, password or card number.",
+    "webhook_url": null,
+    "agent_type": "other",
+    "call_summary_enabled": false,
+    "tasks": [
+      {
+        "task_type": "conversation",
+        "tools_config": {
+          "llm_agent": {
+            "agent_type": "simple_llm_agent",
+            "agent_flow_type": "streaming",
+            "llm_config": {
+              "agent_flow_type": "streaming",
+              "provider": "openai",
+              "model": "gpt-5.4-mini",
+              "max_tokens": 150,
+              "temperature": 1,
+              "summarization_details": null,
+              "extraction_details": null
+            }
+          },
+          "synthesizer": {
+            "provider": "elevenlabs",
+            "provider_config": {"voice": "Angelica", "voice_id": "IkSv4tkouLJ6kYsQA7XD", "model": "eleven_turbo_v2_5"},
+            "stream": true,
+            "caching": true,
+            "buffer_size": 250,
+            "audio_format": "wav"
+          },
+          "transcriber": {
+            "provider": "deepgram",
+            "model": "nova-3",
+            "language": "en",
+            "stream": true,
+            "encoding": "linear16",
+            "sampling_rate": 16000,
+            "endpointing": 250
+          },
+          "input": {"provider": "plivo", "format": "wav"},
+          "output": {"provider": "plivo", "format": "wav"},
+          "api_tools": null,
+          "multilingual_config": null
+        },
+        "toolchain": {"execution": "sequential", "pipelines": [["transcriber", "llm", "synthesizer"]]},
+        "task_config": {
+          "hangup_after_silence": 10,
+          "hangup_after_LLMCall": false,
+          "call_terminate": 120,
+          "ambient_noise": false,
+          "ambient_noise_track": null,
+          "backchanneling": false,
+          "dtmf_enabled": false,
+          "voicemail": false,
+          "check_if_user_online": true
+        }
+      }
+    ]
+  },
+  "agent_prompts": {
+    "task_1": {
+      "system_prompt": "You are the Tracd verification assistant calling the owner of a courier account for {{company_name}}. Speak English. Be short, calm and polite. One question at a time.\n\nSAFETY: Never ask for an OTP, password, PIN or card number. If the person offers one, stop them and say you never need it.\n\nThe booking to verify: {{weight_kg}} kg {{service}}, from {{origin}} to {{destination}}, booked at {{booking_time}}{{device_note}}.\n\nSCRIPT:\n1. You have already greeted them. Now say: \"A booking was just made on your account: {{weight_kg}} kg {{service}}, {{origin}} to {{destination}}, at {{booking_time}}{{device_note}}. Was this you?\"\n2. If they say NO (not them, they did not book it): say \"Thank you. We have stopped this booking and secured your account. Our team will contact you shortly.\" Then say goodbye and end the call.\n3. If they say YES: ask \"Thanks. Which pickup address is this going from?\" Wait for the answer. Then ask \"Has anything changed, like a new warehouse or a new staff login?\" Wait for the answer. Then say \"Thank you, I have noted that. Your booking will be updated in a minute. Goodbye.\" and end the call.\n4. If they are unsure, confused, or ask you to call later: say \"No problem. A member of our team will follow up with you shortly. The booking stays on hold until then.\" Then end the call.\n\nDo not discuss anything else. Do not promise a refund. Do not read out account numbers."
+    }
+  },
+  "dispositions": [
+    {
+      "name": "owner_confirmed",
+      "question": "Did the person confirm that they made the booking that was read out? Answer yes if they clearly said it was them, no if they clearly said it was not them, unsure otherwise.",
+      "category": "Tracd Verify",
+      "is_objective": true,
+      "objective_options": [
+        {"value": "yes", "condition": "The person clearly confirmed they made the booking"},
+        {"value": "no", "condition": "The person clearly said they did not make the booking"},
+        {"value": "unsure", "condition": "The person was unsure, confused, or did not answer the question"}
+      ]
+    },
+    {
+      "name": "detail_answer",
+      "question": "What pickup address or place did the person give for this booking? Copy their words. Empty if none.",
+      "category": "Tracd Verify",
+      "is_subjective": true,
+      "subjective_type": "text"
+    },
+    {
+      "name": "change_reason",
+      "question": "What change did the person mention (for example a new warehouse, new staff login, new address)? Copy their words. Empty if nothing changed.",
+      "category": "Tracd Verify",
+      "is_subjective": true,
+      "subjective_type": "text"
+    }
+  ]
+}

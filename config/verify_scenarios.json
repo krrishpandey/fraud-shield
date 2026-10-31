@@ -1,0 +1,120 @@
+[
+  {
+    "scenario": "verify-fraud",
+    "title": "Account number used from a new device at 2:14 am",
+    "description": "Constructed demo booking on a real Olist account history (the takeover account from docs/demo_block_bookings): new login device, 18 kg express at 2:14 am, to a consignee shared with other accounts. Company and city names are demo display labels.",
+    "expected": "held -> owner says NO -> blocked, account locked",
+    "say": "Held bookings trigger a call to the real owner.",
+    "booking": {
+      "booking_id": "vfy_fraud",
+      "account_id": "a416b6a846a11724393025641d4edd5e",
+      "booked_at": "2018-06-28T02:14:00",
+      "channel": "web",
+      "login_device_age_days": 0.0,
+      "payment_method": "account_billing",
+      "sender_id": "cff9742292dda08fdbbc7bb66914e2a7",
+      "origin_uf": "SP",
+      "origin_zip3": "143",
+      "dest_uf": "GO",
+      "dest_zip3": "761",
+      "consignee_id": "562d18aaeb94ed882e135cad954b5d8f",
+      "weight_kg": 18.0,
+      "length_cm": 40.0,
+      "width_cm": 40.0,
+      "height_cm": 32.0,
+      "service": "express",
+      "category": "furniture",
+      "declared_value": 51.96,
+      "carrier_cost": 112.93,
+      "owner_contact_age_days": 647.679,
+      "meta": {
+        "scenario": "verify-fraud",
+        "constructed_demo": true,
+        "display": {"company": "Sri Murugan Textiles", "origin_city": "Chennai", "dest_city": "Delhi"},
+        "pickup_address": "Ambattur Industrial Estate, Chennai",
+        "verify_sim": {
+          "owner_confirmed": "no",
+          "detail_answer": null,
+          "change_reason": null,
+          "language": "en"
+        }
+      }
+    }
+  },
+  {
+    "scenario": "verify-honest",
+    "title": "Regular shipper, first booking from a new Hosur warehouse",
+    "description": "Constructed demo booking on a real Olist account history (433 days, the hard-negative seller): first booking from a new warehouse (new sender, new origin) by a new staff login. Company and city names are demo display labels.",
+    "expected": "held -> owner says YES, new warehouse -> released with a first-scan check",
+    "say": "Honest customers wait minutes, not hours.",
+    "booking": {
+      "booking_id": "vfy_honest",
+      "account_id": "729f06993dac8e860d4f02d7088ca48a",
+      "booked_at": "2018-06-01T10:20:00",
+      "channel": "api",
+      "login_device_age_days": 0.0,
+      "payment_method": "account_billing",
+      "sender_id": "hosur_warehouse_729f",
+      "origin_uf": "SC",
+      "origin_zip3": "880",
+      "dest_uf": "BA",
+      "dest_zip3": "488",
+      "consignee_id": "3d6465ac2502decfdfa5ab1e1a915a54",
+      "weight_kg": 8.55,
+      "length_cm": 27.0,
+      "width_cm": 27.0,
+      "height_cm": 23.0,
+      "service": "standard",
+      "category": "home",
+      "declared_value": 120.0,
+      "carrier_cost": 47.67,
+      "owner_contact_age_days": 445.943,
+      "meta": {
+        "scenario": "verify-honest",
+        "constructed_demo": true,
+        "display": {"company": "Kaveri Home Goods", "origin_city": "Hosur", "dest_city": "Bengaluru"},
+        "pickup_address": "Plot 14, SIPCOT Phase 2, Hosur",
+        "verify_sim": {
+          "owner_confirmed": "yes",
+          "detail_answer": "Plot 14, SIPCOT Phase 2, Hosur. Our new warehouse.",
+          "change_reason": "We opened a new warehouse in Hosur this week and gave a new staff login to the manager there.",
+          "language": "en"
+        }
+      }
+    }
+  },
+  {
+    "scenario": "verify-contact-changed",
+    "title": "Held booking, owner number changed 6 days ago",
+    "description": "The curated reshipping-drop booking (real Olist row). The owner's phone number on file changed 6 days ago, so Tracd does not call: a fraudster who changed the number would confirm his own booking. Straight to the analyst queue.",
+    "expected": "held -> no call (number changed < 30 days) -> analyst queue",
+    "say": "We only call numbers unchanged for 30 days.",
+    "booking": {
+      "booking_id": "vfy_contact",
+      "account_id": "974cf2cb8f4b7add98709c30df02fe10",
+      "booked_at": "2018-06-11T09:29:40",
+      "channel": "web",
+      "login_device_age_days": 251.352,
+      "payment_method": "account_billing",
+      "sender_id": "974cf2cb8f4b7add98709c30df02fe10",
+      "origin_uf": "SP",
+      "origin_zip3": "148",
+      "dest_uf": "GO",
+      "dest_zip3": "761",
+      "consignee_id": "562d18aaeb94ed882e135cad954b5d8f",
+      "weight_kg": 0.65,
+      "length_cm": 25.0,
+      "width_cm": 15.0,
+      "height_cm": 11.0,
+      "service": "standard",
+      "category": "computers",
+      "declared_value": 79.99,
+      "carrier_cost": 15.56,
+      "owner_contact_age_days": 254.378,
+      "meta": {
+        "scenario": "verify-contact-changed",
+        "display": {"company": "Nila Electronics", "origin_city": "Coimbatore", "dest_city": "Delhi"}
+      }
+    }
+  }
+]

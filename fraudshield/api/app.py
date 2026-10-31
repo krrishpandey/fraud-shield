@@ -39,6 +39,9 @@ from fraudshield.policy.decide import PolicyConfig
 from fraudshield.policy.reasons import booking_signals, reason_catalog
 from fraudshield.sim.stream import StreamMetrics, StreamRunner, offline_metrics
 from fraudshield.monitor.live import live_estimate, load_results as load_monitor_results
+from fraudshield.voice.router import build_verify_router
+from fraudshield.voice.service import TRIGGER_ACTIONS as VERIFY_TRIGGERS
+from fraudshield.voice.wiring import build_verify_service
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG: dict[str, Any] = {
@@ -408,6 +411,11 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
             raise HTTPException(404, "decision not found")
         return rec
 
+    # Tracd Verify: held bookings -> Bolna owner call (fraudshield/voice). Real calls need BOLNA_API_KEY and
+    # BOLNA_AGENT_ID in .env; without them every call is a clearly labelled simulated call.
+    verify = build_verify_service(cfg, lambda did: (_get(did), _owner(did)), costs)
+    app.state.verify = verify
+
     @r.post("/score")
     def score(body: BookingIn, bg: BackgroundTasks):
         b = Booking(**body.model_dump())
@@ -420,6 +428,8 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
         if out["explanation_status"] == "pending" and out["decision_id"] not in scheduled:
             scheduled.add(out["decision_id"])
             bg.add_task(pipe.explain_decision, out["decision_id"])
+        if verify.cfg.auto_start and out["action"] in VERIFY_TRIGGERS:
+            bg.add_task(verify.maybe_start, out["decision_id"])
         return out
 
     @r.get("/decisions")
@@ -875,6 +885,13 @@ def build_app(config: dict | str | Path | None = None, components: dict[str, Any
                               / "passkeys")
     app.include_router(pk)
     app.include_router(pk, prefix="/api")
+    vr = build_verify_router(verify, pipe, audit_path, _path((cfg.get("verify") or {}).get("scenarios_path")),
+                             explain=pipe.explain_decision, real_source=stream_source, cfg=cfg)
+    app.include_router(vr)
+    app.include_router(vr, prefix="/api")
+    if stream_source is not None and (cfg.get("verify") or {}).get("load_real_on_start", False):
+        # the Owner calls page opens on real held-out bookings, scored live; the seeded demo is a separate tab
+        threading.Thread(target=vr.load_real, name="verify-load-real", daemon=True).start()
 
     dist = _path(cfg.get("web_dist"))
     if dist and (dist / "index.html").exists():

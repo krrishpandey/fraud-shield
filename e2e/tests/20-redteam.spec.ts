@@ -7,7 +7,7 @@ test('red team tab: measured results, the gate rejecting the hardened model, and
   page.on('pageerror', (e) => errors.push(e.message))
 
   await page.goto('/#/')
-  await page.getByTestId('nav-redteam').click()
+  await page.goto('/#/redteam') // in the collapsed More tools group
   await expect(page.getByTestId('redteam-view')).toBeVisible()
 
   // measured run (artifacts/results_redteam.json)

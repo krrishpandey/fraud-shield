@@ -23,7 +23,7 @@ test('sign-in: an unsigned visitor sees the sign-in page, signs in to the consol
   await page.getByTestId('login-submit').click()
   await expect(page.getByTestId('login-page')).toHaveCount(0)
   await expect(page.getByTestId('nav-score')).toBeVisible()
-  await expect(page.getByTestId('nav-redteam')).toBeVisible()
+  await expect(page.getByTestId('nav-verify')).toBeVisible()
 
   // the session survives a reload, and signing out returns to the sign-in page
   await page.reload()

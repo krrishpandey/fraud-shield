@@ -12,14 +12,14 @@ test('analyst confirms fraud: audit hash, queue label, dashboard bookings count 
   await expect(page.getByTestId('analyst-result')).toHaveAttribute('data-label', 'fraud')
   await expect(page.getByTestId('analyst-result-hash')).toHaveText(/^[0-9a-f]{64}$/)
 
-  await page.getByTestId('nav-queue').click()
+  await page.goto('/#/queue') // in the collapsed More tools group
   const row = page.locator(`[data-testid="queue-row"][data-decision-id="${id}"]`)
   await expect(row).toBeVisible()
   await expect(row).toContainText('Fraud')
 
   // a booking not scored before raises the bookings KPI by exactly one
   await scoreDemoInUi(page, 'reshipping-drop')
-  await page.getByTestId('nav-dashboard').click()
+  await page.goto('/#/dashboard')
   await expect(page.getByTestId('dashboard-kpi-bookings')).toBeVisible()
   await expect.poll(() => kpiInt(page, 'bookings')).toBe(before + 1)
   await expect(page.getByTestId('action-mix')).toBeVisible()

@@ -11,6 +11,8 @@ import { rememberDecision, useStatus } from '../lib/status'
 import { CounterfactualPanel } from '../components/CounterfactualPanel'
 import { FactCheckedExplanation } from '../components/FactCheckedExplanation'
 import { OwnerPasskey } from '../components/OwnerPasskey'
+import { LayaWhy } from '../components/LayaWhy'
+import { PackageJourney } from '../components/PackageJourney'
 import { ShippingLabel } from '../components/ShippingLabel'
 import { ACTION_META, QUESTION_META, actionLabel, featureLabel, reasonText } from '../lib/domain'
 import { fmtBRL, fmtMs, fmtNum, fmtPct, shortHash } from '../lib/format'
@@ -554,7 +556,7 @@ export default function DecisionView() {
       <PageTitle title="Decision" sub={`${d.booking_id}${b ? ` · acct ${short(b.account_id)}` : ''}`}>
         <Link to="/" className="btn">
           <Icon name="box" size={16} />
-          Score another
+          Try another booking
         </Link>
       </PageTitle>
 
@@ -577,7 +579,7 @@ export default function DecisionView() {
             <div className="verdict-flags">
               {d.degraded && (
                 <p data-testid="degraded-flag">
-                  <Icon name="cpu" size={15} /> Decided by the backup model with stricter thresholds, because the Laya model is not loaded.
+                  <Icon name="cpu" size={15} /> Decided by LightGBM.
                 </p>
               )}
               {!d.degraded && d.decider && (
@@ -608,6 +610,8 @@ export default function DecisionView() {
             </div>
           )}
         </section>
+
+        <PackageJourney id={d.decision_id} action={d.action} risk={d.probabilities.misuse ?? d.gbm_score} />
 
         <div className="itabs dec-tabs" role="tablist" aria-label="Decision sections">
 
@@ -645,6 +649,7 @@ export default function DecisionView() {
               </h2>
             </div>
             <div className="card-b">
+              <LayaWhy id={d.decision_id} />
               <FactCheckedExplanation d={d} polling={polling} />
             </div>
           </section>

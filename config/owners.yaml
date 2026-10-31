@@ -1,0 +1,23 @@
+# Tracd Verify owner directory (demo). Phone numbers are NOT stored here: phone_env names the .env variable that
+# holds the E.164 number. Bolna trial accounts can only call numbers verified in the Bolna dashboard, so put your
+# own team's verified phones in .env. Company names are demo display labels on real Olist account histories.
+# phone_changed_days_ago: how long the number has been on file (the 30-day rule); or phone_changed_at: ISO date.
+owners:
+  a416b6a846a11724393025641d4edd5e:        # verify-fraud scenario
+    company: Sri Murugan Textiles
+    phone_env: TRACD_DEMO_PHONE_FRAUD
+    language: en
+    phone_changed_days_ago: 400
+    pickup_addresses: ["Ambattur Industrial Estate, Chennai"]
+  729f06993dac8e860d4f02d7088ca48a:        # verify-honest scenario
+    company: Kaveri Home Goods
+    phone_env: TRACD_DEMO_PHONE_HONEST
+    language: en
+    phone_changed_days_ago: 210
+    pickup_addresses: ["Guindy, Chennai"]
+  974cf2cb8f4b7add98709c30df02fe10:        # verify-contact-changed scenario: number changed 6 days ago -> no call
+    company: Nila Electronics
+    phone_env: TRACD_DEMO_PHONE_FRAUD
+    language: en
+    phone_changed_days_ago: 6
+    pickup_addresses: ["Peelamedu, Coimbatore"]

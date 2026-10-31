@@ -101,7 +101,7 @@ test('leaving the Learning tab during a retrain: coming back shows the run, then
   await expect(page.getByTestId('learning-retrain-progress')).toBeVisible()
   await page.getByTestId('nav-score').click() // leave while the server is still training
   await expect(page.getByTestId('learning-retrain-progress')).toHaveCount(0)
-  await page.getByTestId('nav-learning').click()
+  await page.goto('/#/learning') // in the collapsed More tools group
   const run = await (await resp).json() // the original request finishes on the server regardless
   // the reopened page finds the run (progress) or its outcome, and ends on the result of that very run
   await expect(page.getByTestId('learning-result')).toHaveAttribute('data-run-id', run.run_id, { timeout: 60_000 })

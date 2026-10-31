@@ -17,6 +17,10 @@ import LearningView from './views/LearningView'
 import LiveView from './views/LiveView'
 import LoginView from './views/LoginView'
 import RedTeamView from './views/RedTeamView'
+import VerifyView from './views/VerifyView'
+import HowView from './views/HowView'
+import LayaView from './views/LayaView'
+import BookingsView from './views/BookingsView'
 import { SessionContext, applySavedTheme, readAnalyst, writeAnalyst } from './lib/session'
 
 applySavedTheme()
@@ -50,7 +54,13 @@ function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<ScoreView />} />
+            <Route path="score" element={<ScoreView />} />
+            <Route path="bookings" element={<BookingsView />} />
+            <Route path="calls" element={<VerifyView />} />
             <Route path="decisions/:id" element={<DecisionView />} />
+            <Route path="verify" element={<VerifyView />} />
+            <Route path="how" element={<HowView />} />
+            <Route path="laya" element={<LayaView />} />
             <Route path="live" element={<LiveView />} />
             <Route path="queue" element={<QueueView />} />
             <Route path="dashboard" element={<DashboardView />} />

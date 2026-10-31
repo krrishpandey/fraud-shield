@@ -74,3 +74,18 @@ learning:
   ipw_clip: 20                   # propensity-weight clip for explored feedback
   lgb_params: {min_child_samples: 100, lambda_l2: 10}   # run R3 in docs/LEARNING_GATE.md: best candidate so far, gate still decides
   interaction_limits: null       # attempt 5 in docs/LEARNING_GATE.md: {login_device_age_days: [channel_code]}
+# Tracd Verify (fraudshield/voice): held bookings -> Bolna owner call. Keys and numbers come from .env.
+verify:
+  enabled: true
+  auto_start: true               # start verification for every held / owner_confirm booking scored via /score
+  mode: auto                     # auto: real Bolna call when BOLNA_API_KEY, BOLNA_AGENT_ID and a number exist; else simulated
+  owners_path: config/owners.yaml
+  scenarios_path: config/verify_scenarios.json
+  load_real_on_start: true       # score real held-out test-window bookings at startup (Owner calls page)
+  min_contact_days: 30
+  max_attempts: 2                # first call + one retry, then SMS (stub), then the analyst queue
+  retry_delay_s: 60              # demo pace; production would wait an hour
+  poll_interval_s: 3
+  sim_speed: 1.0
+  p_yes_given_legit: 0.95        # ASSUMPTION; P(yes | fraud) = costs.yaml p_spoof
+  release_floor: allow_scan_gated

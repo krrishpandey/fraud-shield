@@ -36,8 +36,12 @@ function Brand({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => vo
 }
 
 const PAGES: { label: string; to: string; icon: IconName }[] = [
-  { label: 'Score a booking', to: '/', icon: 'box' },
-  { label: 'Live stream', to: '/live', icon: 'pulse' },
+  { label: 'Try a booking', to: '/', icon: 'box' },
+  { label: 'Live bookings', to: '/bookings', icon: 'pulse' },
+  { label: 'Owner calls', to: '/calls', icon: 'phone' },
+  { label: 'How it works', to: '/how', icon: 'help' },
+  { label: 'Laya fine-tuning', to: '/laya', icon: 'stack' },
+  { label: 'Stream replay', to: '/live', icon: 'refresh' },
   { label: 'Review queue', to: '/queue', icon: 'list' },
   { label: 'Dashboard', to: '/dashboard', icon: 'chart' },
   { label: 'Learning', to: '/learning', icon: 'refresh' },
@@ -104,14 +108,16 @@ function QuickFind({ onClose }: { onClose: () => void }) {
   )
 }
 
-function Group({ title, items, collapsed }: { title: string; items: Item[]; collapsed: boolean }) {
-  const [open, setOpen] = useState(true)
+function Group({ title, items, collapsed, startOpen = true }: { title: string; items: Item[]; collapsed: boolean; startOpen?: boolean }) {
+  const [open, setOpen] = useState(startOpen)
   return (
     <div className="sb-group">
-      <button type="button" className="sb-group-h" aria-expanded={open} tabIndex={collapsed ? -1 : 0} onClick={() => setOpen((o) => !o)}>
-        {title}
-        <Icon name="chevronDown" size={15} style={{ transform: open ? 'none' : 'rotate(-90deg)', transition: 'transform .25s ease' }} />
-      </button>
+      {title && (
+        <button type="button" className="sb-group-h" aria-expanded={open} tabIndex={collapsed ? -1 : 0} onClick={() => setOpen((o) => !o)}>
+          {title}
+          <Icon name="chevronDown" size={15} style={{ transform: open ? 'none' : 'rotate(-90deg)', transition: 'transform .25s ease' }} />
+        </button>
+      )}
       <div className="sb-group-body" data-open={open || collapsed}>
         <ul>
           {items.map((n) => (
@@ -173,19 +179,24 @@ export default function Layout() {
     return id ? `/decisions/${id}` : null
   }, [loc.pathname, status.recent])
 
-  const gate: Item[] = [
-    { to: '/', label: 'Score a booking', id: 'score', icon: 'box', end: true },
-    ...(decisionTo ? [{ to: decisionTo, label: 'Decision', id: 'decision', icon: 'decision' as IconName }] : []),
+  // The Tracd Verify story: owner calls first, then trying a booking, the audit trail and the guide.
+  // The path of a booking: try one, watch every booking's outcome, then the owner calls.
+  const main: Item[] = [
+    { to: '/', label: 'Try a booking', id: 'score', icon: 'box', end: true },
+    { to: '/bookings', label: 'Live bookings', id: 'bookings', icon: 'pulse' },
+    { to: '/calls', label: 'Owner calls', id: 'verify', icon: 'phone' },
+    { to: '/audit', label: 'Audit log', id: 'audit', icon: 'shield' },
+    { to: '/how', label: 'How it works', id: 'how', icon: 'help' },
   ]
-  const operate: Item[] = [
-    { to: '/live', label: 'Live stream', id: 'live', icon: 'pulse', pill: 'Replay' },
+  // Earlier FraudShield tools, kept but out of the way.
+  const more: Item[] = [
+    ...(decisionTo ? [{ to: decisionTo, label: 'Last decision', id: 'decision', icon: 'decision' as IconName }] : []),
+    { to: '/laya', label: 'Laya fine-tuning', id: 'laya', icon: 'stack' },
+    { to: '/dashboard', label: 'Model dashboard', id: 'dashboard', icon: 'chart' },
     { to: '/queue', label: 'Review queue', id: 'queue', icon: 'list', count: status.openCases.length },
-  ]
-  const monitor: Item[] = [
-    { to: '/dashboard', label: 'Dashboard', id: 'dashboard', icon: 'chart' },
+    { to: '/live', label: 'Stream replay', id: 'live', icon: 'refresh' },
     { to: '/learning', label: 'Learning', id: 'learning', icon: 'refresh' },
     { to: '/redteam', label: 'Red team', id: 'redteam', icon: 'target' },
-    { to: '/audit', label: 'Audit log', id: 'audit', icon: 'shield' },
   ]
   const initial = (analyst || 'A').trim().slice(0, 1).toUpperCase()
 
@@ -202,9 +213,8 @@ export default function Layout() {
             <kbd>Ctrl K</kbd>
           </button>
           <nav aria-label="Views" className="sb-nav">
-            <Group title="Gate" items={gate} collapsed={collapsed} />
-            <Group title="Operate" items={operate} collapsed={collapsed} />
-            <Group title="Monitor" items={monitor} collapsed={collapsed} />
+            <Group title="" items={main} collapsed={collapsed} />
+            <Group title="More tools" items={more} collapsed={collapsed} startOpen={false} />
           </nav>
           <div className="sb-foot">
             <div className="sb-settings-wrap">
